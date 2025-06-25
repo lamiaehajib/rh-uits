@@ -35,12 +35,17 @@ class TacheController extends Controller
         // Build the query
         $query = Tache::with('user');
 
+        // Only show tasks where datedebut is today or in the past, UNLESS it's an admin viewing all tasks
+        if (!$this->isAdmin($user)) {
+            $query->where('datedebut', '<=', Carbon::now());
+        }
+
         // Search filter
         if ($search) {
             $query->where(function($q) use ($search) {
                 $q->where('description', 'like', "%{$search}%")
-                  ->orWhere('status', 'like', "%{$search}%")
-                  ->orWhereDate('date', 'like', "%{$search}%");
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhereDate('date', 'like', "%{$search}%");
             });
         }
 
@@ -63,7 +68,7 @@ class TacheController extends Controller
                     break;
                 case 'overdue':
                     $query->where('datedebut', '<', Carbon::now())
-                          ->where('status', '!=', 'termine');
+                                ->where('status', '!=', 'termine');
                     break;
             }
         }
@@ -132,12 +137,14 @@ class TacheController extends Controller
             DB::commit();
 
             return redirect()->route('taches.index')
-                             ->with('success', 'Tâche créée avec succès.');
+                                 ->with('success', 'Tâche créée avec succès.');
         } catch (\Exception $e) {
             DB::rollBack();
+            // Log the actual error for debugging
+            \Log::error("Error creating tache: " . $e->getMessage());
             return redirect()->back()
-                             ->with('error', 'Erreur lors de la création de la tâche.')
-                             ->withInput();
+                                 ->with('error', 'Erreur lors de la création de la tâche. Détails: ' . $e->getMessage()) // Provide more detail in development
+                                 ->withInput();
         }
     }
 
@@ -149,7 +156,7 @@ class TacheController extends Controller
         // Check access
         if (!$this->hasAccessToTask($user, $tache)) {
             return redirect()->route('taches.index')
-                             ->with('error', 'Accès refusé.');
+                                 ->with('error', 'Accès refusé.');
         }
 
         return view('taches.show', compact('tache'));
@@ -163,7 +170,7 @@ class TacheController extends Controller
         // Check access
         if (!$this->hasAccessToTask($user, $tache)) {
             return redirect()->route('taches.index')
-                             ->with('error', 'Accès refusé.');
+                                 ->with('error', 'Accès refusé.');
         }
 
         $users = User::all();
@@ -207,7 +214,7 @@ class TacheController extends Controller
             ]);
         } else {
             return redirect()->route('taches.index')
-                             ->with('error', 'Accès refusé.');
+                                 ->with('error', 'Accès refusé.');
         }
 
         // Send notification if status changed
@@ -219,23 +226,19 @@ class TacheController extends Controller
         }
 
         return redirect()->route('taches.index')
-                         ->with('success', 'Tâche mise à jour avec succès.');
+                             ->with('success', 'Tâche mise à jour avec succès.');
     }
 
-    public function destroy($id)
-    {
-        $user = auth()->user();
-        $tache = Tache::findOrFail($id);
+   public function destroy($id)
+{
+    $user = auth()->user();
+    $tache = Tache::findOrFail($id);
 
-        if (!$this->isAdmin($user)) {
-            return redirect()->route('taches.index')
-                             ->with('error', 'Accès refusé.');
-        }
-
-        $tache->delete();
-        return redirect()->route('taches.index')
+    
+    $tache->delete();
+    return redirect()->route('taches.index')
                          ->with('success', 'Tâche supprimée avec succès.');
-    }
+}
 
     // Nouvelle méthode pour dupliquer une tâche
     public function duplicate($id)
@@ -245,7 +248,7 @@ class TacheController extends Controller
 
         if (!$this->hasAccessToTask($user, $originalTache)) {
             return redirect()->route('taches.index')
-                             ->with('error', 'Accès refusé.');
+                                 ->with('error', 'Accès refusé.');
         }
 
         $newTache = $originalTache->replicate();
@@ -255,7 +258,7 @@ class TacheController extends Controller
         $newTache->save();
 
         return redirect()->route('taches.index')
-                         ->with('success', 'Tâche dupliquée avec succès.');
+                             ->with('success', 'Tâche dupliquée avec succès.');
     }
 
     // Méthode pour marquer une tâche comme terminée rapidement
@@ -304,13 +307,29 @@ class TacheController extends Controller
         return $this->isAdmin($user) || $tache->iduser == $user->id;
     }
 
+    
+    ## Modified `getTaskStats` Method
+
    private function getTaskStats($user)
     {
         $baseQuery = Tache::query(); 
         
         if (!$this->isAdmin($user)) {
             $baseQuery->where('iduser', $user->id);
+            // --- NEW ADDITION START for non-admin users ---
+            // Only count tasks whose datedebut has arrived for regular users
+            $baseQuery->where('datedebut', '<=', Carbon::now()); 
+            // --- NEW ADDITION END ---
         }
+        // --- NEW ADDITION START for admin users ---
+        // If an admin is viewing these stats, you might still want to count ALL tasks,
+        // or you might want them to also respect datedebut for 'current' stats.
+        // I'll assume for admins, you want ALL tasks counted, unless a specific filter is applied later.
+        // If you want admin stats to also respect datedebut, move the line above outside the if.
+        // For now, it respects datedebut only for non-admins as requested implicitly.
+        // If you want datedebut to apply to ALL stats regardless of role, put the line below here:
+        // $baseQuery->where('datedebut', '<=', Carbon::now()); 
+        // --- NEW ADDITION END ---
 
         // We need to fetch tasks that are not 'termine' first, then filter by calculated end date
         $notCompletedTasks = (clone $baseQuery)->where('status', '!=', 'termine');
@@ -374,6 +393,10 @@ class TacheController extends Controller
 
         if (!$this->isAdmin($user)) {
             $query->where('iduser', $user->id);
+            // --- NEW ADDITION START for recent tasks in TacheController ---
+            // Only show recent tasks whose datedebut has arrived for regular users
+            $query->where('datedebut', '<=', Carbon::now());
+            // --- NEW ADDITION END ---
         }
 
         return $query->limit(5)->get();
@@ -389,6 +412,10 @@ class TacheController extends Controller
         
         if (!$this->isAdmin($user)) {
             $query->where('iduser', $user->id);
+            // --- NEW ADDITION START for export tasks in TacheController ---
+            // Only export tasks whose datedebut has arrived for regular users
+            $query->where('datedebut', '<=', Carbon::now());
+            // --- NEW ADDITION END ---
         }
 
         $taches = $query->get();

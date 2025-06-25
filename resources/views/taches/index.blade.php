@@ -309,15 +309,15 @@
                                                                 <i class="fas fa-edit text-lg"></i>
                                                             </a>
                                                     @endcan
-                                                    @can('tache-delete')
-                                                            <button type="button" title="Supprimer" onclick="if(confirm('{{ __('Êtes-vous sûr de vouloir supprimer cette tâche ?') }}')) { document.getElementById('delete-form-{{ $tache->id }}').submit(); }" class="text-primary-red hover:text-red-700 transition duration-150 ease-in-out transform hover:scale-110">
-                                                                <i class="fas fa-trash text-lg"></i>
-                                                            </button>
-                                                            <form id="delete-form-{{ $tache->id }}" action="{{ route('taches.destroy', $tache->id) }}" method="POST" style="display: none;">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                            </form>
-                                                    @endcan
+                                                 @can('tache-delete')
+    <button type="button" title="Supprimer" onclick="if(confirm('{{ __('Êtes-vous sûr de vouloir supprimer cette tâche ?') }}')) { document.getElementById('delete-form-{{ $tache->id }}').submit(); }" class="text-primary-red hover:text-red-700 transition duration-150 ease-in-out transform hover:scale-110">
+        <i class="fas fa-trash text-lg"></i>
+    </button>
+    <form id="delete-form-{{ $tache->id }}" action="{{ route('taches.destroy', $tache->id) }}" method="POST" style="display: none;">
+        @csrf
+        @method('DELETE')
+    </form>
+@endcan
                                                     @can('tache-create') {{-- Supposons que la duplication nécessite la permission de création --}}
                                                     <form action="{{ route('taches.duplicate', $tache->id) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir dupliquer cette tâche ?');" class="inline-block">
                                                         @csrf

@@ -55,7 +55,10 @@ class DashboardController extends Controller
         // Cache key for performance
         $cacheKey = "dashboard_stats_" . $user->id . "_" . md5($searchTerm . $statusFilter . $dateFilter);
 
-        if ($user->hasRole('Admin') || $user->hasRole('Admin1')) { 
+        // Determine if the user is an admin
+        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Admin1');
+
+        if ($isAdmin) { 
             $userCount = User::count();
 
             // Get advanced statistics
@@ -134,6 +137,7 @@ class DashboardController extends Controller
             });
 
             $tasks = Tache::where('iduser', $user->id)
+                ->where('datedebut', '<=', Carbon::now()) // Apply the date debut filter here for regular users
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('description', 'like', '%' . $searchTerm . '%');
                 })
@@ -269,6 +273,9 @@ class DashboardController extends Controller
     }
 
 
+   
+    ## Modified `getAdvancedStats` Method
+  
     /**
      * Get advanced statistics for admin dashboard
      */
@@ -279,6 +286,11 @@ class DashboardController extends Controller
             if ($dateFilter) {
                 $q = $this->applyDateFilter($q, $dateFilter);
             }
+            // --- NEW ADDITION START: Apply datedebut filter for Tache model ---
+            if ($model === Tache::class) {
+                $q->where('datedebut', '<=', Carbon::now());
+            }
+            // --- NEW ADDITION END ---
             return $q;
         };
 
@@ -296,6 +308,9 @@ class DashboardController extends Controller
             'productivity_score' => $this->getProductivityScore($dateFilter)
         ];
     }
+
+ 
+    ## Modified `getUserStats` Method
 
     /**
      * Get user-specific statistics
@@ -323,6 +338,13 @@ class DashboardController extends Controller
                 }
                 $q = $this->applyDateFilter($q, $dateFilter, $dateColumn);
             }
+
+            // --- NEW ADDITION START FOR TASKS IN getUserStats ---
+            if ($model === Tache::class) {
+                $q->where('datedebut', '<=', Carbon::now());
+            }
+            // --- NEW ADDITION END ---
+
             return $q;
         };
 
@@ -368,10 +390,17 @@ class DashboardController extends Controller
     private function getRecentActivities($user)
     {
         $activities = collect();
+        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Admin1');
 
         // Recent tasks
-        $recentTasks = Tache::where('iduser', $user->id)
-            ->latest()
+        $taskQuery = Tache::query();
+        if (!$isAdmin) {
+            $taskQuery->where('iduser', $user->id);
+        }
+        // Always apply datedebut filter for tasks
+        $taskQuery->where('datedebut', '<=', Carbon::now()); 
+
+        $recentTasks = $taskQuery->latest()
             ->limit(5)
             ->get()
             ->map(function($task) {
@@ -386,10 +415,14 @@ class DashboardController extends Controller
             });
 
         // Recent projects
-        $recentProjects = Project::whereHas('users', function($q) use ($user) {
+        $projectQuery = Project::query();
+        if (!$isAdmin) {
+            $projectQuery->whereHas('users', function($q) use ($user) {
                 $q->where('users.id', $user->id);
-            })
-            ->latest()
+            });
+        }
+        
+        $recentProjects = $projectQuery->latest()
             ->limit(3)
             ->get()
             ->map(function($project) {
@@ -413,12 +446,24 @@ class DashboardController extends Controller
     {
         $thisMonth = now()->month;
         $lastMonth = now()->subMonth()->month;
+        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Admin1');
 
-       $thisMonthTasks = Tache::where('iduser', $user->id)
+        $thisMonthTasksQuery = Tache::query();
+        $lastMonthTasksQuery = Tache::query();
+
+        if (!$isAdmin) {
+            $thisMonthTasksQuery->where('iduser', $user->id);
+            $lastMonthTasksQuery->where('iduser', $user->id);
+        }
+        // Always apply datedebut filter for tasks in productivity metrics
+        $thisMonthTasksQuery->where('datedebut', '<=', Carbon::now()); 
+        $lastMonthTasksQuery->where('datedebut', '<=', Carbon::now());
+
+        $thisMonthTasks = $thisMonthTasksQuery
             ->whereMonth('created_at', $thisMonth)
             ->count();
 
-        $lastMonthTasks = Tache::where('iduser', $user->id)
+        $lastMonthTasks = $lastMonthTasksQuery
             ->whereMonth('created_at', $lastMonth)
             ->count();
 
@@ -440,10 +485,18 @@ class DashboardController extends Controller
      */
     private function getCompletionRate($dateFilter = null)
     {
+        // This method calculates overall completion rate, potentially for admins.
+        // If you want even admin stats to only count tasks whose datedebut has arrived,
+        // you should add the datedebut filter here.
         $query = Tache::query();
         if ($dateFilter) {
             $query = $this->applyDateFilter($query, $dateFilter);
         }
+        // --- NEW ADDITION START: Apply datedebut filter for completion rate ---
+        // This will apply to both admin and user if called this way.
+        // If you need separate admin/user logic, split this method or pass an $isAdmin flag.
+        $query->where('datedebut', '<=', Carbon::now());
+        // --- NEW ADDITION END ---
 
         $total = $query->count();
         $completed = (clone $query)->where('status', 'terminé')->count(); // Use clone
@@ -456,7 +509,8 @@ class DashboardController extends Controller
      */
     private function getUserCompletionRate($userId, $dateFilter = null)
     {
-        $query = Tache::where('iduser', $userId);
+        $query = Tache::where('iduser', $userId)
+                      ->where('datedebut', '<=', Carbon::now()); // Apply date debut filter for user-specific stats
         if ($dateFilter) {
             $query = $this->applyDateFilter($query, $dateFilter);
         }
@@ -504,10 +558,9 @@ class DashboardController extends Controller
                 return 'blue';
             case 'en attente':
             case 'pending':
-                return 'yellow';
             case 'nouveau':
             case 'new':
-                return 'gray';
+                return 'gray'; // Assuming 'nouveau' and 'en attente' are similar visually for dashboard
             default:
                 return 'gray';
         }
@@ -565,10 +618,13 @@ class DashboardController extends Controller
     private function getTasksChartData($user, $period)
     {
         $query = Tache::query();
+        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Admin1');
 
-        if (!$user->hasRole('Admin') && !$user->hasRole('Admin1')) {
+        if (!$isAdmin) {
             $query->where('iduser', $user->id);
         }
+        // Always apply datedebut filter for tasks in charts
+        $query->where('datedebut', '<=', Carbon::now());
 
         switch ($period) {
             case 'week':
@@ -620,6 +676,8 @@ class DashboardController extends Controller
 
         $now = Carbon::now();
         $startOfThisWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
+        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Admin1');
+
 
         for ($i = 3; $i >= 0; $i--) {
             $currentWeekStart = $startOfThisWeek->copy()->subWeeks($i);
@@ -628,9 +686,11 @@ class DashboardController extends Controller
             $query = Tache::where('status', 'terminé')
                             ->whereBetween('updated_at', [$currentWeekStart, $currentWeekEnd]);
 
-            if (!$user->hasRole('Admin') && !$user->hasRole('Admin1')) {
+            if (!$isAdmin) {
                 $query->where('iduser', $user->id);
             }
+            // Always apply datedebut filter for tasks in productivity charts
+            $query->where('datedebut', '<=', Carbon::now());
 
             $count = $query->count();
 

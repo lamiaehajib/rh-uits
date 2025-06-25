@@ -236,7 +236,7 @@
                     </div>
                 @endif
 
-                @if(!auth()->user()->hasRole('Admin') && !auth()->user()->hasRole('admis1'))
+                @if(!auth()->user()->hasRole('Admin') && !auth()->user()->hasRole('Admin1'))
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg mb-6 animate-fade-in delay-200">
                         <div class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
                             <h3 class="text-xl font-semibold text-gray-900 mb-4">
@@ -261,46 +261,55 @@
                                     </div>
                                 </div>
 
-                                <form action="{{ route('pointage.pointer') }}" method="POST" class="space-y-4">
+                                <form action="{{ route('pointage.pointer') }}" method="POST" class="space-y-4" id="pointageSortieForm">
                                     @csrf
+                                    {{-- Hidden input fields for geolocation --}}
+                                    <input type="hidden" name="user_latitude" id="user_latitude_out">
+                                    <input type="hidden" name="user_longitude" id="user_longitude_out">
+                                    <input type="hidden" name="localisation" id="localisation_hidden_out">
                                     <div>
-                                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                                        <label for="description_out" class="block text-sm font-medium text-gray-700 mb-2">
                                             <i class="fas fa-comment mr-2 text-gray-500"></i>
                                             {{ __('Description du travail effectué (optionnel)') }}
                                         </label>
-                                        <textarea id="description" name="description" rows="3"
+                                        <textarea id="description_out" name="description" rows="3"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red transition duration-200"
                                             placeholder="{{ __('Décrivez brièvement les tâches accomplies...') }}"></textarea>
                                     </div>
-                                    <button type="submit"
+                                    <button type="submit" id="pointerSortieBtn"
                                         class="w-full bg-primary-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 transform hover:scale-105 shadow-lg btn-primary-red">
                                         <i class="fas fa-stop-circle mr-2"></i>
                                         {{ __('Pointer la Sortie') }}
                                     </button>
                                 </form>
                             @else
-                                <form action="{{ route('pointage.pointer') }}" method="POST" class="space-y-4">
+                                <form action="{{ route('pointage.pointer') }}" method="POST" class="space-y-4" id="pointageArriveeForm">
                                     @csrf
+                                    {{-- Hidden input fields for geolocation --}}
+                                    <input type="hidden" name="user_latitude" id="user_latitude_in">
+                                    <input type="hidden" name="user_longitude" id="user_longitude_in">
+                                    <input type="hidden" name="localisation" id="localisation_hidden_in">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                                            <label for="description_in" class="block text-sm font-medium text-gray-700 mb-2">
                                                 <i class="fas fa-comment mr-2 text-gray-500"></i>
                                                 {{ __('Description (optionnel)') }}
                                             </label>
-                                            <textarea id="description" name="description" rows="2"
+                                            <textarea id="description_in" name="description" rows="2"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red transition duration-200"
                                                 placeholder="{{ __('Description de la journée...') }}"></textarea>
                                         </div>
                                         <div>
-                                            <label for="localisation" class="block text-sm font-medium text-gray-700 mb-2">
+                                            <label for="localisation_display" class="block text-sm font-medium text-gray-700 mb-2">
                                                 <i class="fas fa-map-marker-alt mr-2 text-gray-500"></i>
-                                                {{ __('Localisation (optionnel)') }}
+                                                {{ __('Localisation détectée (automatique)') }}
                                             </label>
-                                            <input type="text" id="localisation" name="localisation"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
+                                            <input type="text" id="localisation_display" disabled
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-600 cursor-not-allowed"
+                                                value="{{ __('En attente de localisation...') }}">
                                         </div>
                                     </div>
-                                    <button type="submit"
+                                    <button type="submit" id="pointerArriveeBtn"
                                         class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 transform hover:scale-105 shadow-lg">
                                         <i class="fas fa-play-circle mr-2"></i>
                                         {{ __('Pointer l\'Arrivée') }}
@@ -356,7 +365,7 @@
                                 <a href="{{ route('pointage.index') }}"
                                     class="btn-secondary-tailwind flex items-center justify-center px-5 py-2 rounded-md shadow-sm font-bold text-sm uppercase tracking-wider">
                                     <i class="fas fa-undo mr-2"></i>
-                                    
+
                                 </a>
                             </div>
                         </form>
@@ -387,6 +396,7 @@
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Départ') }}</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Durée') }}</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Statut') }}</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Localisation') }}</th> {{-- Added this column --}}
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Actions') }}</th>
                                     </tr>
                                 </thead>
@@ -428,7 +438,7 @@
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                <i class="far fa-calendar-alt mr-1 text-gray-500"></i>{{ $pointage->created_at ? $pointage->created_at->format('d/m/Y') : 'N/A' }}
+                                                <i class="far fa-calendar-alt mr-1 text-gray-500"></i>{{ $pointage->date_pointage ? $pointage->date_pointage->format('d/m/Y') : 'N/A' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 @if($pointage->heure_arrivee)
@@ -483,12 +493,29 @@
                                                     </span>
                                                 @endif
                                             </td>
+                                            {{-- Display Localisation --}}
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {{ $pointage->localisation ?? 'Non spécifiée' }}
+                                            </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 flex items-center">
                                                 <a href="{{ route('pointage.show', $pointage->id) }}"
                                                     class="text-blue-600 hover:text-blue-800 transition duration-200 transform hover:scale-110" title="{{ __('Voir') }}">
                                                     <i class="fas fa-eye text-lg"></i>
                                                 </a>
-                                                
+                                                {{-- Correction button for admins --}}
+                                                @if(auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1'))
+                                                    <button type="button" onclick="ouvrirModalCorrection(
+                                                        {{ $pointage->id }},
+                                                        '{{ \Carbon\Carbon::parse($pointage->heure_arrivee)->format('Y-m-d\TH:i') }}',
+                                                        '{{ $pointage->heure_depart ? \Carbon\Carbon::parse($pointage->heure_depart)->format('Y-m-d\TH:i') : '' }}',
+                                                        '{{ addslashes($pointage->description ?? '') }}',
+                                                        '{{ addslashes($pointage->localisation ?? '') }}',
+                                                        '{{ addslashes($pointage->user_latitude ?? '') }}',
+                                                        '{{ addslashes($pointage->user_longitude ?? '') }}'
+                                                    )" class="text-indigo-600 hover:text-indigo-800 transition duration-200 transform hover:scale-110" title="{{ __('Corriger') }}">
+                                                        <i class="fas fa-edit text-lg"></i>
+                                                    </button>
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach
@@ -540,6 +567,17 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Localisation') }}</label>
                                     <input type="text" name="localisation" id="modal_localisation"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
+                                </div>
+                                {{-- Added latitude and longitude inputs to the correction modal --}}
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Latitude') }}</label>
+                                    <input type="text" name="user_latitude" id="modal_user_latitude"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Longitude') }}</label>
+                                    <input type="text" name="user_longitude" id="modal_user_longitude"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
                                 </div>
                             </div>
@@ -668,7 +706,7 @@
                 }
 
                 // Functions for the correction modal (already present, but ensure consistency)
-                function ouvrirModalCorrection(pointageId, heureArrivee, heureDepart, description, localisation) {
+                function ouvrirModalCorrection(pointageId, heureArrivee, heureDepart, description, localisation, userLatitude, userLongitude) {
                     document.getElementById('modalCorrection').classList.remove('hidden');
                     const form = document.getElementById('formCorrection');
 
@@ -678,6 +716,8 @@
                     document.getElementById('modal_heure_depart').value = heureDepart;
                     document.getElementById('modal_description').value = description;
                     document.getElementById('modal_localisation').value = localisation;
+                    document.getElementById('modal_user_latitude').value = userLatitude; // Populate latitude
+                    document.getElementById('modal_user_longitude').value = userLongitude; // Populate longitude
                 }
 
                 function fermerModalCorrection() {
@@ -686,6 +726,8 @@
                     document.getElementById('modal_heure_depart').value = '';
                     document.getElementById('modal_description').value = '';
                     document.getElementById('modal_localisation').value = '';
+                    document.getElementById('modal_user_latitude').value = ''; // Clear latitude
+                    document.getElementById('modal_user_longitude').value = ''; // Clear longitude
                 }
 
                 document.getElementById('modalCorrection')?.addEventListener('click', function(e) {
@@ -693,6 +735,159 @@
                         fermerModalCorrection();
                     }
                 });
+
+                // --- Geolocation Logic ---
+                const pointageArriveeForm = document.getElementById('pointageArriveeForm');
+                const pointageSortieForm = document.getElementById('pointageSortieForm');
+                const localisationDisplay = document.getElementById('localisation_display');
+
+                const userLatitudeIn = document.getElementById('user_latitude_in');
+                const userLongitudeIn = document.getElementById('user_longitude_in');
+                const localisationHiddenIn = document.getElementById('localisation_hidden_in');
+
+                const userLatitudeOut = document.getElementById('user_latitude_out');
+                const userLongitudeOut = document.getElementById('user_longitude_out');
+                const localisationHiddenOut = document.getElementById('localisation_hidden_out');
+
+
+                const pointerArriveeBtn = document.getElementById('pointerArriveeBtn');
+                const pointerSortieBtn = document.getElementById('pointerSortieBtn');
+
+                // Function to handle geolocation or fallbacks
+                function handleGeolocation(callback, formButton, form) {
+                    // Check if on HTTPS (secure context) AND if geolocation is supported
+                    if (window.isSecureContext && navigator.geolocation) {
+                        formButton.disabled = true;
+                        formButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Récupération de la position...';
+
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                const lat = position.coords.latitude;
+                                const lon = position.coords.longitude;
+                                callback(lat, lon, 'Automatique'); // Pass 'Automatique' as a source hint
+                                formButton.disabled = false;
+                                if (form.id === 'pointageArriveeForm') {
+                                    formButton.innerHTML = '<i class="fas fa-play-circle mr-2"></i> Pointer l\'Arrivée';
+                                } else if (form.id === 'pointageSortieForm') {
+                                    formButton.innerHTML = '<i class="fas fa-stop-circle mr-2"></i> Pointer la Sortie';
+                                }
+                            },
+                            (error) => {
+                                console.error("Erreur de géolocalisation: ", error);
+                                let errorMessage = "Impossible de récupérer votre position. Le pointage sera enregistré sans localisation précise.";
+                                if (error.code === error.PERMISSION_DENIED) {
+                                    errorMessage += " (Accès à la localisation refusé)";
+                                } else if (error.code === error.POSITION_UNAVAILABLE) {
+                                    errorMessage += " (Position non déterminable)";
+                                } else if (error.code === error.TIMEOUT) {
+                                    errorMessage += " (Délai expiré)";
+                                }
+                                showCustomError(errorMessage);
+                                // Fallback: Proceed without geolocation data, set as 'Non spécifiée' or similar
+                                callback(null, null, 'Non détectée (Erreur)');
+                                formButton.disabled = false;
+                                if (form.id === 'pointageArriveeForm') {
+                                    formButton.innerHTML = '<i class="fas fa-play-circle mr-2"></i> Pointer l\'Arrivée';
+                                } else if (form.id === 'pointageSortieForm') {
+                                    formButton.innerHTML = '<i class="fas fa-stop-circle mr-2"></i> Pointer la Sortie';
+                                }
+                            },
+                            {
+                                enableHighAccuracy: true,
+                                timeout: 15000,
+                                maximumAge: 0
+                            }
+                        );
+                    } else {
+                        // Fallback: Not on HTTPS or Geolocation not supported
+                        let message = "La géolocalisation n'est pas disponible ou l'accès est bloqué (Site non sécurisé). Le pointage sera enregistré sans localisation précise.";
+                        if (!navigator.geolocation) {
+                             message = "Votre navigateur ne supporte pas la géolocalisation. Le pointage sera enregistré sans localisation précise.";
+                        } else if (!window.isSecureContext) {
+                            message = "Ce site n'est pas sécurisé (HTTPS). La géolocalisation automatique est désactivée. Le pointage sera enregistré sans localisation précise.";
+                        }
+
+                        showCustomAlert(message, 'info'); // Show info message instead of error
+                        console.warn("Geolocation fallback: Not on HTTPS or not supported.");
+                        
+                        // Proceed with null coordinates and 'Non détectée' location
+                        callback(null, null, 'Non détectée (HTTP)');
+                        formButton.disabled = false; // Ensure button is re-enabled
+                        if (form.id === 'pointageArriveeForm') {
+                            formButton.innerHTML = '<i class="fas fa-play-circle mr-2"></i> Pointer l\'Arrivée';
+                        } else if (form.id === 'pointageSortieForm') {
+                            formButton.innerHTML = '<i class="fas fa-stop-circle mr-2"></i> Pointer la Sortie';
+                        }
+                    }
+                }
+
+                // Handle arrival form submission
+                if (pointageArriveeForm) {
+                    pointageArriveeForm.addEventListener('submit', function(event) {
+                        event.preventDefault(); // Prevent default submission
+                        handleGeolocation((lat, lon, status) => {
+                            userLatitudeIn.value = lat;
+                            userLongitudeIn.value = lon;
+                            // Set the hidden localisation field based on status for backend to log/process
+                            localisationHiddenIn.value = status; 
+                            if (localisationDisplay) {
+                                localisationDisplay.value = 'Position ' + status + '. Envoi du pointage...';
+                            }
+                            this.submit(); // Submit the form regardless of geolocation success
+                        }, pointerArriveeBtn, pointageArriveeForm);
+                    });
+                }
+
+                // Handle departure form submission
+                if (pointageSortieForm) {
+                    pointageSortieForm.addEventListener('submit', function(event) {
+                        event.preventDefault(); // Prevent default submission
+                        handleGeolocation((lat, lon, status) => {
+                            userLatitudeOut.value = lat;
+                            userLongitudeOut.value = lon;
+                            // Set the hidden localisation field based on status for backend to log/process
+                            localisationHiddenOut.value = status;
+                            this.submit(); // Submit the form regardless of geolocation success
+                        }, pointerSortieBtn, pointageSortieForm);
+                    });
+                }
+
+                // Initialize localisation display on page load if user is not an admin
+                document.addEventListener('DOMContentLoaded', () => {
+                    const isAdmin = {{ auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1') ? 'true' : 'false' }};
+                    if (!isAdmin && localisationDisplay) {
+                        if (window.isSecureContext && navigator.geolocation) {
+                            localisationDisplay.value = 'Veuillez cliquer pour pointer afin de détecter votre position.';
+                        } else {
+                            localisationDisplay.value = 'Géolocalisation automatique non disponible (Site non sécurisé ou navigateur non compatible).';
+                            if (pointerArriveeBtn) {
+                                pointerArriveeBtn.textContent = 'Pointer l\'Arrivée (Manuel)';
+                                pointerArriveeBtn.classList.add('bg-gray-500'); // Optional: change color to indicate manual/no-auto-location
+                                pointerArriveeBtn.classList.remove('bg-green-600');
+                            }
+                        }
+                    }
+                });
+
+                // Set initial state of buttons based on geolocation availability (optional visual hint)
+                document.addEventListener('DOMContentLoaded', () => {
+                    const isAdmin = {{ auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1') ? 'true' : 'false' }};
+                    if (!isAdmin) {
+                        if (!window.isSecureContext || !navigator.geolocation) {
+                            if (pointerArriveeBtn) {
+                                pointerArriveeBtn.textContent = 'Pointer l\'Arrivée (بدون تحديد موقع)';
+                                pointerArriveeBtn.classList.add('bg-orange-500'); // Change color to hint
+                                pointerArriveeBtn.classList.remove('bg-green-600');
+                            }
+                            if (pointerSortieBtn) { // For the departure button as well
+                                pointerSortieBtn.textContent = 'Pointer la Sortie (بدون تحديد موقع)';
+                                pointerSortieBtn.classList.add('bg-orange-500');
+                                pointerSortieBtn.classList.remove('bg-primary-red');
+                            }
+                        }
+                    }
+                });
+
             </script>
         @endpush
 </x-app-layout>
