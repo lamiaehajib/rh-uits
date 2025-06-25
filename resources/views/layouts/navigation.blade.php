@@ -352,7 +352,7 @@
                  @can("pointage-list")
                 <button type="button">
                     <a href="{{ route('pointage.index') }}"><i class='bx bx-time'></i></a>
-                    <span><a class="a" href="{{ route('pointage.index') }}">pointage</a></span>
+                    <span><a class="a" href="{{ route('pointage.index') }}">pointages</a></span>
                 </button>
                 @endcan
 
