@@ -336,7 +336,7 @@
                 }
 
                 // Ici on utilise toujours le confirm() natif pour rester 'sans JS personnalisé'
-                if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedIds.length} utilisateur(s) ? Cette action est irréversible.`)) {
+                if (confirm(`Êtes-vous sûr de vouloir supprime ${selectedIds.length} utilisateur(s) ? Cette action est irréversible.`)) {
                     $.ajax({
                         url: '{{ route("users.bulk-delete") }}',
                         method: 'DELETE',
