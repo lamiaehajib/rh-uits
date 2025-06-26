@@ -3,7 +3,7 @@
     <div class="container-fluid py-4">
         <div class="row">
             <div class="col-12">
-                   <h2 class="font-semibold text-2xl text-gray-800 leading-tight border-b-2 border-primary-red pb-3 mb-6 animate-fade-in delay-100">
+                       <h2 class="font-semibold text-2xl text-gray-800 leading-tight border-b-2 border-primary-red pb-3 mb-6 animate-fade-in delay-100">
     <i class="fas fa-user mr-3 text-primary-red"></i> {{ __('Gestion des utilisateures') }}
 </h2>
             </div>
@@ -82,6 +82,8 @@
                 <div class="row g-3 align-items-center">
                     <div class="col-lg-6 order-lg-1 order-2">
                         <div class="btn-group w-100 w-md-auto" role="group">
+                            {{-- Button "Supprimer Sélectionnés" (Requires JavaScript for multi-select) --}}
+                            {{-- Si tu veux le laisser sans JS, il faudrait revoir la logique pour soumettre tous les IDs via un seul formulaire global --}}
                             <button type="button" class="btn btn-outline-danger transition duration-300 hover:bg-red-50" id="bulkDeleteBtn" disabled>
                                 <i class="fas fa-trash me-2"></i> Supprimer Sélectionnés
                             </button>
@@ -96,7 +98,7 @@
                         <form method="GET" action="{{ route('users.index') }}" class="row g-2 justify-content-lg-end">
                             <div class="col-md-5 col-lg-4">
                                 <input type="text" class="form-control focus:ring-2 focus:ring-primary-red focus:border-transparent transition duration-200" name="search"
-                                       placeholder="Rechercher..." value="{{ request('search') }}">
+                                         placeholder="Rechercher..." value="{{ request('search') }}">
                             </div>
                             <div class="col-md-4 col-lg-3">
                                 <select name="role" class="form-select focus:ring-2 focus:ring-primary-red focus:border-transparent transition duration-200">
@@ -194,9 +196,10 @@
                                     </td>
                                     <td>
                                         <div class="form-check form-switch d-flex align-items-center">
+                                            {{-- Le toggle de statut aura toujours besoin de JS pour fonctionner en temps réel --}}
                                             <input class="form-check-input status-toggle me-2 cursor-pointer" type="checkbox" role="switch"
-                                                    data-user-id="{{ $user->id }}"
-                                                    {{ $user->is_active ? 'checked' : '' }}>
+                                                     data-user-id="{{ $user->id }}"
+                                                     {{ $user->is_active ? 'checked' : '' }}>
                                             <span class="badge text-white px-2 py-1 rounded-md transition duration-200 {{ $user->is_active ? 'bg-success' : 'bg-danger' }}">
                                                 {{ $user->is_active ? 'Actif' : 'Inactif' }}
                                             </span>
@@ -213,14 +216,23 @@
                                                     <i class="fas fa-edit"></i>
                                                 </a>
 
-                                                <button type="button" class="btn btn-secondary btn-sm rounded-md transition duration-200 hover:scale-110" onclick="duplicateUser({{ $user->id }})" title="Dupliquer">
-                                                    <i class="fas fa-copy"></i>
-                                                </button>
+                                                {{-- FORMULAIRE DE DUPLICATION --}}
+                                                <form action="{{ route('users.duplicate', $user->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir dupliquer cet utilisateur ? Une nouvelle entrée sera créée avec les mêmes informations, mais un email et un code différents.');">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-secondary btn-sm rounded-md transition duration-200 hover:scale-110" title="Dupliquer">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </form>
                                             @endcan
                                             @can('user-delete')
-                                                <button type="button" class="btn btn-danger btn-sm rounded-md transition duration-200 hover:scale-110" onclick="deleteUser({{ $user->id }})" title="Supprimer">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
+                                                {{-- FORMULAIRE DE SUPPRESSION --}}
+                                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-danger btn-sm rounded-md transition duration-200 hover:scale-110" title="Supprimer">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
                                             @endcan
                                         </div>
                                     </td>
@@ -278,20 +290,27 @@
     </div>
 
     @section('scripts')
+    {{-- On garde juste ce qui est absolument nécessaire, comme le JavaScript pour Bootstrap Modal (pour l'import) et le toggle de statut, et toastr. --}}
+    {{-- Si vous voulez vraiment 0 JS, il faudrait supprimer toastr et le modal d'import aussi. --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {{-- Assurez-vous que Toastr JS est aussi inclus si vous l'utilisez --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
     <script>
         $(document).ready(function() {
-            // Gestion sélection multiple
+            // Gestion sélection multiple (REQUIERT JAVASCRIPT)
+            // Si tu veux la supprimer, enlève toute cette section
             $('#selectAll').change(function() {
                 $('.user-checkbox').prop('checked', $(this).prop('checked'));
                 toggleBulkActions();
             });
 
             $('.user-checkbox').change(function() {
-                // If any checkbox is unchecked, uncheck the "select all" checkbox
                 if (!$(this).prop('checked')) {
                     $('#selectAll').prop('checked', false);
                 } else {
-                    // If all checkboxes are checked, check the "select all" checkbox
                     if ($('.user-checkbox:checked').length === $('.user-checkbox').length) {
                         $('#selectAll').prop('checked', true);
                     }
@@ -304,36 +323,8 @@
                 $('#bulkDeleteBtn').prop('disabled', checkedCount === 0);
             }
 
-            // Toggle statut utilisateur
-            $('.status-toggle').change(function() {
-                const userId = $(this).data('user-id');
-                const isActive = $(this).prop('checked');
-                const $badge = $(this).closest('div').find('.badge'); // Find the badge relative to the toggle
-
-                $.ajax({
-                    url: `/users/${userId}/toggle-status`,
-                    method: 'PATCH',
-                    data: {
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            toastr.success(response.message);
-                            // Update the badge text and class
-                            $badge.removeClass('bg-success bg-danger')
-                                .addClass(response.status ? 'bg-success' : 'bg-danger')
-                                .text(response.status ? 'Actif' : 'Inactif');
-                        }
-                    },
-                    error: function() {
-                        toastr.error('Erreur lors de la modification du statut');
-                        // Revert the toggle state on error
-                        $(this).prop('checked', !isActive);
-                    }
-                });
-            });
-
-            // Suppression en masse
+            // Suppression en masse (REQUIERT JAVASCRIPT)
+            // Si tu veux la supprimer, enlève toute cette section
             $('#bulkDeleteBtn').click(function() {
                 const selectedIds = $('.user-checkbox:checked').map(function() {
                     return $(this).val();
@@ -344,32 +335,30 @@
                     return;
                 }
 
-                // Replace confirm() with a custom modal for better UX
-                showCustomConfirmModal(
-                    `Êtes-vous sûr de vouloir supprimer ${selectedIds.length} utilisateur(s) ? Cette action est irréversible.`,
-                    function() { // On confirm
-                        $.ajax({
-                            url: '{{ route("users.bulk-delete") }}',
-                            method: 'DELETE',
-                            data: {
-                                _token: '{{ csrf_token() }}',
-                                user_ids: selectedIds
-                            },
-                            success: function(response) {
-                                if (response.success) {
-                                    toastr.success(response.message);
-                                    location.reload(); // Reload to reflect changes
-                                }
-                            },
-                            error: function(xhr) {
-                                toastr.error('Erreur lors de la suppression en masse. Détails: ' + (xhr.responseJSON ? xhr.responseJSON.message : ''));
+                // Ici on utilise toujours le confirm() natif pour rester 'sans JS personnalisé'
+                if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedIds.length} utilisateur(s) ? Cette action est irréversible.`)) {
+                    $.ajax({
+                        url: '{{ route("users.bulk-delete") }}',
+                        method: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            user_ids: selectedIds
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                toastr.success(response.message);
+                                location.reload(); // Reload to reflect changes
                             }
-                        });
-                    }
-                );
+                        },
+                        error: function(xhr) {
+                            toastr.error('Erreur lors de la suppression en masse. Détails: ' + (xhr.responseJSON ? xhr.responseJSON.message : ''));
+                        }
+                    });
+                }
             });
 
-            // Export (You had a commented out section, assuming you want to keep this functionality)
+            // Export (REQUIERT JAVASCRIPT pour le moment, ou un formulaire)
+            // Si tu veux le laisser sans JS, il faudrait revoir la logique pour soumettre tous les IDs via un seul formulaire global
             $('#bulkExportBtn').click(function() {
                 const selectedIds = $('.user-checkbox:checked').map(function() {
                     return $(this).val();
@@ -382,133 +371,43 @@
                 window.location.href = exportUrl;
             });
 
-            // Custom Confirm Modal Functions
-            function showCustomConfirmModal(message, onConfirmCallback) {
-                // Remove any existing modal to prevent duplicates
-                $('#customConfirmModal').remove();
 
-                const modalHtml = `
-                    <div class="modal fade" id="customConfirmModal" tabindex="-1" aria-labelledby="customConfirmModalLabel" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content rounded-lg shadow-xl animate-scale-in">
-                                <div class="modal-header text-white rounded-t-lg bg-red-600" style="background-color: #D32F2F;">
-                                    <h5 class="modal-title font-bold" id="customConfirmModalLabel">Confirmation</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body p-4 text-gray-800">
-                                    <p>${message}</p>
-                                </div>
-                                <div class="modal-footer border-t border-gray-200 p-3 flex justify-end">
-                                    <button type="button" class="btn btn-secondary me-2 transition duration-200 hover:bg-gray-200" data-bs-dismiss="modal">Annuler</button>
-                                    <button type="button" class="btn text-white custom-btn-primary transition duration-300 hover:opacity-90" style="background-color: #D32F2F;" id="confirmActionBtn">Confirmer</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+            // Toggle statut utilisateur (REQUIERT JAVASCRIPT)
+            // Si tu veux la supprimer, il faudrait une autre approche pour changer le statut (ex: page de modification)
+            $('.status-toggle').change(function() {
+                const userId = $(this).data('user-id');
+                const isActive = $(this).prop('checked');
+                const $badge = $(this).closest('div').find('.badge');
 
-                $('body').append(modalHtml);
-                const customConfirmModal = new bootstrap.Modal(document.getElementById('customConfirmModal'));
-                customConfirmModal.show();
-
-                $('#confirmActionBtn').off('click').on('click', function() {
-                    if (onConfirmCallback) {
-                        onConfirmCallback();
+                $.ajax({
+                    url: `/users/${userId}/toggle-status`,
+                    method: 'PATCH',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            toastr.success(response.message);
+                            $badge.removeClass('bg-success bg-danger')
+                                .addClass(response.status ? 'bg-success' : 'bg-danger')
+                                .text(response.status ? 'Actif' : 'Inactif');
+                        }
+                    },
+                    error: function() {
+                        toastr.error('Erreur lors de la modification du statut');
+                        $(this).prop('checked', !isActive);
                     }
-                    customConfirmModal.hide();
                 });
-
-                // Clean up modal from DOM after it's hidden
-                $('#customConfirmModal').on('hidden.bs.modal', function () {
-                    $(this).remove();
-                });
-            }
+            });
         });
 
-        // Fonctions globales pour les actions individuelles
-        function deleteUser(userId) {
-            // Using a custom modal instead of confirm()
-            showCustomConfirmModal(
-                'Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.',
-                function() { // On confirm
-                    // Using AJAX for smoother deletion feedback without full page reload
-                    $.ajax({
-                        url: `/users/${userId}`,
-                        method: 'DELETE',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                toastr.success(response.message);
-                                $(`#user-row-${userId}`).fadeOut(300, function() {
-                                    $(this).remove(); // Remove the row after fading out
-                                });
-                            }
-                        },
-                        error: function(xhr) {
-                            toastr.error('Erreur lors de la suppression de l\'utilisateur. Détails: ' + (xhr.responseJSON ? xhr.responseJSON.message : ''));
-                        }
-                    });
-                }
-            );
-        }
-
-        function resetPassword(userId) {
-            showCustomConfirmModal(
-                'Êtes-vous sûr de vouloir réinitialiser le mot de passe de cet utilisateur ? Un mot de passe temporaire sera généré.',
-                function() { // On confirm
-                    $.ajax({
-                        url: `/users/${userId}/reset-password`,
-                        method: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                toastr.success(response.message);
-                            }
-                        },
-                        error: function(xhr) {
-                            toastr.error('Erreur lors de la réinitialisation du mot de passe. Détails: ' + (xhr.responseJSON ? xhr.responseJSON.message : ''));
-                        }
-                    });
-                }
-            );
-        }
-
-        function duplicateUser(userId) {
-            showCustomConfirmModal(
-                'Êtes-vous sûr de vouloir dupliquer cet utilisateur ? Une nouvelle entrée sera créée avec les mêmes informations, mais un email et un code différents.',
-                function() { // On confirm
-                    $.ajax({
-                        url: `/users/${userId}/duplicate`,
-                        method: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            toastr.success('Utilisateur dupliqué avec succès ! Un nouvel utilisateur a été créé.');
-                            location.reload(); // Reload to show the new duplicated user
-                        },
-                        error: function(xhr) {
-                            toastr.error('Erreur lors de la duplication de l\'utilisateur. Détails: ' + (xhr.responseJSON ? xhr.responseJSON.message : ''));
-                        }
-                    });
-                }
-            );
-        }
-
-        // --- Custom Modal Helper Functions (moved outside $(document).ready for global access if needed) ---
-        // You'll need to include Bootstrap's JS and CSS for this modal to work.
-        // Make sure Bootstrap 5 JS is loaded before this script.
-        // Example: <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        // Les fonctions deleteUser, resetPassword, duplicateUser ne sont plus nécessaires car elles sont gérées par les formulaires HTML
+        // Si tu as encore des appels à ces fonctions ailleurs, il faudra les remplacer par des formulaires
     </script>
     @endsection
 </x-app-layout>
 
-{{-- Custom CSS for animations and refined styles (add this in your main CSS file or a <style> block) --}}
+{{-- Custom CSS (non modifié) --}}
 <style>
     /* Primary Red for consistent branding */
     .text-primary-red {
