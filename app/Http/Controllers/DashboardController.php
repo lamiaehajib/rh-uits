@@ -234,16 +234,17 @@ class DashboardController extends Controller
         ));
     }
 
-    /**
-     * Handle user pointage (clock-in/clock-out).
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
+ 
+    ## Handle User Pointage (Clock-in/Clock-out)
+    
     public function togglePointage(Request $request)
     {
         $user = auth()->user();
         $today = Carbon::today();
+
+        // Get latitude and longitude from the request, default to null if not provided
+        $userLatitude = $request->input('user_latitude', null); // Provide a default null value
+        $userLongitude = $request->input('user_longitude', null); // Provide a default null value
 
         // Find today's pointage record for the user
         $pointage = SuivrePointage::where('iduser', $user->id)
@@ -255,6 +256,9 @@ class DashboardController extends Controller
             if ($pointage->heure_depart === null) {
                 // User needs to clock out
                 $pointage->heure_depart = Carbon::now();
+                // Update location on clock-out as well, if desired
+                $pointage->longitude_depart = $userLongitude; // Assuming column exists
+                $pointage->latitude_depart = $userLatitude;   // Assuming column exists
                 $pointage->save();
                 return redirect()->back()->with('success', 'Vous avez pointé votre départ avec succès !');
             } else {
@@ -267,15 +271,17 @@ class DashboardController extends Controller
             $newPointage->iduser = $user->id;
             $newPointage->heure_arrivee = Carbon::now();
             $newPointage->date_pointage = $today; // Assuming you have a date_pointage column
+            
+            // Store latitude and longitude for arrival
+            $newPointage->longitude_arrivee = $userLongitude; // Assuming column exists
+            $newPointage->latitude_arrivee = $userLatitude;   // Assuming column exists
+
             $newPointage->save();
             return redirect()->back()->with('success', 'Vous avez pointé votre arrivée avec succès !');
         }
     }
-
-
-   
-    ## Modified `getAdvancedStats` Method
-  
+    
+ 
     /**
      * Get advanced statistics for admin dashboard
      */
@@ -308,10 +314,7 @@ class DashboardController extends Controller
             'productivity_score' => $this->getProductivityScore($dateFilter)
         ];
     }
-
- 
-    ## Modified `getUserStats` Method
-
+    
     /**
      * Get user-specific statistics
      */
@@ -361,7 +364,7 @@ class DashboardController extends Controller
             'productivity_score' => $this->getUserProductivityScore($userId, $dateFilter) // Call the correct method
         ];
     }
-
+    
     /**
      * Apply date filter to query
      */
@@ -374,7 +377,7 @@ class DashboardController extends Controller
                 return $query->whereBetween($dateColumn, [now()->startOfWeek(), now()->endOfWeek()]);
             case 'month':
                 return $query->whereMonth($dateColumn, now()->month)
-                                 ->whereYear($dateColumn, now()->year);
+                             ->whereYear($dateColumn, now()->year);
             case 'quarter':
                 return $query->whereBetween($dateColumn, [now()->startOfQuarter(), now()->endOfQuarter()]);
             case 'year':
@@ -383,7 +386,7 @@ class DashboardController extends Controller
                 return $query;
         }
     }
-
+   
     /**
      * Get recent activities
      */
@@ -438,7 +441,7 @@ class DashboardController extends Controller
 
         return $activities->merge($recentTasks)->merge($recentProjects)->sortByDesc('date')->take(8);
     }
-
+   
     /**
      * Get productivity metrics
      */
@@ -479,7 +482,11 @@ class DashboardController extends Controller
             'efficiency_score' => $this->getEfficiencyScore($user->id)
         ];
     }
+   
+ 
+    ## Get Completion Rate
 
+    
     /**
      * Get completion rate
      */
@@ -503,7 +510,11 @@ class DashboardController extends Controller
 
         return $total > 0 ? round(($completed / $total) * 100, 1) : 0;
     }
+    
+ 
+    ## Get User Completion Rate
 
+    
     /**
      * Get user completion rate
      */
@@ -520,7 +531,11 @@ class DashboardController extends Controller
 
         return $total > 0 ? round(($completed / $total) * 100, 1) : 0;
     }
+    
+ 
+    ## Get Productivity Score
 
+    
     /**
      * Get productivity score
      */
@@ -532,7 +547,11 @@ class DashboardController extends Controller
 
         return round(($completionRate + $efficiency) / 2, 1);
     }
+    
+ 
+    ## Get User Productivity Score
 
+    
     /**
      * Get user productivity score
      */
@@ -543,7 +562,11 @@ class DashboardController extends Controller
 
         return round(($completionRate + $efficiency) / 2, 1);
     }
+    
+ 
+    ## Get Status Color
 
+    
     /**
      * Get status color
      */
@@ -565,7 +588,11 @@ class DashboardController extends Controller
                 return 'gray';
         }
     }
+    
+ 
+    ## Get Average Completion Time
 
+    
     /**
      * Get average completion time
      */
@@ -574,7 +601,11 @@ class DashboardController extends Controller
         // This would calculate based on task creation and completion dates
         return '2.5 jours'; // Placeholder
     }
+    
+ 
+    ## Get Efficiency Score
 
+    
     /**
      * Get efficiency score
      */
@@ -583,7 +614,11 @@ class DashboardController extends Controller
         // Complex calculation based on various factors
         return 78.5; // Placeholder
     }
+    
+ 
+    ## Export Dashboard Data
 
+    
     /**
      * Export dashboard data
      */
@@ -592,7 +627,11 @@ class DashboardController extends Controller
         // Implementation for exporting dashboard data to Excel/PDF
         // This would use packages like maatwebsite/excel or dompdf
     }
+    
+ 
+    ## Get Dashboard Analytics API
 
+    
     /**
      * Get dashboard analytics API
      */
@@ -611,7 +650,11 @@ class DashboardController extends Controller
             'reclamations_dashboard' => $this->getReclamationsForDashboard($user)
         ]);
     }
+    
+ 
+    ## Get Tasks Chart Data
 
+    
     /**
      * Get tasks chart data
      */
@@ -652,8 +695,11 @@ class DashboardController extends Controller
             ]
         ];
     }
+    
+ 
+    ## Get Projects Chart Data
 
-
+    
     /**
      * Get projects chart data (static data - consider making it dynamic)
      */
@@ -665,7 +711,11 @@ class DashboardController extends Controller
             'data' => [45, 32, 8]
         ];
     }
+    
+ 
+    ## Get Productivity Chart Data
 
+    
     /**
      * Get productivity chart data
      */
@@ -703,7 +753,11 @@ class DashboardController extends Controller
             'productivity' => $productivityData
         ];
     }
+    
+ 
+    ## Get Pointage Chart Data (Time Worked)
 
+    
     /**
      * Get pointage chart data (time worked per day/week/month)
      */
@@ -803,8 +857,11 @@ class DashboardController extends Controller
             'title' => 'Temps Travaillé (Heures)'
         ];
     }
+   
+ 
+    ## Get Pointage Punctuality Chart Data
 
-
+    
     /**
      * Get pointage punctuality chart data (late vs on-time arrivals)
      */
@@ -864,7 +921,11 @@ class DashboardController extends Controller
             'total' => $totalArrivals
         ];
     }
+   
+ 
+    ## Get Reclamations Data for Dashboard
 
+    
     /**
      * Get reclamations data for the dashboard based on user role.
      *

@@ -226,7 +226,7 @@
                                             @endcan
                                             @can('user-delete')
                                                 {{-- FORMULAIRE DE SUPPRESSION --}}
-                                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.');">
+                                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" style="display:inline;" z);">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-danger btn-sm rounded-md transition duration-200 hover:scale-110" title="Supprimer">

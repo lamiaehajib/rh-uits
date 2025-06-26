@@ -176,5 +176,6 @@ button.inline-flex.items-center.px-4.py-2.bg-orange-600.border.border-transparen
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtS70P9fajIKg7AuIgBwsdfuXMhGXghg/w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 @yield('scripts')
+ @stack('scripts')
 </body>
 </html>

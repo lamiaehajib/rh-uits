@@ -325,22 +325,27 @@
                                                         <a href="{{ route('objectifs.show', $objectif->id) }}#explanation" class="text-blue-600 hover:text-blue-800 hover:underline text-xs transition-colors duration-200">Fournir une explication</a>
                                                     @endif
                                                 </td>
+
                                                 <td class="py-4 px-6 flex items-center space-x-4">
+                                                     @can('objectif-show')
                                                     <a href="{{ route('objectifs.show', $objectif->id) }}" title="Voir" class="text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out transform hover:scale-110">
                                                         <i class="fas fa-eye text-lg"></i>
                                                     </a>
-                                                    @role('Admin')
+                                                    @endcan
+                                                   @can('objectif-edit')
                                                     <a href="{{ route('objectifs.edit', $objectif->id) }}" title="Modifier" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out transform hover:scale-110">
                                                         <i class="fas fa-edit text-lg"></i>
                                                     </a>
-                                                    <button type="button" title="Supprimer" onclick="showCustomConfirm('{{ __('Êtes-vous sûr de vouloir supprimer cet objectif ?') }}', function() { document.getElementById('delete-form-{{ $objectif->id }}').submit(); });" class="text-primary-red hover:text-red-700 transition duration-150 ease-in-out transform hover:scale-110">
+                                                    @endcan
+                                                     @can('objectif-delete')
+                                                    <button type="button" title="Supprimer" onclick="if(confirm('{{ __('Êtes-vous sûr de vouloir supprimer cet objectif ?') }}')) { document.getElementById('delete-form-{{ $objectif->id }}').submit(); }" class="text-primary-red hover:text-red-700 transition duration-150 ease-in-out transform hover:scale-110">
                                                         <i class="fas fa-trash text-lg"></i>
                                                     </button>
                                                     <form id="delete-form-{{ $objectif->id }}" action="{{ route('objectifs.destroy', $objectif->id) }}" method="POST" style="display: none;">
                                                         @csrf
                                                         @method('DELETE')
                                                     </form>
-                                                    @endrole
+                                                   @endcan
                                                 </td>
                                             </tr>
                                         @endforeach

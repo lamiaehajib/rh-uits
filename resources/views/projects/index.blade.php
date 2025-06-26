@@ -263,9 +263,7 @@
                                 @endif --}}
                             </div>
                             <div class="mt-6 flex justify-end space-x-3">
-                                <button type="submit" class="inline-flex items-center px-6 py-3 bg-primary-red border border-transparent rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red">
-                                    <i class="fas fa-filter mr-2"></i> {{ __('Appliquer les filtres') }}
-                                </button>
+                                
                                 <a href="{{ route('projects.index') }}" class="inline-flex items-center px-6 py-3 bg-gray-200 border border-transparent rounded-full font-bold text-sm text-gray-700 uppercase tracking-wider shadow-md btn-secondary-custom">
                                     <i class="fas fa-undo mr-2"></i> {{ __('Réinitialiser') }}
                                 </a>

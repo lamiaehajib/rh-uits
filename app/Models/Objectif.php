@@ -16,6 +16,7 @@ class Objectif extends Model
      * @var array
      */
     protected $fillable = [
+        'date',
         'type',
         'description',
         'ca',

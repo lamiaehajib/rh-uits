@@ -154,9 +154,10 @@ class ObjectifController extends Controller
             $objectif->calculated_progress = (int) ($objectif->progress ?? 0);
             
             // Simplified needsExplanation for upcoming objectives in sidebar
-            $objectif->needs_explanation = $this->isOverdue($objectif) && $objectif->calculated_progress < 100;
+            $objectif->is_overdue = $this->isOverdue($objectif);
+            $objectif->needs_explanation = $objectif->is_overdue && $objectif->calculated_progress < 100;
             
-            $objectif->days_remaining = Carbon::now()->diffInDays(Carbon::parse($objectif->date), false);
+            $objectif->days_remaining = $this->getDaysUntilDeadline($objectif);
             
             // Ensure typeIcon is available for Blade to render, e.g., via model accessor
             // If Objectif model doesn't have getTypeIconAttribute() accessor, you can uncomment this:
@@ -171,91 +172,49 @@ class ObjectifController extends Controller
      * Returns objectives with enhanced information for calendar
      */
     public function calendar(Request $request): JsonResponse
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
 
-        // No need for dd() or Log::info() unless you are actively debugging
-        // if (!$user) { return response()->json(['error' => 'User not authenticated'], 401); }
-        // \Log::info('Authenticated User ID: ' . $user->id . ', Name: ' . $user->name);
-        // \Log::info('User has Admin role: ' . ($user->hasRole('Admin') ? 'Yes' : 'No'));
-        // \Log::info('FullCalendar Request: start=' . $request->start . ', end=' . $request->end);
-        // \Log::info('FullCalendar Request: type=' . $request->type . ', status=' . $request->status);
+    // Ajoutez ces lignes pour voir ce que le contrôleur reçoit
+    \Log::info('FullCalendar Request received:', $request->all());
 
-        $query = Objectif::with(['user:id,name', 'creator:id,name']);
+    $query = Objectif::with(['user:id,name', 'creator:id,name']);
 
-        // Access control
-        if (!$user->hasRole('Admin')) {
-            $query->where('iduser', $user->id);
-        }
-
-        // Date filtering for calendar view
-        if ($request->has('start') && $request->has('end')) {
-            $startDate = Carbon::parse($request->start)->startOfDay();
-            $endDate = Carbon::parse($request->end)->endOfDay();
-            $query->whereBetween('date', [$startDate, $endDate]);
-        }
-
-        // Additional filters
-        if ($request->has('type') && !empty($request->type)) {
-            $types = explode(',', $request->type); 
-            $query->whereIn('type', $types);
-        }
-
-        if ($request->has('status') && !empty($request->status)) {
-            $statuses = explode(',', $request->status); 
-            $query->whereIn('status', $statuses);
-        }
-
-        // Removed SQL query logging.
-        // \Log::info('SQL Query being executed: ' . $query->toSql());
-        // \Log::info('Bindings for SQL Query: ' . json_encode($query->getBindings()));
-
-        $objectifs = $query->get()->map(function ($objectif) {
-            // Directly use the 'progress' column if it exists, otherwise default to 0
-            // This completely avoids any calculations with 'ca' or 'afaire'.
-            $calculatedProgress = (int) ($objectif->progress ?? 0); 
-            
-            // Simplified needsExplanation to prevent complex logic
-            $needsExplanation = $this->isOverdue($objectif) && $calculatedProgress < 100;
-
-            // Determine event color based on the (simplified) progress and deadline
-            $eventColor = $this->getEventColor($objectif, $calculatedProgress, $needsExplanation);
-
-            return [
-                'id' => $objectif->id,
-                'title' => $this->formatEventTitle($objectif),
-                'start' => $objectif->date,
-                'allDay' => true,
-                'backgroundColor' => $eventColor['background'],
-                'borderColor' => $eventColor['border'],
-                'textColor' => $eventColor['text'],
-                'url' => route('objectifs.show', $objectif->id),
-                'extendedProps' => [
-                    'type' => $objectif->type,
-                    'status' => $objectif->status,
-                    'user' => $objectif->user->name ?? 'N/A',
-                    'creator' => $objectif->creator->name ?? 'N/A',
-                    'description' => $objectif->description,
-                    'ca' => $objectif->ca, // Still passed as string
-                    'afaire' => $objectif->afaire, // Still passed as string
-                    'progress' => $objectif->progress, // Raw progress value
-                    'calculated_progress' => $calculatedProgress, // This is now directly from $objectif->progress
-                    'needs_explanation' => $needsExplanation,
-                    'created_at' => $objectif->created_at->format('d/m/Y'),
-                    'days_until_deadline' => $this->getDaysUntilDeadline($objectif),
-                    'is_overdue' => $this->isOverdue($objectif),
-                    'priority' => $this->calculatePriority($objectif, $calculatedProgress)
-                ]
-            ];
-        });
-
-        // Removed debug lines for production.
-        // \Log::info('Total objectives being sent: ' . $objectifs->count());
-        // dd($objectifs->toArray());
-
-        return response()->json($objectifs);
+    if (!$user->hasRole('Admin')) {
+        $query->where('iduser', $user->id);
     }
 
+    if ($request->has('start') && $request->has('end')) {
+        $startDate = Carbon::parse($request->start)->startOfDay();
+        $endDate = Carbon::parse($request->end)->endOfDay();
+        $query->whereBetween('date', [$startDate, $endDate]);
+    }
+
+    if ($request->has('type') && !empty($request->type)) {
+        $types = explode(',', $request->type); 
+        $query->whereIn('type', $types);
+    }
+
+    if ($request->has('status') && !empty($request->status)) {
+        $statuses = explode(',', $request->status); 
+        $query->whereIn('status', $statuses);
+    }
+
+    // Pour voir la requête SQL générée
+    \Log::info('Generated SQL Query:', ['sql' => $query->toSql(), 'bindings' => $query->getBindings()]);
+
+    $objectifs = $query->get()->map(function ($objectif) {
+        // ... reste du code ...
+        return [
+            // ... les propriétés de l'événement ...
+        ];
+    });
+
+    // Ajoutez cette ligne pour voir les données finales envoyées au frontend
+    \Log::info('Objectives sent to FullCalendar:', ['count' => $objectifs->count(), 'data' => $objectifs->toArray()]);
+
+    return response()->json($objectifs);
+}
     /**
      * Format event title for calendar display
      */
@@ -263,7 +222,6 @@ class ObjectifController extends Controller
     {
         $typeIcon = $this->getTypeIcon($objectif->type);
         $statusBadge = strtoupper($objectif->status);
-        // Use a null-coalescing operator or empty string if description might be null
         $shortDescription = Str::limit($objectif->description ?? '', 40);
         
         return "{$typeIcon} {$shortDescription} ({$statusBadge})";
@@ -332,43 +290,42 @@ class ObjectifController extends Controller
     }
 
     /**
-     * Calculate days until deadline
+     * Calculate days until deadline based on 'status' field (mois/annee)
      */
     private function getDaysUntilDeadline($objectif): int
     {
         $deadline = null;
         
-        // Ensure $objectif->date is a valid date string
         if (!empty($objectif->date)) {
+            $carbonDate = Carbon::parse($objectif->date);
             if ($objectif->status === 'mois') {
-                $deadline = Carbon::parse($objectif->date)->endOfMonth();
+                $deadline = $carbonDate->endOfMonth();
             } elseif ($objectif->status === 'annee') {
-                // Consider the end of the year for 'annee' status
-                $deadline = Carbon::parse($objectif->date)->endOfYear();
+                $deadline = $carbonDate->endOfYear();
             }
         }
-
-        // If deadline is not set or in the past, return a consistent value
-        return $deadline ? Carbon::now()->diffInDays($deadline, false) : -9999; // Return a large negative number if no deadline or invalid date
+        
+        return $deadline ? Carbon::now()->diffInDays($deadline, false) : -9999;
     }
 
     /**
-     * Check if objectif is overdue
+     * Check if objectif is overdue based on 'status' field (mois/annee)
      */
     private function isOverdue($objectif): bool
     {
         $deadline = null;
         
-        // Ensure $objectif->date is a valid date string
         if (!empty($objectif->date)) {
+            $carbonDate = Carbon::parse($objectif->date);
             if ($objectif->status === 'mois') {
-                $deadline = Carbon::parse($objectif->date)->endOfMonth();
+                $deadline = $carbonDate->endOfMonth();
             } elseif ($objectif->status === 'annee') {
-                $deadline = Carbon::parse($objectif->date)->endOfYear();
+                $deadline = $carbonDate->endOfYear();
             }
         }
         
-        // Only return true if a valid deadline exists and it's in the past
+        // An objective is overdue if a valid deadline exists and the current time is past it.
+        // It's also overdue if the progress is less than 100% and the deadline has passed.
         return $deadline ? Carbon::now()->greaterThan($deadline) : false;
     }
 
@@ -385,11 +342,13 @@ class ObjectifController extends Controller
         }
         
         // If deadline is within 7 days and less than 50% complete, it's high
+        // Ensure daysUntilDeadline is non-negative for this condition
         if ($daysUntilDeadline <= 7 && $calculatedProgress < 50 && $daysUntilDeadline >= 0) {
             return 'haute';
         }
         
         // If deadline is within 30 days and less than 25% complete, it's medium
+        // Ensure daysUntilDeadline is non-negative for this condition
         if ($daysUntilDeadline <= 30 && $calculatedProgress < 25 && $daysUntilDeadline >= 0) {
             return 'moyenne';
         }
@@ -492,15 +451,15 @@ class ObjectifController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'date' => 'required|date|after_or_equal:today',
-            'type' => 'required|in:formations,projets,vente',
-            'description' => 'required|string|min:10|max:1000',
-            'ca' => 'nullable|string', // Changed to nullable string, as you don't want calculations
-            'status' => 'required|in:mois,annee',
-            'afaire' => 'nullable|string|min:10|max:1000', // Changed to nullable string
-            'iduser' => 'required|exists:users,id',
-        ]);
+       $request->validate([
+    'date' => 'required|date|after_or_equal:today',
+    'type' => 'required|in:formations,projets,vente',
+    'description' => 'required|string|min:10|max:1000',
+    'ca' => 'required|string', // Changed from nullable to required
+    'status' => 'required|in:mois,annee',
+    'afaire' => 'required|string|min:10|max:1000', // Changed from nullable to required
+    'iduser' => 'required|exists:users,id',
+]);
 
         try {
             DB::beginTransaction();
@@ -527,7 +486,7 @@ class ObjectifController extends Controller
             $user = User::find($request->iduser);
 
             // Send notification
-            if ($user) { // Check if user exists before notifying
+            if ($user) { 
                 $user->notify(new ObjectifCreatedNotification($objectif));
             }
 
@@ -625,14 +584,15 @@ class ObjectifController extends Controller
     public function update(Request $request, Objectif $objectif)
     {
         $request->validate([
-            'date' => 'required|date',
+           
+            
             'type' => 'required|in:formations,projets,vente',
             'description' => 'required|string|min:10|max:1000',
-            'ca' => 'nullable|string', // Changed to nullable string
+            'ca' => 'nullable|string', 
             'status' => 'required|in:mois,annee',
-            'afaire' => 'nullable|string|min:10|max:1000', // Changed to nullable string
+            'afaire' => 'nullable|string|min:10|max:1000', 
             'iduser' => 'required|exists:users,id',
-            'progress' => 'sometimes|integer|min:0|max:100', // Allow manual progress update if needed
+            'progress' => 'sometimes|integer|min:0|max:100', 
         ]);
 
         try {
@@ -641,14 +601,14 @@ class ObjectifController extends Controller
             $oldUser = $objectif->iduser;
 
             $objectif->update([
-                'date' => $request->date,
+               
                 'type' => $request->type,
                 'description' => $request->description,
                 'ca' => $request->ca,
                 'status' => $request->status,
                 'afaire' => $request->afaire,
                 'iduser' => $request->iduser,
-                'progress' => $request->progress ?? $objectif->progress, // Keep existing if not provided
+                'progress' => $request->progress ?? $objectif->progress, 
                 'updated_by' => auth()->id(),
             ]);
 
@@ -662,7 +622,7 @@ class ObjectifController extends Controller
             // Send notification if user changed
             if ($oldUser != $request->iduser) {
                 $user = User::find($request->iduser);
-                if ($user) { // Check if user exists before notifying
+                if ($user) { 
                     $user->notify(new ObjectifUpdatedNotification($objectif));
                 }
             }
@@ -708,40 +668,15 @@ class ObjectifController extends Controller
      * @param  \App\Models\Objectif  $objectif
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Objectif $objectif)
-    {
-        $this->authorize('delete', $objectif);
-
-        try {
-            DB::beginTransaction();
-
-            $userId = $objectif->iduser;
-
-            $objectif->delete();
-
-            // Clear cache
-            Cache::forget('objectif_stats_' . $userId);
-            if (auth()->user()->hasRole('Admin')) {
-                Cache::forget('objectif_stats_' . auth()->id());
-            }
-
-            // Log activity
-            Log::info('Objectif deleted', [
-                'objectif_id' => $objectif->id,
-                'deleted_by' => auth()->id()
-            ]);
-
-            DB::commit();
-
-            return redirect()->route('objectifs.index')->with('success', 'Objectif supprimé avec succès.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error deleting objectif', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-
-            return back()->with('error', 'Une erreur est survenue lors de la suppression.');
-        }
+   public function destroy(Objectif $objectif)
+{
+    try {
+        $objectif->delete();
+        return back()->with('success', 'Objectif supprimé avec succès.');
+    } catch (\Exception $e) {
+        return back()->with('error', 'Une erreur est survenue lors de la suppression.');
     }
+}
 
     /**
      * Bulk operations
@@ -952,9 +887,6 @@ class ObjectifController extends Controller
      */
     private function calculateObjectifProgress($objectif): int
     {
-        // If the 'progress' column exists and is set, use it directly.
-        // Ensure it's treated as an integer.
-        // If 'progress' column is not set or not numeric, default to 0.
         return (int) ($objectif->progress ?? 0);
     }
 
@@ -970,7 +902,6 @@ class ObjectifController extends Controller
         $calculatedProgress = $this->calculateObjectifProgress($objectif);
         $isOverdue = $this->isOverdue($objectif);
 
-        // Needs explanation if it's overdue and not yet 100% complete.
         return $isOverdue && $calculatedProgress < 100;
     }
 }
