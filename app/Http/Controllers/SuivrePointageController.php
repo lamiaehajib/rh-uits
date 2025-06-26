@@ -150,7 +150,7 @@ class SuivrePointageController extends Controller
                 ->exists();
 
             if ($alreadyClockedOutToday) {
-                DB::rollBack(); // لا داعي لإنشاء نقطة تسجيل جديدة
+                DB::rollBack(); 
                 return redirect()->back()->with('info', 'Vous avez déjà pointé votre arrivée et votre départ pour aujourd\'hui.');
             }
 
