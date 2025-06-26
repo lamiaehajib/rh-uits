@@ -360,7 +360,7 @@
                  @can("tache-list")
                 <button type="button">
                     <a href="{{ route('taches.index') }}"><i class='bx bx-task'></i></a>
-                    <span><a class="a" href="{{ route('taches.index') }}">les tâche</a></span>
+                    <span><a class="a" href="{{ route('taches.index') }}">les tâches</a></span>
                 </button>
                 @endcan
 
