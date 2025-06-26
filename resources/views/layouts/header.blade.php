@@ -9,7 +9,7 @@
 
             {{-- Logo Section (Centered on Mobile, Left on Desktop) --}}
             <div class="flex-1 flex justify-center md:justify-start"> {{-- Added flex-1 and justify-center --}}
-                <a href="{{ url('/') }}" class="flex items-center space-x-2">
+                <a href="{{ url('/dashboard') }}" class="flex items-center space-x-2">
                     <img class="h-10 w-auto rounded-md" src="{{ asset('photos/logo.png') }}" alt="Your Company Logo">
                     {{-- <span class="text-xl font-bold text-gray-900">Your Company</span> --}}
                 </a>
