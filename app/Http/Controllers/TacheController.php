@@ -299,7 +299,7 @@ class TacheController extends Controller
     // Helper methods
     private function isAdmin($user)
     {
-        return $user->hasRole(['Admin', 'Admin1', 'ADMIN', 'ADMIN1']);
+        return $user->hasRole(['Sup_Admin', 'Custom_Admin']);
     }
 
     private function hasAccessToTask($user, $tache)

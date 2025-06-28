@@ -48,7 +48,7 @@ public function store(LoginRequest $request): RedirectResponse
     }
 
     // Redirection en fonction des rôles
-    if (auth()->user()->hasRole('Admin') || auth()->user()->hasRole('ADMIN1')) {
+    if (auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin')) {
         return redirect(RouteServiceProvider::HOME);
     } else {
         return redirect()->route('dashboard');
@@ -73,7 +73,7 @@ public function showLoginHistory(Request $request)
     }
 
     // Restreindre les logs selon le rôle
-    if (!auth()->user()->hasRole('Admin') && !auth()->user()->hasRole('ADMIN1')) {
+    if (!auth()->user()->hasRole('Sup_Admin') && !auth()->user()->hasRole('Custom_Admin')) {
         $query->where('user_id', auth()->id());
     }
 

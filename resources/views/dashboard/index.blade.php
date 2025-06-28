@@ -540,7 +540,7 @@
                 <div class="container mx-auto px-4 py-8">
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 stats-grid">
-                        @if(auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1'))
+                        @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
                             <div class="metric-card fade-in p-6 text-center">
                                 <div class="icon bg-gradient-to-r from-green-500 to-green-600"><i class="fas fa-users"></i></div>
                                 <div class="value bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">{{ $userCount }}</div>
@@ -607,8 +607,8 @@
                                 </div>
                                 Ponctualité des Arrivées
                             </h3>
-                            {{-- Add dropdown for period selection, visible only to Admin and Admin1 --}}
-                            @if(auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1'))
+                            {{-- Add dropdown for period selection, visible only to Admin and Custom_Admin --}}
+                            @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
                             <div class="flex justify-end mb-4">
                                 <select id="punctualityPeriodSelect" class="form-select border-gray-300 rounded-md shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50">
                                     <option value="all">Tout</option>
@@ -669,7 +669,7 @@
                             <div class="section-icon w-10 h-10 bg-gradient-to-r from-red-600 to-yellow-400 rounded-full flex items-center justify-center text-white">
                                 <i class="fas fa-exclamation-triangle"></i>
                             </div>
-                            {{ (auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1')) ? __('Réclamations Non Résolues') : __('Mes Réclamations Résolues') }}
+                            {{ (auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin')) ? __('Réclamations Non Résolues') : __('Mes Réclamations Résolues') }}
                         </h3>
                         @if($reclamations->count())
                             <div class="overflow-x-auto">
@@ -678,7 +678,7 @@
                                         <tr>
                                             <th class="p-4 text-left rounded-tl-xl">Référence</th>
                                             <th class="p-4 text-left">Titre</th>
-                                            @if(auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1'))
+                                            @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
                                             <th class="p-4 text-center">Utilisateur</th>
                                             @endif
                                             <th class="p-4 text-center">Priorité</th>
@@ -691,7 +691,7 @@
                                         <tr>
                                             <td class="p-4 text-left">{{ $reclamation->reference }}</td>
                                             <td class="p-4 text-left">{{ $reclamation->titre }}</td>
-                                            @if(auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1'))
+                                            @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
                                             <td class="p-4 text-center">{{ $reclamation->user->name ?? 'N/A' }}</td>
                                             @endif
                                             <td class="p-4 text-center">{{ ucfirst($reclamation->priority) }}</td>
@@ -708,7 +708,7 @@
                             </div>
                         @else
                             <p class="text-center text-gray-500 py-8">
-                                {{ (auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1')) ? __('Aucune réclamation non résolue.') : __('Aucune de vos réclamations n\'a été résolue.') }}
+                                {{ (auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin')) ? __('Aucune réclamation non résolue.') : __('Aucune de vos réclamations n\'a été résolue.') }}
                             </p>
                         @endif
                     </div>
@@ -1364,7 +1364,7 @@
             }
 
             // Logic to automatically show pointage modal on first visit for non-admins
-            const isUserAdmin = {{ Auth::user()->hasRole('Admin') || Auth::user()->hasRole('Admin1') ? 'true' : 'false' }};
+            const isUserAdmin = {{ Auth::user()->hasRole('Sup_Admin') || Auth::user()->hasRole('Custom_Admin') ? 'true' : 'false' }};
             const hasClockedInToday = {{ $hasClockedInToday ? 'true' : 'false' }};
             const hasClockedOutToday = {{ $hasClockedOutToday ? 'true' : 'false' }};
             const today = new Date().toDateString();
@@ -1379,7 +1379,7 @@
             const initialPointagePeriod = document.getElementById('pointagePeriodSelect')?.value || 'month';
             // For punctuality, if not admin, force 'all' to ensure it gets user's total data without period filter.
             // If admin, use selected value or default to 'month'.
-            const initialPunctualityPeriod = "{{ Auth::user()->hasRole('Admin') || Auth::user()->hasRole('Admin1') ? 'month' : 'all' }}";
+            const initialPunctualityPeriod = "{{ Auth::user()->hasRole('Sup_Admin') || Auth::user()->hasRole('Custom_Admin') ? 'month' : 'all' }}";
 
             fetchAndRenderCharts(initialPointagePeriod, initialPunctualityPeriod);
 

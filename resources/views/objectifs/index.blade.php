@@ -217,7 +217,7 @@
                                     <i class="fas fa-calendar-alt mr-2"></i>
                                     Voir le Calendrier
                                 </a>
-                                @role('Admin')
+                                @role('Sup_Admin')
                                 <a href="{{ route('objectifs.create') }}" class="inline-flex items-center justify-center px-6 py-3 btn-primary-red rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg hover:scale-105 transition-transform duration-300 w-full sm:w-auto">
                                     <i class="fas fa-plus-circle mr-2"></i> Créer un Objectif
                                 </a>

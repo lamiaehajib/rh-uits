@@ -455,7 +455,7 @@
                                                 </a>
                                             </th>
                                             <th scope="col" class="py-3 px-6">{{ __('Titre') }}</th>
-                                            @if(auth()->user()->hasRole('Admin'))
+                                            @if(auth()->user()->hasRole('Sup_Admin'))
                                             <th scope="col" class="py-3 px-6">{{ __('Utilisateur') }}</th>
                                             @endif
                                             <th scope="col" class="py-3 px-6">{{ __('Statut') }}</th>
@@ -482,7 +482,7 @@
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 {{ Str::limit($reclamation->titre, 50) }}
                                             </td>
-                                            @if(auth()->user()->hasRole('Admin'))
+                                            @if(auth()->user()->hasRole('Sup_Admin'))
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 {{ $reclamation->user->name ?? 'N/A' }}
                                             </td>
@@ -550,7 +550,7 @@
                                         </tr>
                                         @empty
                                         <tr>
-                                            <td colspan="{{ auth()->user()->hasRole('Admin') ? '8' : '7' }}" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                                            <td colspan="{{ auth()->user()->hasRole('Sup_Admin') ? '8' : '7' }}" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
                                                 <i class="fas fa-box-open mr-2"></i>{{ __('Aucune réclamation trouvée.') }}
                                             </td>
                                         </tr>

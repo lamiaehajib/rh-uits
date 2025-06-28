@@ -39,7 +39,7 @@ class SuivrePointageController extends Controller
         $utilisateur = auth()->user();
 
         $pointageEnCours = null;
-        if (!($utilisateur->hasRole('Admin') || $utilisateur->hasRole('Admin1'))) {
+        if (!($utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin'))) {
             $pointageEnCours = SuivrePointage::where('iduser', Auth::id())
                 ->whereDate('date_pointage', Carbon::today('Africa/Casablanca'))
                 ->whereNull('heure_depart')
@@ -69,7 +69,7 @@ class SuivrePointageController extends Controller
 
         $requete->orderBy('date_pointage', 'DESC')->orderBy('heure_arrivee', 'DESC');
 
-        if ($utilisateur->hasRole('Admin') || $utilisateur->hasRole('Admin1')) {
+        if ($utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin')) {
             $pointages = $requete->paginate(10);
         } else {
             $pointages = $requete->where('iduser', $utilisateur->id)->paginate(10);
@@ -85,7 +85,7 @@ class SuivrePointageController extends Controller
 {
     $utilisateur = auth()->user();
 
-    if ($utilisateur->hasRole('Admin') || $utilisateur->hasRole('Admin1')) {
+    if ($utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin')) {
         return redirect()->back()->with('error', 'En tant qu\'administrateur, vous n\'êtes pas autorisé à pointer.');
     }
 
@@ -214,7 +214,7 @@ class SuivrePointageController extends Controller
         $pointage = SuivrePointage::with('user')->findOrFail($id);
 
         $utilisateur = auth()->user();
-        if (!($utilisateur->hasRole('Admin') || $utilisateur->hasRole('Admin1')) && $pointage->iduser !== $utilisateur->id) {
+        if (!($utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin')) && $pointage->iduser !== $utilisateur->id) {
             abort(403, 'Accès non autorisé.');
         }
 
@@ -276,7 +276,7 @@ class SuivrePointageController extends Controller
     {
         $utilisateur = auth()->user();
 
-        if (!($utilisateur->hasRole('Admin') || $utilisateur->hasRole('Admin1'))) {
+        if (!($utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin'))) {
             abort(403, 'Accès non autorisé pour la correction.');
         }
 

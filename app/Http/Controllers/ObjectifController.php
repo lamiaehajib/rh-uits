@@ -71,7 +71,7 @@ class ObjectifController extends Controller
         $query->orderBy($sortBy, $sortOrder);
 
         // Access control
-        if ($user->hasRole('Admin')) {
+        if ($user->hasRole('Sup_Admin')) {
             $objectifs = $query->paginate(10);
         } else {
             $objectifs = $query->where('iduser', $user->id)->paginate(10);
@@ -97,7 +97,7 @@ class ObjectifController extends Controller
     {
         $query = Objectif::query();
 
-        if (!$user->hasRole('Admin')) {
+        if (!$user->hasRole('Sup_Admin')) {
             $query->where('iduser', $user->id);
         }
 
@@ -145,7 +145,7 @@ class ObjectifController extends Controller
             ->where('date', '<=', Carbon::now()->addDays(30)->endOfDay())
             ->orderBy('date', 'asc');
 
-        if (!$user->hasRole('Admin')) {
+        if (!$user->hasRole('Sup_Admin')) {
             $query->where('iduser', $user->id);
         }
 
@@ -180,7 +180,7 @@ class ObjectifController extends Controller
 
     $query = Objectif::with(['user:id,name', 'creator:id,name']);
 
-    if (!$user->hasRole('Admin')) {
+    if (!$user->hasRole('Sup_Admin')) {
         $query->where('iduser', $user->id);
     }
 
@@ -365,7 +365,7 @@ class ObjectifController extends Controller
         $query = Objectif::with(['user:id,name', 'creator:id,name']);
 
         // Access control
-        if (!$user->hasRole('Admin')) {
+        if (!$user->hasRole('Sup_Admin')) {
             $query->where('iduser', $user->id);
         }
 
@@ -478,7 +478,7 @@ class ObjectifController extends Controller
 
             // Clear cache
             Cache::forget('objectif_stats_' . $request->iduser);
-            if (auth()->user()->hasRole('Admin')) {
+            if (auth()->user()->hasRole('Sup_Admin')) {
                 Cache::forget('objectif_stats_' . auth()->id());
             }
 
@@ -536,7 +536,7 @@ class ObjectifController extends Controller
         $objectif = Objectif::with('user')->findOrFail($id);
 
         // Access control
-        if ($user->hasRole('Admin') || $objectif->iduser == $user->id) {
+        if ($user->hasRole('Sup_Admin') || $objectif->iduser == $user->id) {
             // Mark as viewed
             $this->markAsViewed($objectif, $user);
 
@@ -615,7 +615,7 @@ class ObjectifController extends Controller
             // Clear cache for both old and new users
             Cache::forget('objectif_stats_' . $oldUser);
             Cache::forget('objectif_stats_' . $request->iduser);
-            if (auth()->user()->hasRole('Admin')) {
+            if (auth()->user()->hasRole('Sup_Admin')) {
                 Cache::forget('objectif_stats_' . auth()->id());
             }
 
@@ -693,7 +693,7 @@ class ObjectifController extends Controller
         $user = auth()->user();
         $objectifs = Objectif::whereIn('id', $request->objectifs);
 
-        if (!$user->hasRole('Admin')) {
+        if (!$user->hasRole('Sup_Admin')) {
             $objectifs->where('iduser', $user->id);
         }
 
@@ -764,7 +764,7 @@ class ObjectifController extends Controller
         $user = auth()->user();
         $query = Objectif::with('user');
 
-        if (!$user->hasRole('Admin')) {
+        if (!$user->hasRole('Sup_Admin')) {
             $query->where('iduser', $user->id);
         }
 
@@ -823,7 +823,7 @@ class ObjectifController extends Controller
 
         // Recent objectives
         $recentQuery = Objectif::with('user')->latest()->limit(5);
-        if (!$user->hasRole('Admin')) {
+        if (!$user->hasRole('Sup_Admin')) {
             $recentQuery->where('iduser', $user->id);
         }
         $recent = $recentQuery->get();
@@ -838,7 +838,7 @@ class ObjectifController extends Controller
             ->where('date', '<=', Carbon::now()->addDays(7)->endOfDay())
             ->orderBy('date');
 
-        if (!$user->hasRole('Admin')) {
+        if (!$user->hasRole('Sup_Admin')) {
             $upcomingQuery->where('iduser', $user->id);
         }
         $upcoming = $upcomingQuery->get();

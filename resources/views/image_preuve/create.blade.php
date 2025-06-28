@@ -96,7 +96,7 @@
                             <input type="date" name="date" class="form-control" id="date" value="{{ old('date') }}">
                         </div>
 
-                        @if(Auth::user()->hasRole('Admin'))
+                        @if(Auth::user()->hasRole('Sup_Admin'))
                         <div class="mb-3">
                             <label for="iduser" class="form-label"><i class="fas fa-user me-2"></i>Utilisateur:</label>
                             <select name="iduser" id="iduser" class="form-control">

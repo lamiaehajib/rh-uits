@@ -28,7 +28,7 @@ class VenteObjectifController extends Controller
     $query = VenteObjectif::with('user');
 
     // If the user is an admin or has the 'ucgs' role
-    if ($user->hasRole('Admin') || $user->hasRole('UCGS')) {
+    if ($user->hasRole('Sup_Admin') || $user->hasRole('UCGS')) {
         // If there's a search query, filter the results
         if ($request->has('search') && $request->search != '') {
             $query->where('description', 'like', '%' . $request->search . '%');
@@ -93,7 +93,7 @@ public function store(Request $request)
         $venteObjectif = VenteObjectif::findOrFail($id);
     
         // Vérifiez si l'utilisateur a accès à cette tâche
-        if ($user->hasRole('Admin') || $venteObjectif->iduser == $user->id) {
+        if ($user->hasRole('Sup_Admin') || $venteObjectif->iduser == $user->id) {
             return view('vente_objectifs.show', compact('venteObjectif'));
         }
     

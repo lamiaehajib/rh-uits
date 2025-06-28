@@ -41,7 +41,7 @@ class ReclamationController extends Controller
         $query = Reclamation::with('user');
 
         // Admin sees all, users see only their own
-        if (!$user->hasRole('Admin') && !$user->hasRole('Admin1')) { 
+        if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) { 
             $query->where('iduser', $user->id);
         }
 
@@ -83,7 +83,7 @@ class ReclamationController extends Controller
         // Start with the base query once
         $baseQuery = Reclamation::query();
 
-        if (!$user->hasRole('Admin') && !$user->hasRole('Admin1')) { 
+        if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) { 
             $baseQuery->where('iduser', $user->id);
         }
 
@@ -193,7 +193,7 @@ class ReclamationController extends Controller
         $reclamation = Reclamation::with(['user', 'activities'])->findOrFail($id);
 
         // Vérifiez si l'utilisateur a accès à cette réclamation
-        if ($user->hasRole('Admin') || $user->hasRole('Admin1') || $reclamation->iduser == $user->id) { 
+        if ($user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin') || $reclamation->iduser == $user->id) { 
             return view('reclamations.show', compact('reclamation'));
         }
 
@@ -209,7 +209,7 @@ class ReclamationController extends Controller
     public function edit(Reclamation $reclamation)
     {
         // Only load users for non-admins or if needed for display
-        $users = (auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1')) ? User::all() : collect([auth()->user()]); // Admins get all users, others only their own
+        $users = (auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin')) ? User::all() : collect([auth()->user()]); // Admins get all users, others only their own
         return view('reclamations.edit', compact('reclamation', 'users'));
     }
 
@@ -224,7 +224,7 @@ class ReclamationController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->hasRole('Admin') || $user->hasRole('Admin1')) { 
+        if ($user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin')) { 
             $request->validate([
                 'status' => 'required|in:pending,in_progress,resolved,closed',
                 'admin_notes' => 'nullable|string',
@@ -369,7 +369,7 @@ class ReclamationController extends Controller
         $user = auth()->user();
 
         $query = Reclamation::with('user');
-        if (!$user->hasRole('Admin') && !$user->hasRole('Admin1')) {
+        if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) {
             $query->where('iduser', $user->id);
         }
 
@@ -422,7 +422,7 @@ class ReclamationController extends Controller
 
         // Recent reclamations
         $query = Reclamation::with('user')->latest();
-        if (!$user->hasRole('Admin') && !$user->hasRole('Admin1')) {
+        if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) {
             $query->where('iduser', $user->id);
         }
         $recentReclamations = $query->take(5)->get();
@@ -434,7 +434,7 @@ class ReclamationController extends Controller
             $query = Reclamation::whereYear('created_at', $date->year)
                                  ->whereMonth('created_at', $date->month);
 
-            if (!$user->hasRole('Admin') && !$user->hasRole('Admin1')) {
+            if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) {
                 $query->where('iduser', $user->id);
             }
 

@@ -39,7 +39,7 @@ class FormationController extends Controller
             $query = Formation::with('users'); // Chargement de la relation des utilisateurs pour éviter le problème N+1
 
             // Logique de recherche et de filtrage pour les utilisateurs administrateurs (Admin ou )
-            if ($user->hasRole('Admin') || $user->hasRole('Admin1')) {
+            if ($user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin')) {
                 if ($search) {
                     $query->where(function($q) use ($search) {
                         $q->where('name', 'like', '%' . $search . '%')
@@ -323,7 +323,7 @@ class FormationController extends Controller
             $user = auth()->user();
 
             // Vérification des permissions: Admin, , ou un utilisateur associé à la formation
-            if (!$user->hasRole('Admin') && !$user->hasRole('Admin1') && !$formation->users->contains('id', $user->id)) {
+            if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin') && !$formation->users->contains('id', $user->id)) {
                 return redirect()->back()->with('error', 'Vous n\'avez pas la permission de télécharger ce fichier.');
             }
 
@@ -349,7 +349,7 @@ class FormationController extends Controller
             $user = auth()->user();
 
             // Statistiques pour les administrateurs (Admin ou )
-            if ($user->hasRole('Admin') || $user->hasRole('Admin1')) {
+            if ($user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin')) {
                 $stats = [
                     'total_formations' => Formation::count(),
                     'formations_actives' => Formation::where('statut', 'encour')->count(),

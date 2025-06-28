@@ -42,7 +42,7 @@ class ImagePreuveController extends Controller
     }
 
     // Gestion des rôles
-    if ($user->hasRole('Admin') || $user->hasRole('ADMIN2') || $user->hasRole('ADMIN1')) {
+    if ($user->hasRole('Sup_Admin') ||  $user->hasRole('Custom_Admin')) {
         $imagePreuves = $query->paginate(10);
     } else {
         $imagePreuves = $query->where('iduser', $user->id)->paginate(10);
@@ -67,7 +67,7 @@ class ImagePreuveController extends Controller
             'description' => 'nullable|string',
             'media' => 'required|file|mimes:jpeg,png,jpg,gif,svg,mp4,mkv,avi,mov|max:51200',
             'date' => 'required|date',
-            'iduser' => auth()->user()->hasRole('Admin') ? 'required|exists:users,id' : '',
+            'iduser' => auth()->user()->hasRole('Sup_Admin') ? 'required|exists:users,id' : '',
         ]);
     
         $mediaPath = $request->file('media')->store('public/media');
@@ -81,7 +81,7 @@ class ImagePreuveController extends Controller
         ]);
     
         // إرسال إشعار للمسؤولين
-        $admins = User::role(['Admin'])->get();
+        $admins = User::role(['Sup_Admin'])->get();
         foreach ($admins as $admin) {
             $admin->notify(new MagepreuveCreatedNotification($imagePreuve));
         }
@@ -112,7 +112,7 @@ class ImagePreuveController extends Controller
     $imagePreuve = ImagePreuve::findOrFail($id);
 
     // Check if the user is an admin or if the image belongs to the user
-    if ($user->hasRole('Admin') || $user->hasRole('ADMIN2') || $user->hasRole('ADMIN1') || $imagePreuve->iduser == $user->id) {
+    if ($user->hasRole('Sup_Admin') || $user->hasRole('ADMIN2') || $user->hasRole('Custom_Admin') || $imagePreuve->iduser == $user->id) {
         return view('image_preuve.show', compact('imagePreuve'));
     } else {
         return redirect()->route('image_preuve.index')->with('error', 'Vous n\'êtes pas autorisé à voir cette image.');

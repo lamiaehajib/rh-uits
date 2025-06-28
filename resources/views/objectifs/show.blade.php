@@ -181,7 +181,7 @@
                                 <i class="fas fa-bullseye mr-3 color-primary icon-bounce"></i> Objectif: <span class="color-primary">{{ Str::limit($objectif->description, 50) }}</span>
                             </h3>
                             <div class="flex flex-wrap items-center space-x-3 mt-4 md:mt-0">
-                                @role('Admin')
+                                @role('Sup_Admin')
                                 <a href="{{ route('objectifs.edit', $objectif->id) }}" class="btn-custom-primary">
                                     <i class="fas fa-edit mr-2"></i> Modifier
                                 </a>

@@ -159,7 +159,7 @@
                                 </p>
                             </div>
 
-                            @if(Auth::user()->hasRole('Admin') || Auth::user()->hasRole('Admin1'))
+                            @if(Auth::user()->hasRole('Sup_Admin') || Auth::user()->hasRole('Custom_Admin'))
                             <h4 class="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2 mt-8">
                                 <i class="fas fa-edit mr-2 text-orange-500"></i>
                                 Actions Administrateur

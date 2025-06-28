@@ -236,7 +236,7 @@
                     </div>
                 @endif
 
-                @if(!auth()->user()->hasRole('Admin') && !auth()->user()->hasRole('Admin1'))
+                @if(!auth()->user()->hasRole('Sup_Admin') && !auth()->user()->hasRole('Custom_Admin'))
                     <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg mb-6 animate-fade-in delay-200">
                         <div class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
                             <h3 class="text-xl font-semibold text-gray-900 mb-4">
@@ -503,7 +503,7 @@
                                                     <i class="fas fa-eye text-lg"></i>
                                                 </a>
                                                 {{-- Correction button for admins --}}
-                                                @if(auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1'))
+                                                @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
                                                     <button type="button" onclick="ouvrirModalCorrection(
                                                         {{ $pointage->id }},
                                                         '{{ \Carbon\Carbon::parse($pointage->heure_arrivee)->format('Y-m-d\TH:i') }}',
@@ -540,7 +540,7 @@
         </div>
 
         {{-- Correction Modal --}}
-        @if(auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1'))
+        @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
             <div id="modalCorrection" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
                 <div class="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white animate-fade-in">
                     <div class="mt-3 text-center">
@@ -852,9 +852,9 @@
                     });
                 }
 
-                // Initialize localisation display on page load if user is not an admin
+                // Initialize localisation display on page load if user is not an Sup_Admin
                 document.addEventListener('DOMContentLoaded', () => {
-                    const isAdmin = {{ auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1') ? 'true' : 'false' }};
+                    const isAdmin = {{ auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin') ? 'true' : 'false' }};
                     if (!isAdmin && localisationDisplay) {
                         if (window.isSecureContext && navigator.geolocation) {
                             localisationDisplay.value = 'Veuillez cliquer pour pointer afin de détecter votre position.';
@@ -871,7 +871,7 @@
 
                 // Set initial state of buttons based on geolocation availability (optional visual hint)
                 document.addEventListener('DOMContentLoaded', () => {
-                    const isAdmin = {{ auth()->user()->hasRole('Admin') || auth()->user()->hasRole('Admin1') ? 'true' : 'false' }};
+                    const isAdmin = {{ auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin') ? 'true' : 'false' }};
                     if (!isAdmin) {
                         if (!window.isSecureContext || !navigator.geolocation) {
                             if (pointerArriveeBtn) {

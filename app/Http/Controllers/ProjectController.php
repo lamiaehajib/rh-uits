@@ -29,7 +29,7 @@ class ProjectController extends Controller
     $search = $request->get('search');
 
     // If the user is an admin, retrieve all projects
-    if ($user->hasRole('Admin') || $user->hasRole('ADMIN2')) {
+    if ($user->hasRole('Sup_Admin') || $user->hasRole('ADMIN2')) {
         $projects = Project::with('users')
             ->when($search, function ($query, $search) {
                 return $query->where('titre', 'like', "%{$search}%")
@@ -101,7 +101,7 @@ class ProjectController extends Controller
     $project = project::findOrFail($id);
 
     // Vérifiez si l'utilisateur a accès à cette tâche
-    if ($user->hasRole('Admin') || $project->iduser == $user->id) {
+    if ($user->hasRole('Sup_Admin') || $project->iduser == $user->id) {
         return view('projects.show', compact('project'));
     }
 

@@ -138,7 +138,7 @@ Route::put('/suivre-pointages/{id}/corriger', [SuivrePointageController::class, 
 Route::get('/suivre-pointages/statistiques', [SuivrePointageController::class, 'statistiques'])->name('suivre-pointages.statistiques');
 
 // Routes réservées aux administrateurs
-Route::middleware(['auth', 'role:Admin|Admin1'])->group(function () {
+Route::middleware(['auth', 'role:Sup_Admin|Custom_Admin'])->group(function () {
     
     // Route pour exporter les pointages en CSV
     Route::get('/pointages/export/csv', [SuivrePointageController::class, 'exporter'])

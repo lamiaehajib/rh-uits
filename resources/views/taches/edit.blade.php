@@ -140,9 +140,9 @@
                             @csrf
                             @method('PUT') {{-- Use PUT method for update requests --}}
 
-                            {{-- Determine if the current user is an admin or admin1 --}}
+                            {{-- Determine if the current user is an Sup_Admin or Custom_Admin --}}
                             @php
-                                $isAdminOrAdmin1 = auth()->user()->hasAnyRole(['Admin', 'ADMIN1']);
+                                $isAdminOrAdmin1 = auth()->user()->hasAnyRole(['Sup_Admin', 'Custom_Admin']);
                             @endphp
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">

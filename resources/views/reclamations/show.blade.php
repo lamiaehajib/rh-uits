@@ -120,7 +120,7 @@
                             @else bg-gray-100 text-gray-800 @endif">
                             {{ ucfirst(str_replace('_', ' ', $reclamation->status)) }}
                         </span>
-                        @if(auth()->user()->hasRole('Admin'))
+                        @if(auth()->user()->hasRole('Sup_Admin'))
                         <div class="mt-2">
                             <button type="button" onclick="openStatusModal()" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:border-indigo-700 focus:ring-indigo active:bg-indigo-700 transition ease-in-out duration-150">
                                 <i class="fas fa-sync-alt mr-1"></i> Mettre à jour le statut
@@ -146,7 +146,7 @@
         {{-- Added a horizontal rule for visual separation on smaller screens --}}
         <hr class="my-8 border-gray-200 block md:hidden">
 
-        @if($reclamation->admin_notes && auth()->user()->hasRole('Admin'))
+        @if($reclamation->admin_notes && auth()->user()->hasRole('Sup_Admin'))
         <div class="bg-white rounded-lg shadow-lg p-6 mb-8 card-hover-scale">
             <h3 class="text-2xl font-semibold text-gray-700 mb-6 border-b pb-3 flex items-center">
                 <i class="fas fa-sticky-note mr-3 color-primary icon-bounce"></i> Notes Administrateur
@@ -261,7 +261,7 @@
             @endif
         </div>
 
-        @if(auth()->user()->hasRole('Admin'))
+        @if(auth()->user()->hasRole('Sup_Admin'))
         <div id="statusModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
             <div class="relative top-20 mx-auto p-5 border w-11/12 sm:w-96 shadow-lg rounded-md bg-white"> {{-- Adjusted width for mobile --}}
                 <div class="mt-3 text-center">

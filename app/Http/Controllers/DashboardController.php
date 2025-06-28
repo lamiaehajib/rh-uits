@@ -55,8 +55,8 @@ class DashboardController extends Controller
         // Cache key for performance
         $cacheKey = "dashboard_stats_" . $user->id . "_" . md5($searchTerm . $statusFilter . $dateFilter);
 
-        // Determine if the user is an admin
-        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Admin1');
+        // Determine if the user is an Sup_Admin
+        $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
         if ($isAdmin) { 
             $userCount = User::count();
@@ -66,7 +66,7 @@ class DashboardController extends Controller
                 return $this->getAdvancedStats($dateFilter);
             });
 
-            // Apply search and filters for Admin (these are likely just for the tables on the dashboard, not the charts)
+            // Apply search and filters for Sup_Admin (these are likely just for the tables on the dashboard, not the charts)
             $tasks = Tache::with(['user'])
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('description', 'like', '%' . $searchTerm . '%')
@@ -393,7 +393,7 @@ class DashboardController extends Controller
     private function getRecentActivities($user)
     {
         $activities = collect();
-        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Admin1');
+        $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
         // Recent tasks
         $taskQuery = Tache::query();
@@ -449,7 +449,7 @@ class DashboardController extends Controller
     {
         $thisMonth = now()->month;
         $lastMonth = now()->subMonth()->month;
-        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Admin1');
+        $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
         $thisMonthTasksQuery = Tache::query();
         $lastMonthTasksQuery = Tache::query();
@@ -492,8 +492,8 @@ class DashboardController extends Controller
      */
     private function getCompletionRate($dateFilter = null)
     {
-        // This method calculates overall completion rate, potentially for admins.
-        // If you want even admin stats to only count tasks whose datedebut has arrived,
+        // This method calculates overall completion rate, potentially for Sup_Admin.
+        // If you want even Sup_Admin stats to only count tasks whose datedebut has arrived,
         // you should add the datedebut filter here.
         $query = Tache::query();
         if ($dateFilter) {
@@ -661,7 +661,7 @@ class DashboardController extends Controller
     private function getTasksChartData($user, $period)
     {
         $query = Tache::query();
-        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Admin1');
+        $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
         if (!$isAdmin) {
             $query->where('iduser', $user->id);
@@ -726,7 +726,7 @@ class DashboardController extends Controller
 
         $now = Carbon::now();
         $startOfThisWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
-        $isAdmin = $user->hasRole('Admin') || $user->hasRole('Admin1');
+        $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
 
         for ($i = 3; $i >= 0; $i--) {
@@ -768,7 +768,7 @@ class DashboardController extends Controller
 
         $query = SuivrePointage::query();
 
-        if (!$user->hasRole('Admin') && !$user->hasRole('Admin1')) {
+        if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) {
             $query->where('iduser', $user->id);
         }
 
@@ -869,7 +869,7 @@ class DashboardController extends Controller
     {
         $query = SuivrePointage::query();
 
-        if (!$user->hasRole('Admin') && !$user->hasRole('Admin1')) {
+        if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) {
             $query->where('iduser', $user->id);
         }
 
@@ -937,7 +937,7 @@ class DashboardController extends Controller
     {
         $query = Reclamation::with('user')->latest();
 
-        if ($user->hasRole('Admin') || $user->hasRole('Admin1')) {
+        if ($user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin')) {
             // Admin sees unresolved (pending, in_progress, closed) reclamations
             $query->whereIn('status', ['pending', 'in_progress', 'closed']);
         } else {

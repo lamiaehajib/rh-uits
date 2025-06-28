@@ -22,7 +22,7 @@
                         @csrf
                         @method('PUT')
 
-                        @if(auth()->user()->hasRole('Admin'))
+                        @if(auth()->user()->hasRole('Sup_Admin'))
                             <!-- Admin-only form: Only status and admin_notes are editable -->
                             <div class="grid grid-cols-1 gap-6">
                                 <div>

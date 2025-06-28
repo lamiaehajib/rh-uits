@@ -210,7 +210,7 @@
                                     </select>
                                 </div>
 
-                                @if (auth()->user()->hasRole(['Admin', 'Admin1',  'ADMIN1', 'ADMIN2']))
+                                @if (auth()->user()->hasRole(['Sup_Admin', 'Custom_Admin']))
                                         <div>
                                             <label for="user_filter" class="block text-sm font-medium text-gray-700">{{ __('Filtrer par Utilisateur') }}</label>
                                             <select id="user_filter" name="user_filter" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">

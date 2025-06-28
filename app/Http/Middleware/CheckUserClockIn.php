@@ -26,9 +26,9 @@ class CheckUserClockIn
 
         $user = Auth::user();
 
-        // Les administrateurs et les rôles spécifiques (comme Admin1) n'ont pas besoin de pointer.
+        // Les administrateurs et les rôles spécifiques (comme Custom_Admin) n'ont pas besoin de pointer.
         // Les laisser passer directement.
-        if ($user->hasRole('Admin') || $user->hasRole('Admin1')) {
+        if ($user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin')) {
             return $next($request);
         }
 
