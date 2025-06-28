@@ -110,7 +110,7 @@ class TacheController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'description' => 'required|string|max:2000',
+            'description' => 'required|string|max:4000',
             'duree' => 'required|string|max:255',
             'datedebut' => 'required|date|after_or_equal:today',
             'status' => 'required|in:nouveau,en cours,termine',
@@ -186,7 +186,7 @@ class TacheController extends Controller
         if ($this->isAdmin($user)) {
             // Admin can modify everything
             $request->validate([
-                'description' => 'required|string|max:4000',
+                'description' => 'required|string|max:5000',
 
                 'duree' => 'required|string|max:255',
                 'datedebut' => 'required|date',
