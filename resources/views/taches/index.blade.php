@@ -272,14 +272,14 @@
                                     <tbody>
                                         @foreach ($taches as $tache)
                                             <tr class="bg-white border-b hover:bg-gray-50 transition duration-150 ease-in-out">
-                                                <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">
-                                                    {{ $tache->description }}
-                                                    @if($tache->notes)
-                                                        <div class="text-xs text-gray-500 mt-1">
-                                                            <i class="fas fa-sticky-note mr-1"></i> {{ Str::limit($tache->notes, 50) }}
-                                                        </div>
-                                                    @endif
-                                                </td>
+                                               <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">
+    {{ Str::words($tache->description, 3, '...') }}
+    @if($tache->notes)
+        <div class="text-xs text-gray-500 mt-1">
+            <i class="fas fa-sticky-note mr-1"></i> {{ Str::limit($tache->notes, 50) }}
+        </div>
+    @endif
+</td>
                                                 <td class="py-4 px-6">{{ $tache->duree }}</td>
                                                 <td class="py-4 px-6">{{ \Carbon\Carbon::parse($tache->datedebut)->format('d/m/Y') }}</td>
                                                 <td class="py-4 px-6">

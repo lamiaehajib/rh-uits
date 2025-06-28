@@ -205,6 +205,7 @@
                                             </span>
                                         </div>
                                     </td>
+                                    
                                     <td>{{ $user->created_at->format('d/m/Y') }}</td>
                                     <td>
                                         <div class="d-flex flex-nowrap gap-2">

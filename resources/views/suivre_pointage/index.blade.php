@@ -875,12 +875,12 @@
                     if (!isAdmin) {
                         if (!window.isSecureContext || !navigator.geolocation) {
                             if (pointerArriveeBtn) {
-                                pointerArriveeBtn.textContent = 'Pointer l\'Arrivée (بدون تحديد موقع)';
+                               pointerArriveeBtn.textContent = 'Pointer l\'Arrivée (sans localisation)';
                                 pointerArriveeBtn.classList.add('bg-orange-500'); // Change color to hint
                                 pointerArriveeBtn.classList.remove('bg-green-600');
                             }
                             if (pointerSortieBtn) { // For the departure button as well
-                                pointerSortieBtn.textContent = 'Pointer la Sortie (بدون تحديد موقع)';
+                                pointerSortieBtn.textContent = 'Pointer la Sortie (sans localisation)';
                                 pointerSortieBtn.classList.add('bg-orange-500');
                                 pointerSortieBtn.classList.remove('bg-primary-red');
                             }
