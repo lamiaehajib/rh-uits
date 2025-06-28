@@ -140,15 +140,7 @@
                                 <th scope="col">
                                     <input type="checkbox" id="selectAll" class="form-check-input accent-primary-red">
                                 </th>
-                                <th scope="col">
-                                    <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'id', 'sort_direction' => request('sort_direction') == 'ASC' ? 'DESC' : 'ASC']) }}"
-                                       class="text-white text-decoration-none d-flex align-items-center hover:text-gray-300 transition duration-200">
-                                        #ID
-                                        @if(request('sort_by') == 'id')
-                                            <i class="fas fa-sort-{{ request('sort_direction') == 'ASC' ? 'up' : 'down' }} ms-1"></i>
-                                        @endif
-                                    </a>
-                                </th>
+                               
                                 <th scope="col">
                                     <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'name', 'sort_direction' => request('sort_direction') == 'ASC' ? 'DESC' : 'ASC']) }}"
                                        class="text-white text-decoration-none d-flex align-items-center hover:text-gray-300 transition duration-200">
@@ -162,6 +154,7 @@
                                 <th scope="col">Code</th>
                                 <th scope="col">Téléphone</th>
                                 <th scope="col">Poste</th>
+                                <th scope="col">Journées off</th>
                                 <th scope="col">Rôle</th>
                                 <th scope="col">Statut</th>
                                 <th scope="col">Date Création</th>
@@ -174,7 +167,7 @@
                                     <td>
                                         <input type="checkbox" class="form-check-input user-checkbox accent-primary-red" value="{{ $user->id }}">
                                     </td>
-                                    <td>{{ $user->id }}</td>
+                                   
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="avatar-circle-sm text-white me-2 shadow-sm" style="background-color: #D32F2F;">
@@ -187,6 +180,7 @@
                                     <td><span class="badge bg-secondary text-white px-2 py-1 rounded-md">{{ $user->code }}</span></td>
                                     <td>{{ $user->tele }}</td>
                                     <td>{{ $user->poste }}</td>
+                                    <td>{{ $user->repos }}</td>
                                     <td>
                                         @if(!empty($user->getRoleNames()))
                                             @foreach($user->getRoleNames() as $rolename)
@@ -205,7 +199,7 @@
                                             </span>
                                         </div>
                                     </td>
-                                    
+
                                     <td>{{ $user->created_at->format('d/m/Y') }}</td>
                                     <td>
                                         <div class="d-flex flex-nowrap gap-2">
