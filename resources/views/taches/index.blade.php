@@ -1,26 +1,25 @@
+{{-- resources/views/taches/index.blade.php --}}
+
 <x-app-layout>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="csrf-token" content="{{ csrf_token() }}"> <!-- Ajouté pour les requêtes fetch (même si non utilisé directement pour "markAsComplete" maintenant, il est utile pour d'autres formulaires Laravel) -->
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>Gestion des Tâches</title>
-        <!-- Tailwind CSS CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
-            // Configure Tailwind CSS to use a custom primary color
             tailwind.config = {
                 theme: {
                     extend: {
                         colors: {
-                            'primary-red': '#D32F2F', // Votre couleur spécifiée
+                            'primary-red': '#D32F2F',
                         },
                         fontFamily: {
-                            sans: ['Inter', 'sans-serif'], // Définit Inter comme police par défaut
+                            sans: ['Inter', 'sans-serif'],
                         }
                     }
                 }
             }
         </script>
-        <!-- Font Awesome pour les icônes -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
         <style>
             /* CSS personnalisé pour les animations et l'esthétique améliorée */
@@ -134,7 +133,6 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                            <!-- Total des Tâches -->
                             <div class="bg-blue-50 p-6 rounded-xl shadow-lg flex items-center justify-between card-hover-effect animate-fade-in delay-300">
                                 <div>
                                     <h3 class="text-lg font-semibold text-blue-700">{{ __('Total des Tâches') }}</h3>
@@ -142,7 +140,6 @@
                                 </div>
                                 <i class="fas fa-list-ul text-blue-500 text-5xl opacity-75"></i>
                             </div>
-                            <!-- Nouvelles Tâches -->
                             <div class="bg-yellow-50 p-6 rounded-xl shadow-lg flex items-center justify-between card-hover-effect animate-fade-in delay-400">
                                 <div>
                                     <h3 class="text-lg font-semibold text-yellow-700">{{ __('Nouvelles Tâches') }}</h3>
@@ -150,7 +147,6 @@
                                 </div>
                                 <i class="fas fa-bell text-yellow-500 text-5xl opacity-75"></i>
                             </div>
-                            <!-- Tâches En Cours -->
                             <div class="bg-purple-50 p-6 rounded-xl shadow-lg flex items-center justify-between card-hover-effect animate-fade-in delay-500">
                                 <div>
                                     <h3 class="text-lg font-semibold text-purple-700">{{ __('Tâches En Cours') }}</h3>
@@ -158,7 +154,6 @@
                                 </div>
                                 <i class="fas fa-spinner text-purple-500 text-5xl animate-spin-slow opacity-75"></i>
                             </div>
-                            <!-- Tâches Terminées -->
                             <div class="bg-green-50 p-6 rounded-xl shadow-lg flex items-center justify-between card-hover-effect animate-fade-in delay-600">
                                 <div>
                                     <h3 class="text-lg font-semibold text-green-700">{{ __('Tâches Terminées') }}</h3>
@@ -166,7 +161,6 @@
                                 </div>
                                 <i class="fas fa-check-circle text-green-500 text-5xl opacity-75"></i>
                             </div>
-                            <!-- Tâches en Retard -->
                             <div class="bg-red-50 p-6 rounded-xl shadow-lg flex items-center justify-between card-hover-effect animate-fade-in delay-700">
                                 <div>
                                     <h3 class="text-lg font-semibold text-red-700">{{ __('Tâches en Retard') }}</h3>
@@ -216,7 +210,7 @@
                                             <select id="user_filter" name="user_filter" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
                                                 <option value="all" {{ request('user_filter') == 'all' ? 'selected' : '' }}>{{ __('Tous les utilisateurs') }}</option>
                                                 @foreach ($users as $user)
-                                                        <option value="{{ $user->id }}" {{ request('user_filter') == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
+                                                            <option value="{{ $user->id }}" {{ request('user_filter') == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -228,7 +222,8 @@
                                         <option value="created_at" {{ request('sort_by') == 'created_at' ? 'selected' : '' }}>{{ __('Date de Création') }}</option>
                                         <option value="datedebut" {{ request('sort_by') == 'datedebut' ? 'selected' : '' }}>{{ __('Date de Début') }}</option>
                                         <option value="status" {{ request('sort_by') == 'status' ? 'selected' : '' }}>{{ __('Statut') }}</option>
-                                        
+                                        {{-- ADD THIS NEW OPTION --}}
+                                        <option value="description" {{ request('sort_by') == 'description' ? 'selected' : '' }}>{{ __('Description (A-Z)') }}</option>
                                     </select>
                                 </div>
 
@@ -260,12 +255,25 @@
                                 <table class="w-full text-sm text-left text-gray-700">
                                     <thead class="text-xs text-gray-700 uppercase bg-gray-100 rounded-t-lg">
                                         <tr>
-                                            <th scope="col" class="py-3 px-6">{{ __('Description') }}</th>
+                                            {{-- Update the Description Header to include sorting --}}
+                                            <th scope="col" class="py-3 px-6">
+                                                <a href="{{ route('taches.index', array_merge(request()->query(), ['sort_by' => 'description', 'sort_direction' => request('sort_by') == 'description' && request('sort_direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
+                                                    {{ __('Description') }}
+                                                    @if (request('sort_by') == 'description')
+                                                        @if (request('sort_direction') == 'asc')
+                                                            <i class="fas fa-sort-alpha-down ml-1"></i>
+                                                        @else
+                                                            <i class="fas fa-sort-alpha-up-alt ml-1"></i>
+                                                        @endif
+                                                    @else
+                                                        <i class="fas fa-sort ml-1 text-gray-400"></i>
+                                                    @endif
+                                                </a>
+                                            </th>
                                             <th scope="col" class="py-3 px-6">{{ __('Durée') }}</th>
                                             <th scope="col" class="py-3 px-6">{{ __('Date Début') }}</th>
                                             <th scope="col" class="py-3 px-6">{{ __('Statut') }}</th>
                                             <th scope="col" class="py-3 px-6">{{ __('Affectée à') }}</th>
-                                            
                                             <th scope="col" class="py-3 px-6">{{ __('Actions') }}</th>
                                         </tr>
                                     </thead>
@@ -273,13 +281,13 @@
                                         @foreach ($taches as $tache)
                                             <tr class="bg-white border-b hover:bg-gray-50 transition duration-150 ease-in-out">
                                                <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">
-    {{ Str::words($tache->description, 3, '...') }}
-    @if($tache->notes)
-        <div class="text-xs text-gray-500 mt-1">
-            <i class="fas fa-sticky-note mr-1"></i> {{ Str::limit($tache->notes, 50) }}
-        </div>
-    @endif
-</td>
+                                                {{ Str::words($tache->description, 3, '...') }}
+                                                @if($tache->notes)
+                                                    <div class="text-xs text-gray-500 mt-1">
+                                                        <i class="fas fa-sticky-note mr-1"></i> {{ Str::limit($tache->notes, 50) }}
+                                                    </div>
+                                                @endif
+                                                </td>
                                                 <td class="py-4 px-6">{{ $tache->duree }}</td>
                                                 <td class="py-4 px-6">{{ \Carbon\Carbon::parse($tache->datedebut)->format('d/m/Y') }}</td>
                                                 <td class="py-4 px-6">
@@ -309,15 +317,15 @@
                                                                 <i class="fas fa-edit text-lg"></i>
                                                             </a>
                                                     @endcan
-                                                 @can('tache-delete')
-    <button type="button" title="Supprimer" onclick="if(confirm('{{ __('Êtes-vous sûr de vouloir supprimer cette tâche ?') }}')) { document.getElementById('delete-form-{{ $tache->id }}').submit(); }" class="text-primary-red hover:text-red-700 transition duration-150 ease-in-out transform hover:scale-110">
-        <i class="fas fa-trash text-lg"></i>
-    </button>
-    <form id="delete-form-{{ $tache->id }}" action="{{ route('taches.destroy', $tache->id) }}" method="POST" style="display: none;">
-        @csrf
-        @method('DELETE')
-    </form>
-@endcan
+                                                @can('tache-delete')
+                                                    <button type="button" title="Supprimer" onclick="if(confirm('{{ __('Êtes-vous sûr de vouloir supprimer cette tâche ?') }}')) { document.getElementById('delete-form-{{ $tache->id }}').submit(); }" class="text-primary-red hover:text-red-700 transition duration-150 ease-in-out transform hover:scale-110">
+                                                        <i class="fas fa-trash text-lg"></i>
+                                                    </button>
+                                                    <form id="delete-form-{{ $tache->id }}" action="{{ route('taches.destroy', $tache->id) }}" method="POST" style="display: none;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                    </form>
+                                                @endcan
                                                     @can('tache-create') {{-- Supposons que la duplication nécessite la permission de création --}}
                                                     <form action="{{ route('taches.duplicate', $tache->id) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir dupliquer cette tâche ?');" class="inline-block">
                                                         @csrf
@@ -327,7 +335,6 @@
                                                     </form>
                                                     @endcan
                                                     @if($tache->status != 'termine')
-                                                    <!-- Bouton "Marquer comme Terminé" qui soumet un formulaire -->
                                                     <form id="complete-form-{{ $tache->id }}" action="{{ route('taches.complete', $tache->id) }}" method="POST" class="inline-block">
                                                         @csrf
                                                         @method('PATCH')

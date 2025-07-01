@@ -22,84 +22,88 @@ class TacheController extends Controller
         $this->middleware('permission:tache-show', ['only' => ['show']]);
     }
 
-    public function index(Request $request)
-    {
-        $user = auth()->user();
-        $search = $request->get('search');
-        $status = $request->get('status');
-        $date_filter = $request->get('date_filter');
-        $user_filter = $request->get('user_filter');
-        $sort_by = $request->get('sort_by', 'created_at');
-        $sort_direction = $request->get('sort_direction', 'desc');
+    // app/Http/Controllers/TacheController.php
 
-        // Build the query
-        $query = Tache::with('user');
+public function index(Request $request)
+{
+    $user = auth()->user();
+    $search = $request->get('search');
+    $status = $request->get('status');
+    $date_filter = $request->get('date_filter');
+    $user_filter = $request->get('user_filter');
+    // Allow sorting by 'description'
+    $sort_by = $request->get('sort_by', 'created_at');
+    $sort_direction = $request->get('sort_direction', 'desc');
 
-        // Only show tasks where datedebut is today or in the past, UNLESS it's an admin viewing all tasks
-        if (!$this->isAdmin($user)) {
-            $query->where('datedebut', '<=', Carbon::now());
-        }
+    // Build the query
+    $query = Tache::with('user');
 
-        // Search filter
-        if ($search) {
-            $query->where(function($q) use ($search) {
-                $q->where('description', 'like', "%{$search}%")
-                    ->orWhere('status', 'like', "%{$search}%")
-                    ->orWhereDate('date', 'like', "%{$search}%");
-            });
-        }
-
-        // Status filter
-        if ($status && $status !== 'all') {
-            $query->where('status', $status);
-        }
-
-        // Date filter
-        if ($date_filter) {
-            switch ($date_filter) {
-                case 'today':
-                    $query->whereDate('datedebut', Carbon::today());
-                    break;
-                case 'this_week':
-                    $query->whereBetween('datedebut', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
-                    break;
-                case 'this_month':
-                    $query->whereMonth('datedebut', Carbon::now()->month);
-                    break;
-                case 'overdue':
-                    $query->where('datedebut', '<', Carbon::now())
-                                ->where('status', '!=', 'termine');
-                    break;
-            }
-        }
-
-        // User filter (for admins)
-        if ($user_filter && $user_filter !== 'all' && $this->isAdmin($user)) {
-            $query->where('iduser', $user_filter);
-        }
-
-        // Sorting
-        if ($sort_by === 'priority') {
-            $query->orderByRaw("FIELD(status, 'en cours', 'nouveau', 'termine')");
-        } else {
-            $query->orderBy($sort_by, $sort_direction);
-        }
-
-        // Role-based access
-        if (!$this->isAdmin($user)) {
-            $query->where('iduser', $user->id);
-        }
-
-        $taches = $query->paginate(10)->appends($request->query());
-
-        // Get statistics
-        $stats = $this->getTaskStats($user);
-
-        // Get users for filter (only for admins)
-        $users = $this->isAdmin($user) ? User::all() : collect();
-
-        return view('taches.index', compact('taches', 'stats', 'users'));
+    // Only show tasks where datedebut is today or in the past, UNLESS it's an admin viewing all tasks
+    if (!$this->isAdmin($user)) {
+        $query->where('datedebut', '<=', Carbon::now());
     }
+
+    // Search filter
+    if ($search) {
+        $query->where(function($q) use ($search) {
+            $q->where('description', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%")
+                ->orWhereDate('date', 'like', "%{$search}%");
+        });
+    }
+
+    // Status filter
+    if ($status && $status !== 'all') {
+        $query->where('status', $status);
+    }
+
+    // Date filter
+    if ($date_filter) {
+        switch ($date_filter) {
+            case 'today':
+                $query->whereDate('datedebut', Carbon::today());
+                break;
+            case 'this_week':
+                $query->whereBetween('datedebut', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                break;
+            case 'this_month':
+                $query->whereMonth('datedebut', Carbon::now()->month);
+                break;
+            case 'overdue':
+                $query->where('datedebut', '<', Carbon::now())
+                        ->where('status', '!=', 'termine');
+                break;
+        }
+    }
+
+    // User filter (for admins)
+    if ($user_filter && $user_filter !== 'all' && $this->isAdmin($user)) {
+        $query->where('iduser', $user_filter);
+    }
+
+    // Sorting
+    if ($sort_by === 'priority') {
+        $query->orderByRaw("FIELD(status, 'en cours', 'nouveau', 'termine')");
+    } else {
+        // Apply sorting based on the selected column and direction
+        $query->orderBy($sort_by, $sort_direction);
+    }
+
+    // Role-based access
+    if (!$this->isAdmin($user)) {
+        $query->where('iduser', $user->id);
+    }
+
+    $taches = $query->paginate(10)->appends($request->query());
+
+    // Get statistics
+    $stats = $this->getTaskStats($user);
+
+    // Get users for filter (only for admins)
+    $users = $this->isAdmin($user) ? User::all() : collect();
+
+    return view('taches.index', compact('taches', 'stats', 'users'));
+}
 
     public function create()
     {
