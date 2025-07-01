@@ -268,7 +268,7 @@
                                     <i class="fas fa-filter mr-2"></i> Filtrer
                                 </button>
                                 <a href="{{ route('objectifs.index') }}" class="inline-flex items-center justify-center px-6 py-3 bg-gray-200 border border-transparent rounded-full font-bold text-sm text-gray-700 uppercase tracking-wider shadow-md btn-secondary w-full sm:w-auto">
-                                    <i class="fas fa-undo mr-2"></i> 
+                                    <i class="fas fa-undo mr-2"></i>
                                 </a>
                             </div>
                         </form>
@@ -296,7 +296,7 @@
                                     </thead>
                                     <tbody class="bg-white divide-y divide-gray-200">
                                         @foreach ($objectifs as $index => $objectif)
-                                            <tr class="bg-white border-b hover:bg-gray-50 transition duration-150 ease-in-out card-hover-effect animate-fade-in" style="animation-delay: {{ 200 + ($index * 50) }}ms;">
+                                            <tr class="bg-white border-b hover:bg-gray-50 transition duration-150 ease-in-out transform hover:scale-100 animate-fade-in" style="animation-delay: {{ 200 + ($index * 50) }}ms;">
                                                 <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">{{ $objectif->date }}</td>
                                                 <td class="py-4 px-6 whitespace-nowrap text-sm text-gray-800">
                                                     <span class="px-3 py-1 rounded-full text-xs font-semibold
@@ -327,25 +327,36 @@
                                                 </td>
 
                                                 <td class="py-4 px-6 flex items-center space-x-4">
-                                                     @can('objectif-show')
+                                                    @can('objectif-show')
                                                     <a href="{{ route('objectifs.show', $objectif->id) }}" title="Voir" class="text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out transform hover:scale-110">
                                                         <i class="fas fa-eye text-lg"></i>
                                                     </a>
                                                     @endcan
-                                                   @can('objectif-edit')
+                                                    @can('objectif-edit')
                                                     <a href="{{ route('objectifs.edit', $objectif->id) }}" title="Modifier" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out transform hover:scale-110">
                                                         <i class="fas fa-edit text-lg"></i>
                                                     </a>
                                                     @endcan
-                                                     @can('objectif-delete')
-                                                    <button type="button" title="Supprimer" onclick="if(confirm('{{ __('Êtes-vous sûr de vouloir supprimer cet objectif ?') }}')) { document.getElementById('delete-form-{{ $objectif->id }}').submit(); }" class="text-primary-red hover:text-red-700 transition duration-150 ease-in-out transform hover:scale-110">
+                                                    {{-- Nouveau bouton de duplication --}}
+                                                   
+                                                    @can('objectif-create')
+                                                                    <button type="button" title="Dupliquer l'objectif" onclick="confirmDuplicate({{ $objectif->id }})" class="text-teal-600 hover:text-teal-800 transition duration-150 ease-in-out transform hover:scale-110">
+                                                                        <i class="fas fa-copy text-lg"></i>
+                                                                    </button>
+                                                                    <form id="duplicate-form-{{ $objectif->id }}" action="{{ route('objectifs.duplicate', $objectif->id) }}" method="POST" style="display: none;">
+                                                                        @csrf
+                                                                    </form>
+                                                                    @endcan
+                                                   
+                                                    @can('objectif-delete')
+                                                    <button type="button" title="Supprimer" onclick="confirmDelete({{ $objectif->id }})" class="text-primary-red hover:text-red-700 transition duration-150 ease-in-out transform hover:scale-110">
                                                         <i class="fas fa-trash text-lg"></i>
                                                     </button>
                                                     <form id="delete-form-{{ $objectif->id }}" action="{{ route('objectifs.destroy', $objectif->id) }}" method="POST" style="display: none;">
                                                         @csrf
                                                         @method('DELETE')
                                                     </form>
-                                                   @endcan
+                                                    @endcan
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -451,6 +462,20 @@
 
                 function showCustomError(message, callback = null) {
                     return showCustomModal(message, 'error', callback);
+                }
+
+                // Function to handle delete confirmation using the custom modal
+                function confirmDelete(id) {
+                    showCustomConfirm("Êtes-vous sûr de vouloir supprimer cet objectif ?", () => {
+                        document.getElementById('delete-form-' + id).submit();
+                    });
+                }
+
+                // Function to handle duplicate confirmation using the custom modal
+                function confirmDuplicate(id) {
+                    showCustomConfirm("Voulez-vous vraiment dupliquer cet objectif ? Une nouvelle copie sera créée avec la progression à 0% et une nouvelle date.", () => {
+                        document.getElementById('duplicate-form-' + id).submit();
+                    });
                 }
             </script>
         @endpush

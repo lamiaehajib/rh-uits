@@ -155,7 +155,7 @@ Route::get('/objectifs/export', [ObjectifController::class, 'export'])->name('ob
 Route::get('/objectifs/all', [ObjectifController::class, 'getAllObjectifs'])->name('objectifs.all');
 Route::post('objectifs/bulk-action', [ObjectifController::class, 'bulkAction'])->name('objectifs.bulkAction');
 Route::post('objectifs/{objectif}/update-progress', [ObjectifController::class, 'updateProgress'])->name('objectifs.updateProgress');
-
+Route::post('objectifs/{objectif}/duplicate', [ObjectifController::class, 'duplicate'])->name('objectifs.duplicate');
 // ✅ خليه فالأخير
 Route::resource('objectifs', ObjectifController::class);
 

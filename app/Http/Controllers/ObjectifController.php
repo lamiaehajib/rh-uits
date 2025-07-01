@@ -904,4 +904,62 @@ class ObjectifController extends Controller
 
         return $isOverdue && $calculatedProgress < 100;
     }
+
+
+
+    public function duplicate(Objectif $objectif)
+    {
+        // === LOGIQUE D'AUTORISATION UNIQUE : VÉRIFIE SEULEMENT 'objectif-create' ===
+        // Si l'utilisateur n'a PAS la permission 'objectif-create', il n'est pas autorisé.
+        if (!Auth::user()->can('objectif-create')) {
+            abort(403, 'Unauthorized action. You do not have the necessary permissions to duplicate objectives (requires objectif-create).');
+        }
+
+        // Si tu avais une politique (Policy) `ObjectifPolicy` avec une méthode `duplicate`,
+        // tu devrais la supprimer ou la commenter, ou t'assurer qu'elle vérifie aussi uniquement 'objectif-create'.
+        // Par exemple:
+        // public function duplicate(User $user, Objectif $objectif) {
+        //     return $user->can('objectif-create');
+        // }
+
+
+        try {
+            DB::beginTransaction();
+
+            $newObjectif = $objectif->replicate();
+            $newObjectif->date = Carbon::now()->addMonth()->toDateString();
+            $newObjectif->progress = 0;
+            $newObjectif->description = 'Copie de : ' . $objectif->description;
+            $newObjectif->created_by = auth()->id();
+            $newObjectif->created_at = Carbon::now();
+            $newObjectif->updated_at = Carbon::now();
+
+            $newObjectif->save();
+
+            Cache::forget('objectif_stats_' . $newObjectif->iduser);
+            if (auth()->user()->hasRole('Sup_Admin')) {
+                Cache::forget('objectif_stats_' . auth()->id());
+            }
+
+            Log::info('Objectif duplicated', [
+                'original_objectif_id' => $objectif->id,
+                'new_objectif_id' => $newObjectif->id,
+                'duplicated_by' => auth()->id(),
+                'assigned_to' => $newObjectif->iduser
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('objectifs.index')->with('success', 'Objectif dupliqué avec succès. Le nouvel objectif a une progression de 0% et une date un mois plus tard.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Erreur lors de la duplication de l\'objectif', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'objectif_id' => $objectif->id
+            ]);
+            return back()->with('error', 'Une erreur est survenue lors de la duplication de l\'objectif : ' . $e->getMessage());
+        }
+    }
 }
