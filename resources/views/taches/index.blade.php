@@ -27,7 +27,7 @@
                 font-family: 'Inter', sans-serif;
             }
 
-            /* Animation d'apparition en fondu pour les éléments */
+            
             .animate-fade-in {
                 animation: fadeIn 0.5s ease-out forwards;
                 opacity: 0;
