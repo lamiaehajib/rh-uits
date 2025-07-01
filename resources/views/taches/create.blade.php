@@ -138,6 +138,12 @@
                         <form action="{{ route('taches.store') }}" method="POST" class="space-y-6">
                             @csrf
 
+                            @php
+                                $user = auth()->user();
+                                $isAdmin = $user->hasAnyRole(['Sup_Admin', 'Custom_Admin']);
+                                $canCreateRetour = $user->hasAnyRole(['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH']);
+                            @endphp
+
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 <!-- Titre de la Tâche -->
                                 <div>
@@ -244,8 +250,8 @@
                                         class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
                                         focus:ring-primary-red focus:border-primary-red
                                         @error('iduser') border-primary-red ring-red-200 @enderror" required>
-                                        @foreach($users as $user)
-                                            <option value="{{ $user->id }}" {{ old('iduser') == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
+                                        @foreach($users as $userOption)
+                                            <option value="{{ $userOption->id }}" {{ old('iduser') == $userOption->id ? 'selected' : '' }}>{{ $userOption->name }}</option>
                                         @endforeach
                                     </select>
                                     @error('iduser')
@@ -262,16 +268,17 @@
                                         class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
                                         focus:ring-primary-red focus:border-primary-red
                                         @error('priorite') border-primary-red ring-red-200 @enderror" required>
-                                        <option value="faible" {{ old('priorite') == 'faible' ? 'selected' : '' }}>{{ __('Faible') }}</option>
-                                        <option value="moyen" {{ old('priorite') == 'moyen' ? 'selected' : '' }}>{{ __('Moyen') }}</option>
-                                        <option value="élevé" {{ old('priorite') == 'élevé' ? 'selected' : '' }}>{{ __('Élevé') }}</option>
+                                        <option value="faible" {{ old('priorite') == 'faible' ? 'selected' : '' }}>{{ __('Information ') }}</option>
+                                        <option value="moyen" {{ old('priorite') == 'moyen' ? 'selected' : '' }}>{{ __('Important') }}</option>
+                                        <option value="élevé" {{ old('priorite') == 'élevé' ? 'selected' : '' }}>{{ __('Urgent') }}</option>
                                     </select>
                                     @error('priorite')
                                         <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
 
-                                <!-- Retour de la Tâche (optional) -->
+                                <!-- Retour de la Tâche (optional) - Only visible for specific non-admin roles -->
+                                @if ($canCreateRetour && !$isAdmin)
                                 <div class="md:col-span-2"> <!-- Span across two columns for better layout -->
                                     <label for="retour" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-comment-dots mr-2 text-gray-500"></i> {{ __('Retour/Notes (Optionnel)') }}
@@ -285,6 +292,7 @@
                                         <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
+                                @endif
                             </div>
 
                             <div class="mt-8 flex items-center justify-end space-x-4">
