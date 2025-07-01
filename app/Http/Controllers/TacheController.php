@@ -209,7 +209,7 @@ class TacheController extends Controller
             $data['updated_by'] = auth()->id();
             
             $tache->update($data);
-        } elseif ($user->hasAnyRole(['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin','USER_TECH'])) { // Corrected syntax and logic
+        } elseif ($user->hasAnyRole(['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH'])) { // Added 'USER_TECH' role
             // These specific non-admin roles can only modify status and retour
             $request->validate([
                 'status' => 'required|in:nouveau,en cours,termine',

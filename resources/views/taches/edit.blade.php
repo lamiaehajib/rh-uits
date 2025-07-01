@@ -142,8 +142,11 @@
 
                             {{-- Determine if the current user is an Sup_Admin or Custom_Admin --}}
                             @php
-                                $isAdminOrAdmin1 = auth()->user()->hasAnyRole(['Sup_Admin', 'Custom_Admin']);
-                                $isUITS = auth()->user()->hasRole('UITS');
+                                $user = auth()->user();
+                                $isAdminOrAdmin1 = $user->hasAnyRole(['Sup_Admin', 'Custom_Admin']);
+                                // Define roles that can modify 'retour'
+                                $canModifyRetourRoles = ['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH'];
+                                $canEditRetour = $user->hasAnyRole($canModifyRetourRoles);
                             @endphp
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -268,8 +271,8 @@
                                         @error('iduser') border-primary-red ring-red-200 @enderror
                                         {{ !$isAdminOrAdmin1 ? 'bg-gray-100 cursor-not-allowed' : '' }}"
                                         {{ !$isAdminOrAdmin1 ? 'disabled' : '' }} required>
-                                        @foreach($users as $user)
-                                            <option value="{{ $user->id }}" {{ old('iduser', $tache->iduser) == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
+                                        @foreach($users as $userOption) {{-- Renamed $user to $userOption to avoid conflict with $user variable in @php block --}}
+                                            <option value="{{ $userOption->id }}" {{ old('iduser', $tache->iduser) == $userOption->id ? 'selected' : '' }}>{{ $userOption->name }}</option>
                                         @endforeach
                                     </select>
                                     @error('iduser')
@@ -314,9 +317,9 @@
                                         class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
                                         focus:ring-primary-red focus:border-primary-red
                                         @error('retour') border-primary-red ring-red-200 @enderror
-                                        {{ !$isAdminOrAdmin1 && !$isUITS ? 'bg-gray-100 cursor-not-allowed' : '' }}"
+                                        {{ !$isAdminOrAdmin1 && !$canEditRetour ? 'bg-gray-100 cursor-not-allowed' : '' }}"
                                         placeholder="{{ __('Ajoutez des notes ou un retour sur la tâche...') }}"
-                                        {{ !$isAdminOrAdmin1 && !$isUITS ? 'readonly' : '' }}>{{ old('retour', $tache->retour) }}</textarea>
+                                        {{ !$isAdminOrAdmin1 && !$canEditRetour ? 'readonly' : '' }}>{{ old('retour', $tache->retour) }}</textarea>
                                     @error('retour')
                                         <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
                                     @enderror
