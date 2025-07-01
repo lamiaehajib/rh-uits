@@ -112,7 +112,7 @@
                     <p class="break-words"><strong><i class="fas fa-clock mr-2 text-gray-500"></i> Heures:</strong> {{ $formation->nombre_heures }}</p>
                     <p class="break-words"><strong><i class="fas fa-calendar-check mr-2 text-gray-500"></i> Séances:</strong> {{ $formation->nombre_seances }}</p>
                     <p class="break-words"><strong><i class="fas fa-dollar-sign mr-2 text-gray-500"></i> Prix:</strong> {{ number_format($formation->prix, 2) }} DH</p>
-                    <p class="break-words"><strong><i class="fas fa-calendar-days mr-2 text-gray-500"></i> Durée:</strong> {{ $formation->duree }} jours</p>
+                    <p class="break-words"><strong><i class="fas fa-calendar-days mr-2 text-gray-500"></i> Durée:</strong>  {{ $formation->duree }} {{ $formation->duree_unit }}</p>
                     <p class="break-words"><strong><i class="fas fa-user-tie mr-2 text-gray-500"></i> Créé par:</strong> {{ $formation->createdBy->name ?? 'N/A' }}</p>
                 </div>
             </div>

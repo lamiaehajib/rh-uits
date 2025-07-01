@@ -209,19 +209,29 @@
                     </div>
 
                     {{-- Durée (jours) --}}
-                    <div>
-                        <label for="duree" class="block text-sm font-medium text-gray-700">Durée (jours) <span class="text-red-500">*</span></label>
-                        <div class="mt-1 flex rounded-md shadow-sm input-group"> {{-- Added input-group class --}}
-                            <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm input-group-text">
-                                <i class="fas fa-calendar-days"></i>
-                            </span>
-                            <input type="number" name="duree" id="duree" value="{{ old('duree') }}" min="1" required
-                                   class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-none rounded-r-md shadow-sm focus:outline-none focus:ring-primary-custom focus:border-primary-custom @error('duree') border-red-500 @enderror">
-                        </div>
-                        @error('duree')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                   <div class="mb-4"> {{-- Added a margin bottom for spacing --}}
+    <label for="duree" class="block text-sm font-medium text-gray-700">Durée <span class="text-red-500">*</span></label>
+    <div class="mt-1 flex rounded-md shadow-sm">
+        <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+            <i class="fas fa-calendar-days"></i>
+        </span>
+        <input type="number" name="duree" id="duree" value="{{ old('duree') }}" min="1" required
+               class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-none @error('duree') border-red-500 @enderror focus:outline-none focus:ring-primary-custom focus:border-primary-custom">
+
+        <select name="duree_unit" id="duree_unit" required
+                class="block px-3 py-2 border border-gray-300 rounded-r-md shadow-sm @error('duree_unit') border-red-500 @enderror focus:outline-none focus:ring-primary-custom focus:border-primary-custom">
+            <option value="jours" {{ old('duree_unit') == 'jours' ? 'selected' : '' }}>Jours</option>
+            <option value="semaines" {{ old('duree_unit') == 'semaines' ? 'selected' : '' }}>Semaines</option>
+            <option value="mois" {{ old('duree_unit') == 'mois' ? 'selected' : '' }}>Mois</option>
+        </select>
+    </div>
+    @error('duree')
+        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+    @enderror
+    @error('duree_unit')
+        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+    @enderror
+</div>
 
                     {{-- Prix (DH) --}}
                     <div>

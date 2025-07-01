@@ -124,6 +124,7 @@ class FormationController extends Controller
             'nombre_seances' => 'required|integer|min:1|max:100', // Nombre de séances (entier entre 1 et 100)
             'prix' => 'required|numeric|min:0', // Le prix (numérique, supérieur ou égal à 0)
             'duree' => 'required|integer|min:1|max:365', // Durée en jours (entier entre 1 et 365)
+            'duree_unit' => 'required|string|in:jours,semaines,mois',
         ], [
             // Messages d'erreur personnalisés
             'name.unique' => 'Une formation avec ce nom existe déjà.',
@@ -234,6 +235,7 @@ class FormationController extends Controller
             'nombre_seances' => 'required|integer|min:1|max:100',
             'prix' => 'required|numeric|min:0',
             'duree' => 'required|integer|min:1|max:365',
+            'duree_unit' => 'required|string|in:jours,semaines,mois',
         ], [
             // Messages d'erreur personnalisés
             'name.unique' => 'Une formation avec ce nom existe déjà.',
