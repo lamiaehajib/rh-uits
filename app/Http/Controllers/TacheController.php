@@ -24,86 +24,88 @@ class TacheController extends Controller
 
     // app/Http/Controllers/TacheController.php
 
-public function index(Request $request)
-{
-    $user = auth()->user();
-    $search = $request->get('search');
-    $status = $request->get('status');
-    $date_filter = $request->get('date_filter');
-    $user_filter = $request->get('user_filter');
-    // Allow sorting by 'description'
-    $sort_by = $request->get('sort_by', 'created_at');
-    $sort_direction = $request->get('sort_direction', 'desc');
+    public function index(Request $request)
+    {
+        $user = auth()->user();
+        $search = $request->get('search');
+        $status = $request->get('status');
+        $date_filter = $request->get('date_filter');
+        $user_filter = $request->get('user_filter');
+        // Allow sorting by 'description', 'titre', or 'priorite'
+        $sort_by = $request->get('sort_by', 'created_at');
+        $sort_direction = $request->get('sort_direction', 'desc');
 
-    // Build the query
-    $query = Tache::with('user');
+        // Build the query
+        $query = Tache::with('user');
 
-    // Only show tasks where datedebut is today or in the past, UNLESS it's an admin viewing all tasks
-    if (!$this->isAdmin($user)) {
-        $query->where('datedebut', '<=', Carbon::now());
-    }
-
-    // Search filter
-    if ($search) {
-        $query->where(function($q) use ($search) {
-            $q->where('description', 'like', "%{$search}%")
-                ->orWhere('status', 'like', "%{$search}%")
-                ->orWhereDate('date', 'like', "%{$search}%");
-        });
-    }
-
-    // Status filter
-    if ($status && $status !== 'all') {
-        $query->where('status', $status);
-    }
-
-    // Date filter
-    if ($date_filter) {
-        switch ($date_filter) {
-            case 'today':
-                $query->whereDate('datedebut', Carbon::today());
-                break;
-            case 'this_week':
-                $query->whereBetween('datedebut', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
-                break;
-            case 'this_month':
-                $query->whereMonth('datedebut', Carbon::now()->month);
-                break;
-            case 'overdue':
-                $query->where('datedebut', '<', Carbon::now())
-                        ->where('status', '!=', 'termine');
-                break;
+        // Only show tasks where datedebut is today or in the past, UNLESS it's an admin viewing all tasks
+        if (!$this->isAdmin($user)) {
+            $query->where('datedebut', '<=', Carbon::now());
         }
+
+        // Search filter
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhere('titre', 'like', "%{$search}%") // Added titre to search
+                    ->orWhereDate('date', 'like', "%{$search}%");
+            });
+        }
+
+        // Status filter
+        if ($status && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        // Date filter
+        if ($date_filter) {
+            switch ($date_filter) {
+                case 'today':
+                    $query->whereDate('datedebut', Carbon::today());
+                    break;
+                case 'this_week':
+                    $query->whereBetween('datedebut', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                    break;
+                case 'this_month':
+                    $query->whereMonth('datedebut', Carbon::now()->month);
+                    break;
+                case 'overdue':
+                    $query->where('datedebut', '<', Carbon::now())
+                                ->where('status', '!=', 'termine');
+                    break;
+            }
+        }
+
+        // User filter (for admins)
+        if ($user_filter && $user_filter !== 'all' && $this->isAdmin($user)) {
+            $query->where('iduser', $user_filter);
+        }
+
+        // Sorting
+        // Modified to handle 'priorite' as an enum for sorting
+        if ($sort_by === 'priorite') {
+            $query->orderByRaw("FIELD(priorite, 'élevé', 'moyen', 'faible') " . $sort_direction);
+        } else {
+            // Apply sorting based on the selected column and direction
+            $query->orderBy($sort_by, $sort_direction);
+        }
+
+        // Role-based access
+        if (!$this->isAdmin($user)) {
+            $query->where('iduser', $user->id);
+        }
+
+        $taches = $query->paginate(10)->appends($request->query());
+
+        // Get statistics
+        $stats = $this->getTaskStats($user);
+
+        // Get users for filter (only for admins)
+        $users = $this->isAdmin($user) ? User::all() : collect();
+
+        return view('taches.index', compact('taches', 'stats', 'users'));
     }
-
-    // User filter (for admins)
-    if ($user_filter && $user_filter !== 'all' && $this->isAdmin($user)) {
-        $query->where('iduser', $user_filter);
-    }
-
-    // Sorting
-    if ($sort_by === 'priority') {
-        $query->orderByRaw("FIELD(status, 'en cours', 'nouveau', 'termine')");
-    } else {
-        // Apply sorting based on the selected column and direction
-        $query->orderBy($sort_by, $sort_direction);
-    }
-
-    // Role-based access
-    if (!$this->isAdmin($user)) {
-        $query->where('iduser', $user->id);
-    }
-
-    $taches = $query->paginate(10)->appends($request->query());
-
-    // Get statistics
-    $stats = $this->getTaskStats($user);
-
-    // Get users for filter (only for admins)
-    $users = $this->isAdmin($user) ? User::all() : collect();
-
-    return view('taches.index', compact('taches', 'stats', 'users'));
-}
 
     public function create()
     {
@@ -114,14 +116,15 @@ public function index(Request $request)
     public function store(Request $request)
     {
         $request->validate([
+            'titre' => 'required|string|max:255', // Added validation for titre
             'description' => 'required|string|max:4000',
             'duree' => 'required|string|max:255',
             'datedebut' => 'required|date|after_or_equal:today',
             'status' => 'required|in:nouveau,en cours,termine',
             'date' => 'required|in:jour,semaine,mois',
             'iduser' => 'required|exists:users,id',
-            
-            
+            'priorite' => 'required|in:faible,moyen,élevé', // Added validation for priorite
+            'retour' => 'nullable|string|max:5000', // Added validation for retour
         ]);
 
         try {
@@ -130,7 +133,8 @@ public function index(Request $request)
             // Add creator info
             $data = $request->all();
             $data['created_by'] = auth()->id();
-            $data['priority'] = $request->get('priority', 'medium');
+            // The 'priority' field was incorrectly named and assigned. It should be 'priorite' and comes from validation.
+            // $data['priority'] = $request->get('priority', 'medium'); // Removed this line
 
             $tache = Tache::create($data);
 
@@ -141,14 +145,14 @@ public function index(Request $request)
             DB::commit();
 
             return redirect()->route('taches.index')
-                                 ->with('success', 'Tâche créée avec succès.');
+                                ->with('success', 'Tâche créée avec succès.');
         } catch (\Exception $e) {
             DB::rollBack();
             // Log the actual error for debugging
             \Log::error("Error creating tache: " . $e->getMessage());
             return redirect()->back()
-                                 ->with('error', 'Erreur lors de la création de la tâche. Détails: ' . $e->getMessage()) // Provide more detail in development
-                                 ->withInput();
+                                ->with('error', 'Erreur lors de la création de la tâche. Détails: ' . $e->getMessage()) // Provide more detail in development
+                                ->withInput();
         }
     }
 
@@ -160,7 +164,7 @@ public function index(Request $request)
         // Check access
         if (!$this->hasAccessToTask($user, $tache)) {
             return redirect()->route('taches.index')
-                                 ->with('error', 'Accès refusé.');
+                                ->with('error', 'Accès refusé.');
         }
 
         return view('taches.show', compact('tache'));
@@ -174,7 +178,7 @@ public function index(Request $request)
         // Check access
         if (!$this->hasAccessToTask($user, $tache)) {
             return redirect()->route('taches.index')
-                                 ->with('error', 'Accès refusé.');
+                                ->with('error', 'Accès refusé.');
         }
 
         $users = User::all();
@@ -188,38 +192,38 @@ public function index(Request $request)
         $oldStatus = $tache->status;
 
         if ($this->isAdmin($user)) {
-            // Admin can modify everything
+            // Admin can modify everything EXCEPT 'retour'
             $request->validate([
+                'titre' => 'required|string|max:255',
                 'description' => 'required|string|max:5000',
-
                 'duree' => 'required|string|max:255',
                 'datedebut' => 'required|date',
                 'status' => 'required|in:nouveau,en cours,termine',
                 'date' => 'required|in:jour,semaine,mois',
                 'iduser' => 'required|exists:users,id',
-                'priority' => 'nullable|in:low,medium,high',
-                'notes' => 'nullable|string|max:1000',
+                'priorite' => 'required|in:faible,moyen,élevé',
+                // 'retour' is intentionally excluded from admin validation as they cannot modify it
             ]);
 
-            $data = $request->all();
+            $data = $request->except('retour'); // Exclude 'retour' from the data array for admins
             $data['updated_by'] = auth()->id();
             
             $tache->update($data);
-        } elseif ($user->hasRole('UITS')) {
-            // UITS can only modify status and add notes
+        } elseif ($user->hasAnyRole(['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin','USER_TECH'])) { // Corrected syntax and logic
+            // These specific non-admin roles can only modify status and retour
             $request->validate([
                 'status' => 'required|in:nouveau,en cours,termine',
-                'notes' => 'nullable|string|max:1000',
+                'retour' => 'nullable|string|max:5000',
             ]);
 
             $tache->update([
                 'status' => $request->status,
-                'notes' => $request->notes,
+                'retour' => $request->retour,
                 'updated_by' => auth()->id(),
             ]);
         } else {
             return redirect()->route('taches.index')
-                                 ->with('error', 'Accès refusé.');
+                                ->with('error', 'Accès refusé.');
         }
 
         // Send notification if status changed
@@ -231,19 +235,24 @@ public function index(Request $request)
         }
 
         return redirect()->route('taches.index')
-                             ->with('success', 'Tâche mise à jour avec succès.');
+                            ->with('success', 'Tâche mise à jour avec succès.');
     }
 
-   public function destroy($id)
-{
-    $user = auth()->user();
-    $tache = Tache::findOrFail($id);
+    public function destroy($id)
+    {
+        $user = auth()->user();
+        $tache = Tache::findOrFail($id);
 
-    
-    $tache->delete();
-    return redirect()->route('taches.index')
-                         ->with('success', 'Tâche supprimée avec succès.');
-}
+        // Access check for destroy method (if needed, based on your authorization logic)
+        // if (!$this->hasAccessToTask($user, $tache) && !$this->isAdmin($user)) {
+        //     return redirect()->route('taches.index')
+        //                      ->with('error', 'Accès refusé pour supprimer cette tâche.');
+        // }
+
+        $tache->delete();
+        return redirect()->route('taches.index')
+                            ->with('success', 'Tâche supprimée avec succès.');
+    }
 
     // Nouvelle méthode pour dupliquer une tâche
     public function duplicate($id)
@@ -253,17 +262,21 @@ public function index(Request $request)
 
         if (!$this->hasAccessToTask($user, $originalTache)) {
             return redirect()->route('taches.index')
-                                 ->with('error', 'Accès refusé.');
+                                ->with('error', 'Accès refusé.');
         }
 
         $newTache = $originalTache->replicate();
         $newTache->status = 'nouveau';
         $newTache->created_by = auth()->id();
         $newTache->description = $originalTache->description . ' (Copie)';
+        // Ensure new fields are also replicated
+        $newTache->titre = $originalTache->titre . ' (Copie)'; // Replicate titre
+        $newTache->priorite = $originalTache->priorite; // Replicate priorite
+        $newTache->retour = null; // Clear retour for the new task, or replicate if desired
         $newTache->save();
 
         return redirect()->route('taches.index')
-                             ->with('success', 'Tâche dupliquée avec succès.');
+                            ->with('success', 'Tâche dupliquée avec succès.');
     }
 
     // Méthode pour marquer une tâche comme terminée rapidement
@@ -315,7 +328,7 @@ public function index(Request $request)
     
     ## Modified `getTaskStats` Method
 
-   private function getTaskStats($user)
+    private function getTaskStats($user)
     {
         $baseQuery = Tache::query(); 
         
@@ -330,9 +343,7 @@ public function index(Request $request)
         // If an admin is viewing these stats, you might still want to count ALL tasks,
         // or you might want them to also respect datedebut for 'current' stats.
         // I'll assume for admins, you want ALL tasks counted, unless a specific filter is applied later.
-        // If you want admin stats to also respect datedebut, move the line above outside the if.
-        // For now, it respects datedebut only for non-admins as requested implicitly.
-        // If you want datedebut to apply to ALL stats regardless of role, put the line below here:
+        // If you want admin stats to also respect datedebut, put the line above here:
         // $baseQuery->where('datedebut', '<=', Carbon::now()); 
         // --- NEW ADDITION END ---
 
@@ -443,15 +454,19 @@ public function index(Request $request)
 
         $callback = function() use ($taches) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['ID', 'Description', 'Durée', 'Date début', 'Statut', 'Utilisateur', 'Créé le']);
+            // Added 'Titre', 'Priorité', 'Retour' to CSV headers
+            fputcsv($file, ['ID', 'Titre', 'Description', 'Durée', 'Date début', 'Statut', 'Priorité', 'Retour', 'Utilisateur', 'Créé le']);
 
             foreach ($taches as $tache) {
                 fputcsv($file, [
                     $tache->id,
+                    $tache->titre, // Added titre
                     $tache->description,
                     $tache->duree,
                     $tache->datedebut,
                     $tache->status,
+                    $tache->priorite, // Added priorite
+                    $tache->retour,   // Added retour
                     $tache->user->name ?? 'N/A',
                     $tache->created_at->format('Y-m-d H:i:s'),
                 ]);
@@ -463,3 +478,4 @@ public function index(Request $request)
         return response()->stream($callback, 200, $headers);
     }
 }
+

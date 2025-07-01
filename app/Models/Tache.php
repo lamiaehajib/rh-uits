@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,21 +10,32 @@ use Spatie\Permission\Traits\HasRoles;
 
 class Tache extends Model
 {
-    use HasFactory,HasRoles,Notifiable;
+    use HasFactory, HasRoles, Notifiable;
 
-    protected $fillable =  ['description', 'duree', 'status', 'date', 'iduser','datedebut','created_by', // Make sure these columns exist in your database
-        'updated_by', ];
-
-   
+    protected $fillable = [
+        'description',
+        'duree',
+        'status',
+        'date',
+        'iduser',
+        'datedebut',
+        'created_by',
+        'updated_by',
+        'titre',    // Added the 'titre' field
+        'priorite', // Added the 'priorite' field
+        'retour',   // Added the 'retour' field
+    ];
 
     public function user()
     {
         return $this->belongsTo(User::class, 'iduser');
     }
+
     public function Dashboard()
     {
         return $this->hasMany(Dashboard::class, 'idtach');
     }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -37,3 +49,4 @@ class Tache extends Model
         return $this->belongsTo(User::class, 'updated_by');
     }
 }
+

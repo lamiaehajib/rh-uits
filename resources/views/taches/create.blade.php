@@ -139,6 +139,21 @@
                             @csrf
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                <!-- Titre de la Tâche -->
+                                <div>
+                                    <label for="titre" class="block text-sm font-semibold text-gray-700 mb-1">
+                                        <i class="fas fa-heading mr-2 text-indigo-500"></i> {{ __('Titre de la Tâche') }} <span class="text-primary-red text-lg">*</span>
+                                    </label>
+                                    <input type="text" name="titre" id="titre"
+                                        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
+                                        focus:ring-primary-red focus:border-primary-red
+                                        @error('titre') border-primary-red ring-red-200 @enderror"
+                                        value="{{ old('titre') }}" placeholder="{{ __('Entrez un titre concis pour la tâche...') }}" required>
+                                    @error('titre')
+                                        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
                                 <!-- Description de la Tâche -->
                                 <div>
                                     <label for="description" class="block text-sm font-semibold text-gray-700 mb-1">
@@ -238,8 +253,39 @@
                                     @enderror
                                 </div>
 
-                                <!-- Priority -->
-                                
+                                <!-- Priorité de la Tâche -->
+                                <div>
+                                    <label for="priorite" class="block text-sm font-semibold text-gray-700 mb-1">
+                                        <i class="fas fa-exclamation-triangle mr-2 text-red-500"></i> {{ __('Priorité') }} <span class="text-primary-red text-lg">*</span>
+                                    </label>
+                                    <select name="priorite" id="priorite"
+                                        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
+                                        focus:ring-primary-red focus:border-primary-red
+                                        @error('priorite') border-primary-red ring-red-200 @enderror" required>
+                                        <option value="faible" {{ old('priorite') == 'faible' ? 'selected' : '' }}>{{ __('Faible') }}</option>
+                                        <option value="moyen" {{ old('priorite') == 'moyen' ? 'selected' : '' }}>{{ __('Moyen') }}</option>
+                                        <option value="élevé" {{ old('priorite') == 'élevé' ? 'selected' : '' }}>{{ __('Élevé') }}</option>
+                                    </select>
+                                    @error('priorite')
+                                        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Retour de la Tâche (optional) -->
+                                <div class="md:col-span-2"> <!-- Span across two columns for better layout -->
+                                    <label for="retour" class="block text-sm font-semibold text-gray-700 mb-1">
+                                        <i class="fas fa-comment-dots mr-2 text-gray-500"></i> {{ __('Retour/Notes (Optionnel)') }}
+                                    </label>
+                                    <textarea name="retour" id="retour" rows="3"
+                                        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
+                                        focus:ring-primary-red focus:border-primary-red
+                                        @error('retour') border-primary-red ring-red-200 @enderror"
+                                        placeholder="{{ __('Ajoutez des notes ou un retour sur la tâche...') }}">{{ old('retour') }}</textarea>
+                                    @error('retour')
+                                        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
 
                             <div class="mt-8 flex items-center justify-end space-x-4">
                                 <a href="{{ route('taches.index') }}"
