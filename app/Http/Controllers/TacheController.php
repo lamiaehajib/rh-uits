@@ -32,14 +32,12 @@ class TacheController extends Controller
         $sort_by = $request->get('sort_by', 'created_at');
         $sort_direction = $request->get('sort_direction', 'desc');
 
-        $query = Tache::with('users'); // Eager load the 'users' relationship
+        $query = Tache::with('users');
 
         if (!$this->isAdmin($user)) {
-            // If not an admin, only show tasks assigned to the current user
             $query->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
-            $query->where('datedebut', '<=', Carbon::now());
         }
 
         if ($search) {
@@ -55,6 +53,7 @@ class TacheController extends Controller
             $query->where('status', $status);
         }
 
+        // Had l'logic dyal filter "overdue" khdamna bih b `date_fin_prevue`
         if ($date_filter) {
             switch ($date_filter) {
                 case 'today':
@@ -67,13 +66,14 @@ class TacheController extends Controller
                     $query->whereMonth('datedebut', Carbon::now()->month);
                     break;
                 case 'overdue':
-                    $query->where('datedebut', '<', Carbon::now())
-                                ->where('status', '!=', 'termine');
+                    // Hada howa l'filter lli bghiti, katsta3mel date_fin_prevue
+                    $query->where('status', '!=', 'termine')
+                          ->whereNotNull('date_fin_prevue')
+                          ->where('date_fin_prevue', '<', Carbon::now());
                     break;
             }
         }
 
-        // User filter (for admins)
         if ($user_filter && $user_filter !== 'all' && $this->isAdmin($user)) {
             $query->whereHas('users', function ($q) use ($user_filter) {
                 $q->where('user_id', $user_filter);
@@ -88,6 +88,7 @@ class TacheController extends Controller
 
         $taches = $query->paginate(10)->appends($request->query());
 
+        // Hna kan3aytou 3la getTaskStats bach njibou les comptes kamlin
         $stats = $this->getTaskStats($user);
 
         $users = $this->isAdmin($user) ? User::all() : collect();
@@ -109,9 +110,9 @@ class TacheController extends Controller
             'duree' => 'required|string|max:255',
             'datedebut' => 'required|date|after_or_equal:today',
             'status' => 'required|in:nouveau,en cours,termine',
-            'date' => 'required|in:jour,semaine,mois',
-            'user_ids' => 'required|array', // Validate that it's an array of user IDs
-            'user_ids.*' => 'exists:users,id', // Validate each ID exists in the users table
+            'date' => 'required|in:jour,semaine,mois', // Had "date" ma msta3mla walou f duree, y9dar tkoun mghayra 3la dakchi li baghi
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id',
             'priorite' => 'required|in:faible,moyen,élevé',
             'retour' => 'nullable|string|max:5000',
         ]);
@@ -119,15 +120,17 @@ class TacheController extends Controller
         try {
             DB::beginTransaction();
 
-            $data = $request->except('user_ids'); // Exclude user_ids from direct mass assignment
+            $data = $request->except('user_ids');
             $data['created_by'] = auth()->id();
+
+            // Calculate date_fin_prevue
+            $startDate = Carbon::parse($request->input('datedebut'));
+            $data['date_fin_prevue'] = $this->calculateExpectedEndDate($startDate, $request->input('duree'));
 
             $tache = Tache::create($data);
 
-            // Attach multiple users to the task
             $tache->users()->attach($request->input('user_ids'));
 
-            // Send notification to each assigned user
             foreach ($request->input('user_ids') as $userId) {
                 $user = User::findOrFail($userId);
                 $user->notify(new TacheCreatedNotification($tache));
@@ -149,7 +152,7 @@ class TacheController extends Controller
     public function show($id)
     {
         $user = auth()->user();
-        $tache = Tache::with(['users', 'creator'])->findOrFail($id); // Eager load 'users'
+        $tache = Tache::with(['users', 'creator'])->findOrFail($id);
 
         if (!$this->hasAccessToTask($user, $tache)) {
             return redirect()->route('taches.index')
@@ -162,7 +165,7 @@ class TacheController extends Controller
     public function edit($id)
     {
         $user = auth()->user();
-        $tache = Tache::with('users')->findOrFail($id); // Eager load 'users'
+        $tache = Tache::with('users')->findOrFail($id);
 
         if (!$this->hasAccessToTask($user, $tache)) {
             return redirect()->route('taches.index')
@@ -176,7 +179,7 @@ class TacheController extends Controller
     public function update(Request $request, $id)
     {
         $user = auth()->user();
-        $tache = Tache::with('users')->findOrFail($id); // Eager load 'users' to check assigned users
+        $tache = Tache::with('users')->findOrFail($id);
         $oldStatus = $tache->status;
 
         if ($this->isAdmin($user)) {
@@ -195,9 +198,12 @@ class TacheController extends Controller
             $data = $request->except('retour', 'user_ids');
             $data['updated_by'] = auth()->id();
 
+            // Recalculate date_fin_prevue on update
+            $startDate = Carbon::parse($request->input('datedebut'));
+            $data['date_fin_prevue'] = $this->calculateExpectedEndDate($startDate, $request->input('duree'));
+
             $tache->update($data);
 
-            // Sync the users for the task (detach existing and attach new ones)
             $tache->users()->sync($request->input('user_ids'));
 
         } elseif ($user->hasAnyRole(['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH'])) {
@@ -217,7 +223,6 @@ class TacheController extends Controller
         }
 
         if ($oldStatus !== $tache->status) {
-            // Notify all assigned users when status changes
             foreach ($tache->users as $assignedUser) {
                 $assignedUser->notify(new TacheUpdatedNotification($tache));
             }
@@ -232,7 +237,7 @@ class TacheController extends Controller
         $user = auth()->user();
         $tache = Tache::findOrFail($id);
 
-        $tache->delete(); // This will also delete entries in the pivot table due to cascade delete
+        $tache->delete();
         return redirect()->route('taches.index')
                             ->with('success', 'Tâche supprimée avec succès.');
     }
@@ -240,7 +245,7 @@ class TacheController extends Controller
     public function duplicate($id)
     {
         $user = auth()->user();
-        $originalTache = Tache::with('users')->findOrFail($id); // Load users to duplicate them
+        $originalTache = Tache::with('users')->findOrFail($id);
 
         if (!$this->hasAccessToTask($user, $originalTache)) {
             return redirect()->route('taches.index')
@@ -254,9 +259,13 @@ class TacheController extends Controller
         $newTache->titre = $originalTache->titre . ' (Copie)';
         $newTache->priorite = $originalTache->priorite;
         $newTache->retour = null;
+        // Important: Recalculate date_fin_prevue for the duplicated task
+        $newTache->date_fin_prevue = $this->calculateExpectedEndDate(
+            Carbon::parse($newTache->datedebut),
+            $newTache->duree
+        );
         $newTache->save();
 
-        // Duplicate the assigned users
         $newTache->users()->attach($originalTache->users->pluck('id'));
 
         return redirect()->route('taches.index')
@@ -266,7 +275,7 @@ class TacheController extends Controller
     public function markAsComplete($id)
     {
         $user = auth()->user();
-        $tache = Tache::with('users')->findOrFail($id); // Load users to check access correctly
+        $tache = Tache::with('users')->findOrFail($id);
 
         if (!$this->hasAccessToTask($user, $tache)) {
             return redirect()->back()->with('error', 'Accès refusé pour marquer cette tâche comme terminée.');
@@ -299,11 +308,31 @@ class TacheController extends Controller
 
     private function hasAccessToTask($user, $tache)
     {
-        // An admin always has access.
-        // A regular user has access if they are one of the assigned users for the task.
         return $this->isAdmin($user) || $tache->users->contains($user->id);
     }
     
+    // Had L'fonction kat7eseb date_fin_prevue
+    private function calculateExpectedEndDate(Carbon $startDate, string $duree): ?Carbon
+    {
+        $duration = strtolower($duree);
+        $expectedEndDate = null;
+
+        if (preg_match('/(\d+)\s*jour/i', $duration, $matches)) {
+            $expectedEndDate = $startDate->copy()->addDays($matches[1]);
+        } elseif (preg_match('/(\d+)\s*semaine/i', $duration, $matches)) {
+            $expectedEndDate = $startDate->copy()->addWeeks($matches[1]);
+        } elseif (preg_match('/(\d+)\s*mois/i', $duration, $matches)) {
+            $expectedEndDate = $startDate->copy()->addMonths($matches[1]);
+        } else {
+            // Ila kan format ghalat, n9adro nlogiw l'erreur wla n3tiw default.
+            // Ila bghitiha gha "1 jour" b default ila ma l9a walou, zidha.
+            \Log::warning("Unknown duration format for tache: " . $duree);
+        }
+
+        return $expectedEndDate;
+    }
+
+    // Had L'fonction kat7eseb ga3 les stats, menhom overdue count
     private function getTaskStats($user)
     {
         $baseQuery = Tache::query(); 
@@ -312,50 +341,30 @@ class TacheController extends Controller
             $baseQuery->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
-            $baseQuery->where('datedebut', '<=', Carbon::now()); 
         }
 
-        $notCompletedTasks = (clone $baseQuery)->where('status', '!=', 'termine');
-
-        $overdueCount = 0;
-        foreach ($notCompletedTasks->get() as $tache) {
-            try {
-                $duration = $tache->duree;
-                $startDate = Carbon::parse($tache->datedebut);
-
-                $expectedEndDate = null;
-                if (preg_match('/(\d+)\s*jour/i', $duration, $matches)) {
-                    $expectedEndDate = $startDate->addDays($matches[1]);
-                } elseif (preg_match('/(\d+)\s*semaine/i', $duration, $matches)) {
-                    $expectedEndDate = $startDate->addWeeks($matches[1]);
-                } elseif (preg_match('/(\d+)\s*mois/i', $duration, $matches)) {
-                    $expectedEndDate = $startDate->addMonths($matches[1]);
-                } else {
-                    $expectedEndDate = $startDate->addDay(); 
-                }
-
-                if ($expectedEndDate && $expectedEndDate->isPast()) {
-                    $overdueCount++;
-                }
-            } catch (\Exception $e) {
-                \Log::error("Error parsing task duration for tache ID: {$tache->id}. Error: {$e->getMessage()}");
-            }
-        }
+        // Overdue count kanakhdouha direkt men database
+        $overdueCount = (clone $baseQuery)->where('status', '!=', 'termine')
+                                          ->whereNotNull('date_fin_prevue')
+                                          ->where('date_fin_prevue', '<', Carbon::now())
+                                          ->count();
 
         return [
             'total' => (clone $baseQuery)->count(), 
             'nouveau' => (clone $baseQuery)->where('status', 'nouveau')->count(),
             'en_cours' => (clone $baseQuery)->where('status', 'en cours')->count(),
             'termine' => (clone $baseQuery)->where('status', 'termine')->count(),
-            'overdue' => $overdueCount,
+            'overdue' => $overdueCount, // Hada houwa l'nombre dyal les tâches en retard
         ];
     }
 
+    // Had L'fonction katjib les tâches li en retard bach ytbano f dashboard (top 5)
     private function getOverdueTasks($user)
     {
-        $query = Tache::with('users') // Load 'users'
-                      ->where('datedebut', '<', Carbon::now())
-                      ->where('status', '!=', 'termine');
+        $query = Tache::with('users')
+                      ->where('status', '!=', 'termine')
+                      ->whereNotNull('date_fin_prevue')
+                      ->where('date_fin_prevue', '<', Carbon::now());
 
         if (!$this->isAdmin($user)) {
             $query->whereHas('users', function ($q) use ($user) {
@@ -363,18 +372,19 @@ class TacheController extends Controller
             });
         }
 
-        return $query->orderBy('datedebut', 'asc')->limit(5)->get();
+        return $query->orderBy('date_fin_prevue', 'asc')->limit(5)->get();
     }
 
     private function getRecentTasks($user)
     {
-        $query = Tache::with('users')->orderBy('created_at', 'desc'); // Load 'users'
+        $query = Tache::with('users')->orderBy('created_at', 'desc');
 
         if (!$this->isAdmin($user)) {
             $query->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
-            $query->where('datedebut', '<=', Carbon::now());
+            // Hna bqina m7tafdin b datedebut <= Carbon::now() bach les tâches lli mazal ma bdaouch ma ybanouch f recent tasks
+            $query->where('datedebut', '<=', Carbon::now()); 
         }
 
         return $query->limit(5)->get();
@@ -385,7 +395,7 @@ class TacheController extends Controller
         $user = auth()->user();
         $format = $request->get('format', 'csv');
 
-        $query = Tache::with('users'); // Load 'users'
+        $query = Tache::with('users');
         
         if (!$this->isAdmin($user)) {
             $query->whereHas('users', function ($q) use ($user) {
@@ -414,10 +424,9 @@ class TacheController extends Controller
 
         $callback = function() use ($taches) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['ID', 'Titre', 'Description', 'Durée', 'Date début', 'Statut', 'Priorité', 'Retour', 'Utilisateurs Assignés', 'Créé le']); // Updated header
+            fputcsv($file, ['ID', 'Titre', 'Description', 'Durée', 'Date début', 'Date Fin Prévue', 'Statut', 'Priorité', 'Retour', 'Utilisateurs Assignés', 'Créé le']); // Updated header to include date_fin_prevue
 
             foreach ($taches as $tache) {
-                // Get assigned user names, comma-separated
                 $assignedUsers = $tache->users->pluck('name')->implode(', ');
                 fputcsv($file, [
                     $tache->id,
@@ -425,10 +434,11 @@ class TacheController extends Controller
                     $tache->description,
                     $tache->duree,
                     $tache->datedebut,
+                    $tache->date_fin_prevue ? Carbon::parse($tache->date_fin_prevue)->format('d/m/Y') : '', // Add date_fin_prevue
                     $tache->status,
                     $tache->priorite,
                     $tache->retour,
-                    $assignedUsers, // Use the comma-separated names
+                    $assignedUsers,
                     $tache->created_at->format('Y-m-d H:i:s'),
                 ]);
             }

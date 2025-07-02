@@ -17,8 +17,9 @@ class Tache extends Model
         'duree',
         'status',
         'date',
-        // 'iduser', // <-- قم بإزالة هذا السطر
+     
         'datedebut',
+        'date_fin_prevue',
         'created_by',
         'updated_by',
         'titre',

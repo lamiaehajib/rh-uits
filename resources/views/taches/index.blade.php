@@ -160,6 +160,7 @@
                                 </div>
                                 <i class="fas fa-check-circle text-green-500 text-5xl opacity-75"></i>
                             </div>
+                            {{-- Had l'bloc houwa lli ghayban fih "Tâches en Retard" --}}
                             <div class="bg-red-50 p-6 rounded-xl shadow-lg flex items-center justify-between card-hover-effect animate-fade-in delay-700">
                                 <div>
                                     <h3 class="text-lg font-semibold text-red-700">{{ __('Tâches en Retard') }}</h3>
@@ -199,7 +200,7 @@
                                         <option value="today" {{ request('date_filter') == 'today' ? 'selected' : '' }}>{{ __('Aujourd\'hui') }}</option>
                                         <option value="this_week" {{ request('date_filter') == 'this_week' ? 'selected' : '' }}>{{ __('Cette Semaine') }}</option>
                                         <option value="this_month" {{ request('date_filter') == 'this_month' ? 'selected' : '' }}>{{ __('Ce Mois-ci') }}</option>
-                                        <option value="overdue" {{ request('date_filter') == 'overdue' ? 'selected' : '' }}>{{ __('En Retard') }}</option>
+                                        <option value="overdue" {{ request('date_filter') == 'overdue' ? 'selected' : '' }}>{{ __('En Retard') }}</option> {{-- Had L'option hiya li bghiti --}}
                                     </select>
                                 </div>
 
@@ -254,7 +255,6 @@
                                 <table class="w-full text-sm text-left text-gray-700">
                                     <thead class="text-xs text-gray-700 uppercase bg-gray-100 rounded-t-lg">
                                         <tr>
-                                            {{-- Titre Header --}}
                                             <th scope="col" class="py-3 px-6">
                                                 <a href="{{ route('taches.index', array_merge(request()->query(), ['sort_by' => 'titre', 'sort_direction' => request('sort_by') == 'titre' && request('sort_direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
                                                     {{ __('Titre') }}
@@ -272,7 +272,6 @@
                                             <th scope="col" class="py-3 px-6">{{ __('Durée') }}</th>
                                             <th scope="col" class="py-3 px-6">{{ __('Date Début') }}</th>
                                             <th scope="col" class="py-3 px-6">{{ __('Statut') }}</th>
-                                            {{-- Priorité Header --}}
                                             <th scope="col" class="py-3 px-6">
                                                 <a href="{{ route('taches.index', array_merge(request()->query(), ['sort_by' => 'priorite', 'sort_direction' => request('sort_by') == 'priorite' && request('sort_direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
                                                     {{ __('Priorité') }}
@@ -295,7 +294,7 @@
                                         @foreach ($taches as $tache)
                                             <tr class="bg-white border-b hover:bg-gray-50 transition duration-150 ease-in-out">
                                                 <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">
-                                                    {{ Str::words($tache->titre, 5, '...') }} {{-- Display titre --}}
+                                                    {{ Str::words($tache->titre, 5, '...') }}
                                                 </td>
                                                 <td class="py-4 px-6">{{ $tache->duree }}</td>
                                                 <td class="py-4 px-6">{{ \Carbon\Carbon::parse($tache->datedebut)->format('d/m/Y') }}</td>
@@ -308,7 +307,6 @@
                                                         {{ ucfirst($tache->status) }}
                                                     </span>
                                                 </td>
-                                                {{-- Priorité Column --}}
                                                 <td class="py-4 px-6">
                                                     <span class="px-3 py-1 rounded-full text-xs font-semibold
                                                         @if($tache->priorite == 'faible') bg-blue-200 text-blue-800
@@ -318,14 +316,14 @@
                                                         {{ ucfirst($tache->priorite) }}
                                                     </span>
                                                 </td>
-                                               <td class="py-4 px-6">
-        <div class="flex items-center">
-        <i class="fas fa-user-circle text-gray-400 mr-2"></i>
-        @foreach ($tache->users as $assignedUser)
-            {{ $assignedUser->name }}{{ !$loop->last ? ', ' : '' }}
-        @endforeach
-    </div>
-</td>
+                                                <td class="py-4 px-6">
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-user-circle text-gray-400 mr-2"></i>
+                                                        @foreach ($tache->users as $assignedUser)
+                                                            {{ $assignedUser->name }}{{ !$loop->last ? ', ' : '' }}
+                                                        @endforeach
+                                                    </div>
+                                                </td>
                                                 
                                                 <td class="py-4 px-6 flex items-center space-x-4">
                                                     @can('tache-show')
@@ -347,7 +345,7 @@
                                                             @method('DELETE')
                                                         </form>
                                                     @endcan
-                                                    @can('tache-create') {{-- Supposons que la duplication nécessite la permission de création --}}
+                                                    @can('tache-create')
                                                         <form action="{{ route('taches.duplicate', $tache->id) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir dupliquer cette tâche ?');" class="inline-block">
                                                             @csrf
                                                             <button type="submit" title="Dupliquer" class="text-gray-600 hover:text-gray-900 transition duration-150 ease-in-out">
