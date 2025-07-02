@@ -309,12 +309,19 @@
                                                     </span>
                                                 </td>
                                                 <td class="py-4 px-6 text-sm text-gray-800 truncate max-w-xs md:max-w-md" title="{{ $objectif->description }}">{{ Str::limit($objectif->description, 70) }}</td>
-                                                <td class="py-4 px-6 whitespace-nowrap text-sm text-gray-800">
-                                                    <div class="flex items-center">
-                                                        <i class="fas fa-user-circle text-gray-400 mr-2"></i>
-                                                        {{ $objectif->user->name ?? 'N/A' }}
-                                                    </div>
-                                                </td>
+                                                <td class="py-4 px-6">
+                                        {{-- AFFICHAGE DES UTILISATEURS ASSIGNÉS (NOUVEAU) --}}
+                                        <div class="flex flex-col space-y-1"> {{-- Pour un affichage vertical si plusieurs noms longs --}}
+                                            @forelse ($objectif->users as $assignedUser)
+                                                <span class="inline-flex items-center text-sm font-medium text-gray-900">
+                                                    <i class="fas fa-user-circle mr-1 text-gray-500"></i>
+                                                    {{ $assignedUser->name }}
+                                                </span>
+                                            @empty
+                                                <span class="text-sm text-gray-500">Non assigné</span>
+                                            @endforelse
+                                        </div>
+                                    </td>
                                                 <td class="py-4 px-6 text-sm">
                                                     <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
                                                         <div class="h-2.5 rounded-full {{ $objectif->calculated_progress == 100 ? 'bg-green-500' : 'bg-primary-red' }} transition-all duration-500 ease-out" style="width: {{ $objectif->calculated_progress }}%"></div>
