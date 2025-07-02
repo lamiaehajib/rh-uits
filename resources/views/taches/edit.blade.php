@@ -261,28 +261,25 @@
                                 </div>
 
                                 <!-- Assigné à l'utilisateur -->
-                                <div>
-                                    <label for="iduser" class="block text-sm font-semibold text-gray-700 mb-1">
-                                        <i class="fas fa-user-tag mr-2 text-teal-500"></i> {{ __('Assigné à l\'utilisateur') }} <span class="text-primary-red text-lg">*</span>
-                                    </label>
-                                    <select name="iduser" id="iduser"
-                                        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
-                                        focus:ring-primary-red focus:border-primary-red
-                                        @error('iduser') border-primary-red ring-red-200 @enderror
-                                        {{ !$isAdminOrAdmin1 ? 'bg-gray-100 cursor-not-allowed' : '' }}"
-                                        {{ !$isAdminOrAdmin1 ? 'disabled' : '' }} required>
-                                        @foreach($users as $userOption) {{-- Renamed $user to $userOption to avoid conflict with $user variable in @php block --}}
-                                            <option value="{{ $userOption->id }}" {{ old('iduser', $tache->iduser) == $userOption->id ? 'selected' : '' }}>{{ $userOption->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('iduser')
-                                        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
-                                    @enderror
-                                    {{-- If disabled, ensure value is sent via hidden input --}}
-                                    @if (!$isAdminOrAdmin1)
-                                        <input type="hidden" name="iduser" value="{{ old('iduser', $tache->iduser) }}">
-                                    @endif
-                                </div>
+                                <div class="form-group mb-4">
+    <label class="block text-gray-700 text-sm font-bold mb-2">Utilisateurs Assignés:</label>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @foreach ($users as $user)
+            <div class="flex items-center bg-white border border-gray-300 rounded-lg p-3 shadow-sm">
+                <input type="checkbox" name="user_ids[]" id="user_{{ $user->id }}" value="{{ $user->id }}"
+                       class="form-checkbox h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-gray-300"
+                       {{-- Vérifier si l'utilisateur est déjà assigné à la tâche OU s'il était coché avant une erreur de validation --}}
+                       {{ in_array($user->id, old('user_ids', $tache->users->pluck('id')->toArray())) ? 'checked' : '' }}>
+                <label for="user_{{ $user->id }}" class="ml-3 text-gray-800 text-base cursor-pointer">
+                    {{ $user->name }}
+                </label>
+            </div>
+        @endforeach
+    </div>
+    @error('user_ids')
+        <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
+    @enderror
+</div>
 
                                 <!-- Priorité de la Tâche -->
                                 <div>

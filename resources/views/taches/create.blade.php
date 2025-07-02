@@ -242,15 +242,22 @@
                                 </div>
 
                                 <!-- Assigné à l'utilisateur -->
-                           <div class="form-group">
-    <label for="user_ids">Utilisateurs Assignés:</label>
-    <select class="form-control" name="user_ids[]" id="user_ids" multiple required>
+                          <div class="form-group mb-4"> {{-- mb-4 pour marge bottom --}}
+    <label class="block text-gray-700 text-sm font-bold mb-2">Utilisateurs Assignés:</label>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> {{-- Grille pour afficher les checkboxes sur plusieurs colonnes --}}
         @foreach ($users as $user)
-            <option value="{{ $user->id }}">{{ $user->name }}</option>
+            <div class="flex items-center bg-white border border-gray-300 rounded-lg p-3 shadow-sm">
+                <input type="checkbox" name="user_ids[]" id="user_{{ $user->id }}" value="{{ $user->id }}"
+                       class="form-checkbox h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-gray-300"
+                       {{ in_array($user->id, old('user_ids', [])) ? 'checked' : '' }}> {{-- old() pour conserver les sélections en cas d'erreur --}}
+                <label for="user_{{ $user->id }}" class="ml-3 text-gray-800 text-base cursor-pointer">
+                    {{ $user->name }}
+                </label>
+            </div>
         @endforeach
-    </select>
+    </div>
     @error('user_ids')
-        <div class="alert alert-danger">{{ $message }}</div>
+        <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
     @enderror
 </div>
 
