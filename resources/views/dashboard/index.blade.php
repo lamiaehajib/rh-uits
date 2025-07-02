@@ -728,17 +728,46 @@
                             <table class="modern-table w-full whitespace-nowrap">
                                 <thead>
                                     <tr>
-                                        <th class="p-4 text-left rounded-tl-xl">Description</th>
+                                        <th scope="col" class="py-3 px-6">
+                                                <a href="{{ route('taches.index', array_merge(request()->query(), ['sort_by' => 'titre', 'sort_direction' => request('sort_by') == 'titre' && request('sort_direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
+                                                    {{ __('Titre') }}
+                                                    @if (request('sort_by') == 'titre')
+                                                        @if (request('sort_direction') == 'asc')
+                                                            <i class="fas fa-sort-alpha-down ml-1"></i>
+                                                        @else
+                                                            <i class="fas fa-sort-alpha-up-alt ml-1"></i>
+                                                        @endif
+                                                    @else
+                                                        <i class="fas fa-sort ml-1 text-gray-400"></i>
+                                                    @endif
+                                                </a>
+                                            </th>
                                         <th class="p-4 text-center">Statut</th>
                                         <th class="p-4 text-center">Date Début</th>
                                         <th class="p-4 text-center">Durée</th>
+                                        <th scope="col" class="py-3 px-6">
+                                                <a href="{{ route('taches.index', array_merge(request()->query(), ['sort_by' => 'priorite', 'sort_direction' => request('sort_by') == 'priorite' && request('sort_direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
+                                                    {{ __('Priorité') }}
+                                                    @if (request('sort_by') == 'priorite')
+                                                        @if (request('sort_direction') == 'asc')
+                                                            <i class="fas fa-sort-amount-down-alt ml-1"></i>
+                                                        @else
+                                                            <i class="fas fa-sort-amount-up-alt ml-1"></i>
+                                                        @endif
+                                                    @else
+                                                        <i class="fas fa-sort ml-1 text-gray-400"></i>
+                                                    @endif
+                                                </a>
+                                            </th>
                                         <th class="p-4 text-center rounded-tr-xl">Assigné(e)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse ($tasks as $tache)
                                         <tr class="border-b last:border-none hover:bg-gray-50">
-                                            <td class="p-4 text-left">{{ $tache->description }}</td>
+                                           <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">
+                                                    {{ Str::words($tache->titre, 5, '...') }} {{-- Display titre --}}
+                                                </td>
                                             <td class="p-4 text-center">
                                                 <span class="status-badge status-{{ strtolower(str_replace(' ', '-', $tache->status)) }}">
                                                     {{ $tache->status }}
@@ -746,6 +775,15 @@
                                             </td>
                                             <td class="p-4 text-center">{{ \Carbon\Carbon::parse($tache->datedebut)->format('d/m/Y') }}</td>
                                             <td class="p-4 text-center">{{ $tache->duree }}</td>
+                                            <td class="py-4 px-6">
+                                                    <span class="px-3 py-1 rounded-full text-xs font-semibold
+                                                        @if($tache->priorite == 'faible') bg-blue-200 text-blue-800
+                                                        @elseif($tache->priorite == 'moyen') bg-orange-200 text-orange-800
+                                                        @elseif($tache->priorite == 'élevé') bg-red-200 text-red-800
+                                                        @endif">
+                                                        {{ ucfirst($tache->priorite) }}
+                                                    </span>
+                                                </td>
                                                    <td class="py-4 px-6">
         <div class="flex items-center">
         <i class="fas fa-user-circle text-gray-400 mr-2"></i>
