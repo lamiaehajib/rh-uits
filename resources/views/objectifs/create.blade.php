@@ -212,18 +212,29 @@
                                     @enderror
                                 </div>
 
-                                {{-- Statut (Durée) --}}
+                                {{-- Durée (combined input) --}}
                                 <div class="col-span-1">
-                                    <label for="status" class="block text-gray-700 text-sm font-bold mb-2">Statut (Durée): <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                        <select name="status" id="status" class="form-select-custom @error('status') border-red-500 @enderror" required>
-                                            <option value="">Sélectionner une durée</option>
-                                            <option value="mois" {{ old('status') == 'mois' ? 'selected' : '' }}>Mois</option>
-                                            <option value="annee" {{ old('status') == 'annee' ? 'selected' : '' }}>Année</option>
+                                    <label for="duree_value" class="block text-gray-700 text-sm font-bold mb-2">Durée:</label>
+                                    <div class="mt-1 flex rounded-md shadow-sm">
+                                        <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                                            <i class="fas fa-calendar-days"></i>
+                                        </span>
+                                        <input type="number" name="duree_value" id="duree_value" value="{{ old('duree_value') }}" min="1"
+                                            class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-none @error('duree_value') border-red-500 @enderror focus:outline-none focus:ring-primary-red focus:border-primary-red">
+
+                                        <select name="duree_type" id="duree_type"
+                                            class="block px-3 py-2 border border-gray-300 rounded-r-md shadow-sm @error('duree_type') border-red-500 @enderror focus:outline-none focus:ring-primary-red focus:border-primary-red">
+                                            <option value="">Unité</option>
+                                            <option value="jours" {{ old('duree_type') == 'jours' ? 'selected' : '' }}>Jours</option>
+                                            <option value="semaines" {{ old('duree_type') == 'semaines' ? 'selected' : '' }}>Semaines</option>
+                                            <option value="mois" {{ old('duree_type') == 'mois' ? 'selected' : '' }}>Mois</option>
+                                            <option value="annee" {{ old('duree_type') == 'annee' ? 'selected' : '' }}>Année</option>
                                         </select>
                                     </div>
-                                    @error('status')
+                                    @error('duree_value')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    @error('duree_type')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>

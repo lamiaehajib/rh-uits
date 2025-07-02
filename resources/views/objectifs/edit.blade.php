@@ -134,13 +134,86 @@
                 margin-top: 0.25rem;
             }
 
-            /* Animations from the original objectif blade */
+            /* Animations from the original objectif blade (keeping them if desired) */
             @keyframes fadeIn {
                 from { opacity: 0; transform: translateY(20px); }
                 to { opacity: 1; transform: translateY(0); }
             }
             .animate-fade-in {
                 animation: fadeIn 0.5s ease-out forwards;
+            }
+
+            @keyframes bounceIn {
+                0% { opacity: 0; transform: scale(0.8); }
+                60% { opacity: 1; transform: scale(1.05); }
+                80% { transform: scale(0.98); }
+                100% { transform: scale(1); }
+            }
+            .animate-bounce-in {
+                animation: bounceIn 0.6s ease-out forwards;
+            }
+
+            /* New Animations for Timeline/Calendar */
+            @keyframes slideInUp {
+                from { opacity: 0; transform: translateY(30px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .animate-slide-in-up {
+                animation: slideInUp 0.6s ease-out forwards;
+            }
+
+            @keyframes zoomIn {
+                from { opacity: 0; transform: scale(0.95); }
+                to { opacity: 1; transform: scale(1); }
+            }
+            .animate-zoom-in {
+                animation: zoomIn 0.7s ease-out forwards;
+                animation-delay: 0.2s; /* Delay to appear after main content */
+                opacity: 0;
+            }
+
+            @keyframes popIn {
+                0% { opacity: 0; transform: scale(0.5); }
+                70% { opacity: 1; transform: scale(1.1); }
+                100% { transform: scale(1); }
+            }
+            .animate-pop-in-start {
+                animation: popIn 0.5s ease-out forwards;
+                animation-delay: 0.8s;
+                opacity: 0;
+            }
+            .animate-pop-in-mid {
+                animation: popIn 0.5s ease-out forwards;
+                animation-delay: 1.1s;
+                opacity: 0;
+            }
+            .animate-pop-in-end {
+                animation: popIn 0.5s ease-out forwards;
+                animation-delay: 1.4s;
+                opacity: 0;
+            }
+
+            @keyframes pulseFade {
+                0% { opacity: 0.5; transform: scale(0.8); }
+                50% { opacity: 1; transform: scale(1); }
+                100% { opacity: 0.5; transform: scale(0.8); }
+            }
+            .animate-pulse-fade {
+                animation: pulseFade 2s infinite ease-in-out;
+            }
+
+            /* Button styles adapted from create/users and primary-red */
+            .btn-custom-primary {
+                @apply inline-flex items-center px-4 py-2 bg-primary-red border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest shadow-md hover:bg-[#B71C1C] focus:outline-none focus:border-primary-red focus:ring ring-red-300 disabled:opacity-25 transition ease-in-out duration-150 transform hover:scale-105;
+            }
+
+            .btn-custom-secondary {
+                @apply inline-flex items-center px-4 py-2 bg-gray-200 border border-gray-300 rounded-md font-semibold text-xs text-gray-800 uppercase tracking-widest shadow-sm hover:bg-gray-300 active:bg-gray-400 focus:outline-none focus:border-gray-500 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150 transform hover:scale-105;
+            }
+
+            /* Form input/textarea styles */
+            .form-detail-display {
+                @apply block w-full px-3 py-2 text-base text-gray-800 bg-gray-100 border border-gray-200 rounded-md shadow-inner;
             }
         </style>
     </head>
@@ -222,18 +295,29 @@
                                     @enderror
                                 </div>
 
-                                {{-- Statut (Durée) --}}
+                                {{-- Durée (combined input) --}}
                                 <div class="col-span-1">
-                                    <label for="status" class="block text-gray-700 text-sm font-bold mb-2">Statut (Durée): <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-clock"></i></span>
-                                        <select name="status" id="status" class="form-select-custom @error('status') border-red-500 @enderror" required>
-                                            <option value="">Sélectionner une durée</option>
-                                            <option value="mois" {{ old('status', $objectif->status) == 'mois' ? 'selected' : '' }}>Mois</option>
-                                            <option value="annee" {{ old('status', $objectif->status) == 'annee' ? 'selected' : '' }}>Année</option>
+                                    <label for="duree_value" class="block text-gray-700 text-sm font-bold mb-2">Durée:</label>
+                                    <div class="mt-1 flex rounded-md shadow-sm">
+                                        <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                                            <i class="fas fa-calendar-days"></i>
+                                        </span>
+                                        <input type="number" name="duree_value" id="duree_value" value="{{ old('duree_value', $objectif->duree_value) }}" min="1"
+                                            class="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-none @error('duree_value') border-red-500 @enderror focus:outline-none focus:ring-primary-red focus:border-primary-red">
+
+                                        <select name="duree_type" id="duree_type"
+                                            class="block px-3 py-2 border border-gray-300 rounded-r-md shadow-sm @error('duree_type') border-red-500 @enderror focus:outline-none focus:ring-primary-red focus:border-primary-red">
+                                            <option value="">Unité</option>
+                                            <option value="jours" {{ old('duree_type', $objectif->duree_type) == 'jours' ? 'selected' : '' }}>Jours</option>
+                                            <option value="semaines" {{ old('duree_type', $objectif->duree_type) == 'semaines' ? 'selected' : '' }}>Semaines</option>
+                                            <option value="mois" {{ old('duree_type', $objectif->duree_type) == 'mois' ? 'selected' : '' }}>Mois</option>
+                                            <option value="annee" {{ old('duree_type', $objectif->duree_type) == 'annee' ? 'selected' : '' }}>Année</option>
                                         </select>
                                     </div>
-                                    @error('status')
+                                    @error('duree_value')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                    @error('duree_type')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -275,6 +359,18 @@
                                         <input type="number" name="progress" id="progress" min="0" max="100" class="form-control-custom @error('progress') border-red-500 @enderror" value="{{ old('progress', $objectif->progress) }}">
                                     </div>
                                     @error('progress')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                {{-- Explication pour incomplet (si nécessaire) --}}
+                                <div class="col-span-1 md:col-span-2">
+                                    <label for="explanation_for_incomplete" class="block text-gray-700 text-sm font-bold mb-2">Explication si incomplet:</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-comment-alt"></i></span>
+                                        <textarea name="explanation_for_incomplete" id="explanation_for_incomplete" rows="3" class="form-control-custom form-textarea-custom @error('explanation_for_incomplete') border-red-500 @enderror">{{ old('explanation_for_incomplete', $objectif->explanation_for_incomplete ?? '') }}</textarea>
+                                    </div>
+                                    @error('explanation_for_incomplete')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>

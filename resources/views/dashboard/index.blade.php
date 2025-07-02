@@ -746,7 +746,14 @@
                                             </td>
                                             <td class="p-4 text-center">{{ \Carbon\Carbon::parse($tache->datedebut)->format('d/m/Y') }}</td>
                                             <td class="p-4 text-center">{{ $tache->duree }}</td>
-                                            <td class="p-4 text-center">{{ $tache->user->name ?? 'N/A' }}</td>
+                                                   <td class="py-4 px-6">
+        <div class="flex items-center">
+        <i class="fas fa-user-circle text-gray-400 mr-2"></i>
+        @foreach ($tache->users as $assignedUser)
+            {{ $assignedUser->name }}{{ !$loop->last ? ', ' : '' }}
+        @endforeach
+    </div>
+</td>
                                         </tr>
                                     @empty
                                         <tr>

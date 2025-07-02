@@ -1,14 +1,16 @@
 <?php
 
 namespace App\Models;
+
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Permission\Traits\HasRoles;
+
 class Objectif extends Model
 {
-    use HasFactory,HasRoles,Notifiable;
+    use HasFactory, HasRoles, Notifiable;
 
     /**
      * Les attributs pouvant être assignés en masse.
@@ -20,15 +22,18 @@ class Objectif extends Model
         'type',
         'description',
         'ca',
-        'status',
+        // 'status', // Le champ 'status' a été supprimé de la base de données et donc du fillable
         'afaire',
         'iduser',
         'created_by',
         'progress',
+        'duree_value', // Ajouté pour permettre l'assignation massive
+        'duree_type',  // Ajouté pour permettre l'assignation massive
+        'explanation_for_incomplete', // Ajouté pour permettre l'assignation massive
     ];
 
     /**
-     * Définition de la relation avec l'utilisateur.
+     * Définition de la relation avec l'utilisateur principal (celui à qui l'objectif est assigné).
      * Chaque objectif appartient à un utilisateur.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -38,16 +43,10 @@ class Objectif extends Model
         return $this->belongsTo(User::class, 'iduser');
     }
 
-
-   
-
     /**
-     * Get the attachments for the objectif.
-     */
-   
-
-    /**
-     * Get the user who created the objective.
+     * Obtenir l'utilisateur qui a créé l'objectif.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function creator()
     {

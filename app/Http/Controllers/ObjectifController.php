@@ -6,7 +6,7 @@ use App\Models\Objectif;
 use App\Models\User;
 use App\Notifications\ObjectifCreatedNotification;
 use App\Notifications\ObjectifUpdatedNotification;
-use App\Notifications\ObjectifDeadlineNotification;
+use App\Notifications\ObjectifDeadlineNotification; // Keep if still used elsewhere for general deadlines
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -43,8 +43,8 @@ class ObjectifController extends Controller
             $search = $request->input('search');
             $query->where(function($query) use ($search) {
                 $query->where('type', 'like', '%' . $search . '%')
-                      ->orWhere('description', 'like', '%' . $search . '%')
-                      ->orWhere('status', 'like', '%' . $search . '%');
+                      ->orWhere('description', 'like', '%' . $search . '%');
+                      // Removed 'status' from search
             });
         }
 
@@ -53,9 +53,10 @@ class ObjectifController extends Controller
             $query->where('type', $request->type);
         }
 
-        if ($request->has('status') && !empty($request->status)) {
-            $query->where('status', $request->status);
-        }
+        // Removed status filter as the column no longer exists
+        // if ($request->has('status') && !empty($request->status)) {
+        //     $query->where('status', $request->status);
+        // }
 
         if ($request->has('date_from') && !empty($request->date_from)) {
             $query->where('date', '>=', $request->date_from);
@@ -110,7 +111,15 @@ class ObjectifController extends Controller
         $inProgress = $query->clone()->where('progress', '>', 0)->where('progress', '<', 100)->count();
         
         // For overdue, count objectives past their date AND not fully completed
-        $overdue = $query->clone()->where('date', '<', Carbon::now()->startOfDay())->where('progress', '<', 100)->count(); 
+        // This now correctly uses the calculated overdue status based on duree_value/type
+        $overdueCount = 0;
+        $allObjectifs = $query->clone()->get();
+        foreach ($allObjectifs as $objectif) {
+            if ($this->isOverdue($objectif) && $this->calculateObjectifProgress($objectif) < 100) {
+                $overdueCount++;
+            }
+        }
+        $overdue = $overdueCount;
         // --- END SIMPLIFIED STATS LOGIC ---
 
         return [
@@ -172,59 +181,119 @@ class ObjectifController extends Controller
      * Returns objectives with enhanced information for calendar
      */
     public function calendar(Request $request): JsonResponse
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    // Ajoutez ces lignes pour voir ce que le contrôleur reçoit
-    \Log::info('FullCalendar Request received:', $request->all());
+        // Ajoutez ces lignes pour voir ce que le contrôleur reçoit
+        \Log::info('FullCalendar Request received:', $request->all());
 
-    $query = Objectif::with(['user:id,name', 'creator:id,name']);
+        $query = Objectif::with(['user:id,name', 'creator:id,name']);
 
-    if (!$user->hasRole('Sup_Admin')) {
-        $query->where('iduser', $user->id);
+        if (!$user->hasRole('Sup_Admin')) {
+            $query->where('iduser', $user->id);
+        }
+
+        if ($request->has('start') && $request->has('end')) {
+            $startDate = Carbon::parse($request->start)->startOfDay();
+            $endDate = Carbon::parse($request->end)->endOfDay();
+            $query->whereBetween('date', [$startDate, $endDate]);
+        }
+
+        if ($request->has('type') && !empty($request->type)) {
+            $types = explode(',', $request->type); 
+            $query->whereIn('type', $types);
+        }
+
+        // Removed status filter as the column no longer exists
+        // if ($request->has('status') && !empty($request->status)) {
+        //     $statuses = explode(',', $request->status); 
+        //     $query->whereIn('status', $statuses);
+        // }
+
+        // Pour voir la requête SQL générée
+        \Log::info('Generated SQL Query:', ['sql' => $query->toSql(), 'bindings' => $query->getBindings()]);
+
+        $objectifs = $query->get()->map(function ($objectif) {
+            $calculatedProgress = $this->calculateObjectifProgress($objectif);
+            $needsExplanation = $this->needsExplanation($objectif);
+            $eventColors = $this->getEventColor($objectif, $calculatedProgress, $needsExplanation);
+
+            return [
+                'id' => $objectif->id,
+                'title' => $this->formatEventTitle($objectif), // Uses updated formatEventTitle
+                'start' => $objectif->date,
+                'end' => $this->getCalculatedEndDate($objectif), // New method to get end date based on duration
+                'allDay' => true, // Or false if you want to be more specific with time
+                'backgroundColor' => $eventColors['background'],
+                'borderColor' => $eventColors['border'],
+                'textColor' => $eventColors['text'],
+                'extendedProps' => [
+                    'description' => $objectif->description,
+                    'type' => $objectif->type,
+                    'ca' => $objectif->ca,
+                    'afaire' => $objectif->afaire,
+                    'progress' => $objectif->progress,
+                    'calculated_progress' => $calculatedProgress,
+                    'needs_explanation' => $needsExplanation,
+                    'duree_value' => $objectif->duree_value,
+                    'duree_type' => $objectif->duree_type,
+                    'user_name' => $objectif->user->name ?? 'N/A',
+                    'creator_name' => $objectif->creator->name ?? 'N/A',
+                    'days_until_deadline' => $this->getDaysUntilDeadline($objectif),
+                    'is_overdue' => $this->isOverdue($objectif),
+                    'priority' => $this->calculatePriority($objectif, $calculatedProgress),
+                ],
+            ];
+        });
+
+        // Ajoutez cette ligne pour voir les données finales envoyées au frontend
+        \Log::info('Objectives sent to FullCalendar:', ['count' => $objectifs->count(), 'data' => $objectifs->toArray()]);
+
+        return response()->json($objectifs);
     }
 
-    if ($request->has('start') && $request->has('end')) {
-        $startDate = Carbon::parse($request->start)->startOfDay();
-        $endDate = Carbon::parse($request->end)->endOfDay();
-        $query->whereBetween('date', [$startDate, $endDate]);
+    /**
+     * Calculate the end date of an objective based on its start date and duration.
+     */
+    private function getCalculatedEndDate($objectif): ?string
+    {
+        if (empty($objectif->date) || empty($objectif->duree_value) || empty($objectif->duree_type)) {
+            return null;
+        }
+
+        $startDate = Carbon::parse($objectif->date);
+        $endDate = clone $startDate;
+
+        switch ($objectif->duree_type) {
+            case 'jours':
+                $endDate->addDays($objectif->duree_value);
+                break;
+            case 'semaines':
+                $endDate->addWeeks($objectif->duree_value);
+                break;
+            case 'mois':
+                $endDate->addMonths($objectif->duree_value);
+                break;
+            case 'annee':
+                $endDate->addYears($objectif->duree_value);
+                break;
+            default:
+                return null;
+        }
+
+        return $endDate->toDateString();
     }
 
-    if ($request->has('type') && !empty($request->type)) {
-        $types = explode(',', $request->type); 
-        $query->whereIn('type', $types);
-    }
-
-    if ($request->has('status') && !empty($request->status)) {
-        $statuses = explode(',', $request->status); 
-        $query->whereIn('status', $statuses);
-    }
-
-    // Pour voir la requête SQL générée
-    \Log::info('Generated SQL Query:', ['sql' => $query->toSql(), 'bindings' => $query->getBindings()]);
-
-    $objectifs = $query->get()->map(function ($objectif) {
-        // ... reste du code ...
-        return [
-            // ... les propriétés de l'événement ...
-        ];
-    });
-
-    // Ajoutez cette ligne pour voir les données finales envoyées au frontend
-    \Log::info('Objectives sent to FullCalendar:', ['count' => $objectifs->count(), 'data' => $objectifs->toArray()]);
-
-    return response()->json($objectifs);
-}
     /**
      * Format event title for calendar display
      */
     private function formatEventTitle($objectif): string
     {
         $typeIcon = $this->getTypeIcon($objectif->type);
-        $statusBadge = strtoupper($objectif->status);
+        // Removed status badge as the column no longer exists
         $shortDescription = Str::limit($objectif->description ?? '', 40);
         
-        return "{$typeIcon} {$shortDescription} ({$statusBadge})";
+        return "{$typeIcon} {$shortDescription}";
     }
 
     /**
@@ -242,7 +311,7 @@ class ObjectifController extends Controller
     }
 
     /**
-     * Get event color based on status and progress
+     * Get event color based on needsExplanation and calculatedProgress
      */
     private function getEventColor($objectif, $calculatedProgress, $needsExplanation): array
     {
@@ -290,43 +359,74 @@ class ObjectifController extends Controller
     }
 
     /**
-     * Calculate days until deadline based on 'status' field (mois/annee)
+     * Calculate days until deadline based on 'duree_value' and 'duree_type'
      */
     private function getDaysUntilDeadline($objectif): int
     {
-        $deadline = null;
-        
-        if (!empty($objectif->date)) {
-            $carbonDate = Carbon::parse($objectif->date);
-            if ($objectif->status === 'mois') {
-                $deadline = $carbonDate->endOfMonth();
-            } elseif ($objectif->status === 'annee') {
-                $deadline = $carbonDate->endOfYear();
-            }
+        if (empty($objectif->date) || empty($objectif->duree_value) || empty($objectif->duree_type)) {
+            return -9999; // Or some other indicator for invalid duration
         }
-        
-        return $deadline ? Carbon::now()->diffInDays($deadline, false) : -9999;
+
+        $startDate = Carbon::parse($objectif->date);
+        $deadline = clone $startDate; // Clone to avoid modifying original $startDate
+
+        switch ($objectif->duree_type) {
+            case 'jours':
+                $deadline->addDays($objectif->duree_value);
+                break;
+            case 'semaines':
+                $deadline->addWeeks($objectif->duree_value);
+                break;
+            case 'mois':
+                $deadline->addMonths($objectif->duree_value);
+                break;
+            case 'annee':
+                $deadline->addYears($objectif->duree_value);
+                break;
+            default:
+                return -9999; // Unknown duration type
+        }
+
+        // Ensure the deadline is considered at the end of the day for consistency with 'date' field
+        $deadline->endOfDay();
+
+        return Carbon::now()->diffInDays($deadline, false); // false to get negative for past dates
     }
 
     /**
-     * Check if objectif is overdue based on 'status' field (mois/annee)
+     * Check if objectif is overdue based on 'duree_value' and 'duree_type'
      */
     private function isOverdue($objectif): bool
     {
-        $deadline = null;
-        
-        if (!empty($objectif->date)) {
-            $carbonDate = Carbon::parse($objectif->date);
-            if ($objectif->status === 'mois') {
-                $deadline = $carbonDate->endOfMonth();
-            } elseif ($objectif->status === 'annee') {
-                $deadline = $carbonDate->endOfYear();
-            }
+        if (empty($objectif->date) || empty($objectif->duree_value) || empty($objectif->duree_type)) {
+            return false; // Cannot determine overdue if duration is not set
         }
-        
+
+        $startDate = Carbon::parse($objectif->date);
+        $deadline = clone $startDate;
+
+        switch ($objectif->duree_type) {
+            case 'jours':
+                $deadline->addDays($objectif->duree_value);
+                break;
+            case 'semaines':
+                $deadline->addWeeks($objectif->duree_value);
+                break;
+            case 'mois':
+                $deadline->addMonths($objectif->duree_value);
+                break;
+            case 'annee':
+                $deadline->addYears($objectif->duree_value);
+                break;
+            default:
+                return false; // Unknown duration type
+        }
+
+        // Ensure the deadline is considered at the end of the day
+        $deadline->endOfDay();
+
         // An objective is overdue if a valid deadline exists and the current time is past it.
-        // It's also overdue if the progress is less than 100% and the deadline has passed.
-        return $deadline ? Carbon::now()->greaterThan($deadline) : false;
+        return Carbon::now()->greaterThan($deadline);
     }
 
     /**
@@ -375,10 +475,11 @@ class ObjectifController extends Controller
             $query->whereIn('type', $types);
         }
 
-        if ($request->has('status') && !empty($request->status)) {
-            $statuses = is_array($request->status) ? $request->status : [$request->status];
-            $query->whereIn('status', $statuses);
-        }
+        // Removed status filter as the column no longer exists
+        // if ($request->has('status') && !empty($request->status)) {
+        //     $statuses = is_array($request->status) ? $request->status : [$request->status];
+        //     $query->whereIn('status', $statuses);
+        // }
 
         if ($request->has('date_from') && !empty($request->date_from)) {
             $query->where('date', '>=', $request->date_from);
@@ -401,13 +502,16 @@ class ObjectifController extends Controller
                 'id' => $objectif->id,
                 'date' => $objectif->date,
                 'type' => $objectif->type,
-                'status' => $objectif->status,
+                // 'status' => $objectif->status, // Removed status
                 'description' => $objectif->description,
                 'ca' => $objectif->ca,
                 'afaire' => $objectif->afaire,
                 'progress' => $objectif->progress,
                 'calculated_progress' => $calculatedProgress,
                 'needs_explanation' => $needsExplanation,
+                'duree_value' => $objectif->duree_value, // Added
+                'duree_type' => $objectif->duree_type,   // Added
+                'explanation_for_incomplete' => $objectif->explanation_for_incomplete, // Added
                 'user' => [
                     'id' => $objectif->user->id ?? null,
                     'name' => $objectif->user->name ?? 'N/A'
@@ -452,14 +556,16 @@ class ObjectifController extends Controller
     public function store(Request $request)
     {
        $request->validate([
-    'date' => 'required|date|after_or_equal:today',
-    'type' => 'required|in:formations,projets,vente',
-    'description' => 'required|string|min:10|max:1000',
-    'ca' => 'required|string', // Changed from nullable to required
-    'status' => 'required|in:mois,annee',
-    'afaire' => 'required|string|min:10|max:1000', // Changed from nullable to required
-    'iduser' => 'required|exists:users,id',
-]);
+            'date' => 'required|date|after_or_equal:today',
+            'type' => 'required|in:formations,projets,vente',
+            'description' => 'required|string|min:10|max:1000',
+            'ca' => 'required|string',
+            // 'status' => 'required|in:mois,annee', // Removed status validation
+            'duree_value' => 'nullable|integer|min:1', // Added duree_value validation
+            'duree_type' => 'nullable|in:jours,semaines,mois,annee', // Added duree_type validation
+            'afaire' => 'required|string|min:10|max:1000',
+            'iduser' => 'required|exists:users,id',
+        ]);
 
         try {
             DB::beginTransaction();
@@ -469,7 +575,9 @@ class ObjectifController extends Controller
             $objectif->type = $request->type;
             $objectif->description = $request->description;
             $objectif->ca = $request->ca;
-            $objectif->status = $request->status;
+            // $objectif->status = $request->status; // Removed status assignment
+            $objectif->duree_value = $request->duree_value; // Added
+            $objectif->duree_type = $request->duree_type;   // Added
             $objectif->afaire = $request->afaire;
             $objectif->iduser = $request->iduser;
             $objectif->created_by = auth()->id();
@@ -584,15 +692,17 @@ class ObjectifController extends Controller
     public function update(Request $request, Objectif $objectif)
     {
         $request->validate([
-           
-            
+            'date' => 'required|date|after_or_equal:today', // Added date validation for update
             'type' => 'required|in:formations,projets,vente',
             'description' => 'required|string|min:10|max:1000',
             'ca' => 'nullable|string', 
-            'status' => 'required|in:mois,annee',
+            // 'status' => 'required|in:mois,annee', // Removed status validation
+            'duree_value' => 'nullable|integer|min:1', // Added duree_value validation
+            'duree_type' => 'nullable|in:jours,semaines,mois,annee', // Added duree_type validation
             'afaire' => 'nullable|string|min:10|max:1000', 
             'iduser' => 'required|exists:users,id',
             'progress' => 'sometimes|integer|min:0|max:100', 
+            'explanation_for_incomplete' => 'nullable|string|max:1000', // Added validation for explanation
         ]);
 
         try {
@@ -601,15 +711,19 @@ class ObjectifController extends Controller
             $oldUser = $objectif->iduser;
 
             $objectif->update([
-               
+                'date' => $request->date, // Added date to update
                 'type' => $request->type,
                 'description' => $request->description,
                 'ca' => $request->ca,
-                'status' => $request->status,
+                // 'status' => $request->status, // Removed status assignment
+                'duree_value' => $request->duree_value, // Added
+                'duree_type' => $request->duree_type,   // Added
                 'afaire' => $request->afaire,
                 'iduser' => $request->iduser,
                 'progress' => $request->progress ?? $objectif->progress, 
-                'updated_by' => auth()->id(),
+                'explanation_for_incomplete' => $request->explanation_for_incomplete, // Added
+                // 'updated_by' is not a fillable field in the model, it's usually handled by timestamps or a separate observer/event
+                // If you need to track 'updated_by', ensure it's in the $fillable array of the Objectif model
             ]);
 
             // Clear cache for both old and new users
@@ -669,14 +783,14 @@ class ObjectifController extends Controller
      * @return \Illuminate\Http\Response
      */
    public function destroy(Objectif $objectif)
-{
-    try {
-        $objectif->delete();
-        return back()->with('success', 'Objectif supprimé avec succès.');
-    } catch (\Exception $e) {
-        return back()->with('error', 'Une erreur est survenue lors de la suppression.');
+    {
+        try {
+            $objectif->delete();
+            return back()->with('success', 'Objectif supprimé avec succès.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Une erreur est survenue lors de la suppression.');
+        }
     }
-}
 
     /**
      * Bulk operations
@@ -684,7 +798,7 @@ class ObjectifController extends Controller
     public function bulkAction(Request $request)
     {
         $request->validate([
-            'action' => 'required|in:delete,update_status,assign_user',
+            'action' => 'required|in:delete,assign_user', // Removed 'update_status'
             'objectifs' => 'required|array',
             'objectifs.*' => 'exists:objectifs,id',
             'value' => 'sometimes|string'
@@ -714,6 +828,15 @@ class ObjectifController extends Controller
                     }
                     $message = count($objectifs) . ' objectifs supprimés.';
                     break;
+
+                // Removed 'update_status' case
+                // case 'update_status':
+                //     $objectifs->each(function ($objectif) use ($request) {
+                //         $this->authorize('update', $objectif);
+                //         $objectif->update(['status' => $request->value]);
+                //     });
+                //     $message = count($objectifs) . ' objectifs mis à jour.';
+                //     break;
 
                 case 'assign_user':
                     $objectifs->each(function ($objectif) use ($request) {
@@ -773,9 +896,10 @@ class ObjectifController extends Controller
             $query->where('type', $request->type);
         }
 
-        if ($request->has('status') && !empty($request->status)) {
-            $query->where('status', $request->status);
-        }
+        // Removed status filter as the column no longer exists
+        // if ($request->has('status') && !empty($request->status)) {
+        //     $query->where('status', $request->status);
+        // }
 
         $objectifs = $query->get();
 
@@ -789,8 +913,8 @@ class ObjectifController extends Controller
         $callback = function() use ($objectifs) {
             $file = fopen('php://output', 'w');
 
-            // Headers (removed 'Priorité')
-            fputcsv($file, ['Date', 'Type', 'Description', 'CA', 'Status', 'À faire', 'Utilisateur', 'Progression Calculée']);
+            // Headers (removed 'Status' and 'Priorité')
+            fputcsv($file, ['Date', 'Type', 'Description', 'CA', 'À faire', 'Durée Valeur', 'Durée Type', 'Utilisateur', 'Progression Calculée', 'Explication Incomplète']);
 
             foreach ($objectifs as $objectif) {
                 // Calculate progress before exporting - uses simplified method
@@ -800,10 +924,13 @@ class ObjectifController extends Controller
                     $objectif->type,
                     $objectif->description,
                     $objectif->ca,
-                    $objectif->status,
+                    // $objectif->status, // Removed status
                     $objectif->afaire,
+                    $objectif->duree_value, // Added
+                    $objectif->duree_type,  // Added
                     $objectif->user->name ?? 'N/A',
                     $calculatedProgress . '%',
+                    $objectif->explanation_for_incomplete ?? '', // Added
                 ]);
             }
 
@@ -835,13 +962,18 @@ class ObjectifController extends Controller
         // Upcoming deadlines
         $upcomingQuery = Objectif::with('user')
             ->where('date', '>', Carbon::now()->startOfDay())
-            ->where('date', '<=', Carbon::now()->addDays(7)->endOfDay())
+            // This filter needs to be dynamic based on duree_value and duree_type
+            // For simplicity, we'll fetch and then filter in PHP for now, or refine query
             ->orderBy('date');
 
         if (!$user->hasRole('Sup_Admin')) {
             $upcomingQuery->where('iduser', $user->id);
         }
-        $upcoming = $upcomingQuery->get();
+        $upcoming = $upcomingQuery->get()->filter(function($objectif) {
+            $daysUntilDeadline = $this->getDaysUntilDeadline($objectif);
+            return $daysUntilDeadline > 0 && $daysUntilDeadline <= 7;
+        });
+
         $upcoming->each(function ($objectif) {
             $objectif->calculated_progress = $this->calculateObjectifProgress($objectif);
             $objectif->needs_explanation = $this->needsExplanation($objectif);
@@ -860,12 +992,15 @@ class ObjectifController extends Controller
     public function updateProgress(Request $request, Objectif $objectif)
     {
         $request->validate([
-            'progress' => 'required|integer|min:0|max:100'
+            'progress' => 'required|integer|min:0|max:100',
+            'explanation_for_incomplete' => 'nullable|string|max:1000', // Added validation for explanation
         ]);
 
         $objectif->update([
             'progress' => $request->progress,
-            'updated_by' => auth()->id()
+            'explanation_for_incomplete' => $request->explanation_for_incomplete, // Added
+            // 'updated_by' is not a fillable field in the model, it's usually handled by timestamps or a separate observer/event
+            // If you need to track 'updated_by', ensure it's in the $fillable array of the Objectif model
         ]);
 
         // Clear cache
@@ -874,7 +1009,8 @@ class ObjectifController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Progression mise à jour.',
-            'progress' => $objectif->progress
+            'progress' => $objectif->progress,
+            'explanation_for_incomplete' => $objectif->explanation_for_incomplete,
         ]);
     }
 
@@ -902,9 +1038,8 @@ class ObjectifController extends Controller
         $calculatedProgress = $this->calculateObjectifProgress($objectif);
         $isOverdue = $this->isOverdue($objectif);
 
-        return $isOverdue && $calculatedProgress < 100;
+        return $isOverdue && $calculatedProgress < 100 && empty($objectif->explanation_for_incomplete);
     }
-
 
 
     public function duplicate(Objectif $objectif)
@@ -919,7 +1054,7 @@ class ObjectifController extends Controller
         // tu devrais la supprimer ou la commenter, ou t'assurer qu'elle vérifie aussi uniquement 'objectif-create'.
         // Par exemple:
         // public function duplicate(User $user, Objectif $objectif) {
-        //     return $user->can('objectif-create');
+        //      return $user->can('objectif-create');
         // }
 
 
@@ -927,12 +1062,15 @@ class ObjectifController extends Controller
             DB::beginTransaction();
 
             $newObjectif = $objectif->replicate();
-            $newObjectif->date = Carbon::now()->addMonth()->toDateString();
+            // Adjust date based on original date and duration, or set a default like +1 month
+            // For simplicity, setting to 1 month from now for duplicated objective
+            $newObjectif->date = Carbon::now()->addMonth()->toDateString(); 
             $newObjectif->progress = 0;
             $newObjectif->description = 'Copie de : ' . $objectif->description;
             $newObjectif->created_by = auth()->id();
             $newObjectif->created_at = Carbon::now();
             $newObjectif->updated_at = Carbon::now();
+            $newObjectif->explanation_for_incomplete = null; // Clear explanation for incomplete for duplicated objective
 
             $newObjectif->save();
 

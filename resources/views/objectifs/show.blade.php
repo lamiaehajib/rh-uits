@@ -215,7 +215,15 @@
                                     @endif">
                                     {{ ucfirst($objectif->type) }}
                                 </span></p>
-                                <p><strong><i class="fas fa-hourglass-half mr-2 text-gray-500"></i> Statut (Durée):</strong> <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{{ ucfirst($objectif->status) }}</span></p>
+                                <p><strong><i class="fas fa-hourglass-half mr-2 text-gray-500"></i> Durée:</strong> 
+                                    @if($objectif->duree_value && $objectif->duree_type)
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                            {{ $objectif->duree_value }} {{ ucfirst($objectif->duree_type) }}
+                                        </span>
+                                    @else
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Non spécifié</span>
+                                    @endif
+                                </p>
                                 <p class="sm:col-span-2"><strong><i class="fas fa-user-circle mr-2 text-gray-500"></i> Assigné à:</strong> {{ $objectif->user->name ?? 'N/A' }}</p>
 
                                 <div class="sm:col-span-2">
@@ -245,28 +253,37 @@
                                 $endDate = null;
                                 $midPointDate = null;
 
-                                if ($objectif->status === 'mois') {
-                                    $endDate = $startDate->copy()->endOfMonth();
-                                    $midPointDate = $startDate->copy()->addDays(floor($startDate->daysInMonth / 2));
-                                } elseif ($objectif->status === 'annee') {
-                                    $endDate = $startDate->copy()->addYear()->subDay(); // Sub day to make it end of the year *before* the next start date
-                                    $midPointDate = $startDate->copy()->addMonths(6);
+                                // Calculate endDate based on duree_value and duree_type
+                                if ($objectif->duree_value && $objectif->duree_type) {
+                                    $endDate = clone $startDate;
+                                    switch ($objectif->duree_type) {
+                                        case 'jours':
+                                            $endDate->addDays($objectif->duree_value);
+                                            break;
+                                        case 'semaines':
+                                            $endDate->addWeeks($objectif->duree_value);
+                                            break;
+                                        case 'mois':
+                                            $endDate->addMonths($objectif->duree_value);
+                                            break;
+                                        case 'annee':
+                                            $endDate->addYears($objectif->duree_value);
+                                            break;
+                                    }
+                                    $endDate->endOfDay(); // Ensure end of day for comparison
+                                    
+                                    // Calculate midpoint date
+                                    $totalDays = $startDate->diffInDays($endDate);
+                                    $midPointDate = $startDate->copy()->addDays(floor($totalDays / 2));
                                 }
-
-                                // Handle cases where endDate might be before startDate for some reason
-                                if ($endDate && $startDate->greaterThan($endDate)) {
-                                    $totalDurationDays = 1; // Prevent division by zero or negative duration
-                                    $progressPercentageVisual = 0;
-                                    $todayPosition = 0;
-                                    $midpointPosition = 0;
-                                } else {
-                                    $totalDurationDays = $startDate->diffInDays($endDate) + 1; // Add 1 to include both start and end day
-                                    $elapsedDays = $startDate->diffInDays($currentDate);
-                                    $progressPercentageVisual = min(100, max(0, ($elapsedDays / $totalDurationDays) * 100));
-                                    $todayPosition = min(100, max(0, ($startDate->diffInDays(Carbon\Carbon::now()) / $totalDurationDays) * 100));
-                                    $midpointPosition = ($midPointDate && $totalDurationDays > 0) ? ($startDate->diffInDays($midPointDate) / $totalDurationDays) * 100 : 50; // Default to 50% if no midpoint
-                                    $midpointPosition = min(100, max(0, $midpointPosition));
-                                }
+                                
+                                // Visual progress calculation
+                                $totalDurationDays = ($endDate && $startDate->lessThanOrEqualTo($endDate)) ? $startDate->diffInDays($endDate) + 1 : 1;
+                                $elapsedDays = $startDate->diffInDays($currentDate);
+                                $progressPercentageVisual = min(100, max(0, ($elapsedDays / $totalDurationDays) * 100));
+                                $todayPosition = min(100, max(0, ($startDate->diffInDays(Carbon\Carbon::now()) / $totalDurationDays) * 100));
+                                $midpointPosition = ($midPointDate && $totalDurationDays > 0) ? ($startDate->diffInDays($midPointDate) / $totalDurationDays) * 100 : 50; // Default to 50% if no midpoint
+                                $midpointPosition = min(100, max(0, $midpointPosition));
                             @endphp
 
                             <div class="relative w-full bg-gray-200 rounded-full h-8 flex items-center mb-6 overflow-hidden">
@@ -289,7 +306,7 @@
                                 @if ($midPointDate)
                                     <div class="absolute top-0 bottom-0 flex items-center z-20" style="left: {{ $midpointPosition }}%;">
                                         <span class="bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md transform -translate-x-1/2 animate-pop-in-mid">
-                                            50%: {{ $midPointDate->format('d M Y') }}
+                                            Milieu: {{ $midPointDate->format('d M Y') }}
                                         </span>
                                     </div>
                                 @endif
@@ -319,8 +336,10 @@
                                     <i class="fas fa-exclamation-triangle mr-3 text-red-600 icon-bounce"></i> Explication Requise
                                 </h4>
                                 <p class="text-red-600 mb-4">Cet objectif n'a pas atteint 100% à la date prévue. Veuillez fournir une explication.</p>
-                                <form action="#" method="POST"> {{-- Replace # with your actual route to update explanation --}}
+                                <form action="{{ route('objectifs.updateProgress', $objectif->id) }}" method="POST"> {{-- Point to updateProgress route --}}
                                     @csrf
+                                    @method('PUT')
+                                    <input type="hidden" name="progress" value="{{ $objectif->progress }}"> {{-- Keep current progress --}}
                                     <div class="mb-4">
                                         <label for="explanation_for_incomplete" class="block text-red-700 text-sm font-bold mb-2">Raison de l'objectif non atteint:</label>
                                         <textarea name="explanation_for_incomplete" id="explanation_for_incomplete" rows="4" class="form-detail-display border-red-300 focus:border-red-500 focus:ring focus:ring-red-200 @error('explanation_for_incomplete') border-red-500 @enderror">{{ old('explanation_for_incomplete', $objectif->explanation_for_incomplete ?? '') }}</textarea>
