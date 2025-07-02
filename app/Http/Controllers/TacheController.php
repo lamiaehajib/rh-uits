@@ -162,7 +162,7 @@ class TacheController extends Controller
         return view('taches.show', compact('tache'));
     }
 
-    public function edit($id)
+    public function edit($id, Request $request) // Zidna Request $request hna
     {
         $user = auth()->user();
         $tache = Tache::with('users')->findOrFail($id);
@@ -173,7 +173,9 @@ class TacheController extends Controller
         }
 
         $users = User::all();
-        return view('taches.edit', compact('tache', 'users'));
+        // Passi ga3 les filter parameters l'edit view
+        $filterParams = $request->only(['search', 'status', 'date_filter', 'user_filter', 'sort_by', 'sort_direction']);
+        return view('taches.edit', compact('tache', 'users', 'filterParams')); // Zidna filterParams
     }
 
     public function update(Request $request, $id)
@@ -228,7 +230,9 @@ class TacheController extends Controller
             }
         }
 
-        return redirect()->route('taches.index')
+        // Hna ghadi nst3emlou les filters li jbna men l'request
+        $filterParams = $request->only(['search', 'status', 'date_filter', 'user_filter', 'sort_by', 'sort_direction']);
+        return redirect()->route('taches.index', $filterParams) // Passi les parameters hna
                             ->with('success', 'Tâche mise à jour avec succès.');
     }
 
@@ -345,9 +349,9 @@ class TacheController extends Controller
 
         // Overdue count kanakhdouha direkt men database
         $overdueCount = (clone $baseQuery)->where('status', '!=', 'termine')
-                                          ->whereNotNull('date_fin_prevue')
-                                          ->where('date_fin_prevue', '<', Carbon::now())
-                                          ->count();
+                                           ->whereNotNull('date_fin_prevue')
+                                           ->where('date_fin_prevue', '<', Carbon::now())
+                                           ->count();
 
         return [
             'total' => (clone $baseQuery)->count(), 

@@ -332,7 +332,8 @@
                                                         </a>
                                                     @endcan
                                                     @can('tache-edit')
-                                                        <a href="{{ route('taches.edit', $tache->id) }}" title="Modifier" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out transform hover:scale-110">
+                                                        {{-- Hna kanswftou les filtres f link dial edit --}}
+                                                       <a href="{{ route('taches.edit', array_merge(['tach' => $tache->id], request()->query())) }}" title="Modifier" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out transform hover:scale-110">
                                                             <i class="fas fa-edit text-lg"></i>
                                                         </a>
                                                     @endcan

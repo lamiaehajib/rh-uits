@@ -139,7 +139,9 @@
                         <form action="{{ route('taches.update', $tache->id) }}" method="POST" class="space-y-6">
                             @csrf
                             @method('PUT') {{-- Use PUT method for update requests --}}
-
+@foreach ($filterParams as $key => $value)
+        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+    @endforeach
                             {{-- Determine if the current user is an Sup_Admin or Custom_Admin --}}
                             @php
                                 $user = auth()->user();
