@@ -170,12 +170,18 @@
                                 </div>
 
                                 <!-- Assigné à l'utilisateur -->
-                                <div>
-                                    <p class="text-sm font-semibold text-gray-700 flex items-center mb-1">
-                                        <i class="fas fa-user-tag mr-2 text-teal-500"></i> {{ __('Assigné à:') }}
-                                    </p>
-                                    <p class="text-gray-800 ml-5">{{ $tache->user->name ?? 'N/A' }}</p>
-                                </div>
+                                <p class="sm:col-span-2">
+                                    <strong><i class="fas fa-users mr-2 text-gray-500"></i> Assigné(s) à:</strong>
+                                    <span class="inline-flex flex-wrap items-center space-x-2 mt-1"> {{-- mt-1 pour un petit espacement avec le label --}}
+                                        @forelse ($tache->users as $assignedUser)
+                                            <span class="px-2 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 flex items-center">
+                                                <i class="fas fa-user mr-1"></i> {{ $assignedUser->name }}
+                                            </span>
+                                        @empty
+                                            <span class="text-sm text-gray-500">Non assigné</span>
+                                        @endforelse
+                                    </span>
+                                </p>
                                 
                                 <!-- Retour de la Tâche -->
                                 @if ($tache->retour)
