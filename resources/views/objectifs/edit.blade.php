@@ -334,22 +334,27 @@
                                     @enderror
                                 </div>
 
-                                {{-- Assigner à l'utilisateur --}}
-                                <div class="col-span-1">
-                                    <label for="iduser" class="block text-gray-700 text-sm font-bold mb-2">Assigner à l'utilisateur: <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                        <select name="iduser" id="iduser" class="form-select-custom @error('iduser') border-red-500 @enderror" required>
-                                            <option value="">Sélectionner un utilisateur</option>
-                                            @foreach ($users as $user)
-                                                <option value="{{ $user->id }}" {{ old('iduser', $objectif->iduser) == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    @error('iduser')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+                                {{-- Assigner aux utilisateurs (Sélection multiple) --}}
+<div class="col-span-1 md:col-span-2"> {{-- Utilise col-span-2 si tu veux qu'il prenne toute la largeur sur mobile et md --}}
+    <label for="user_ids" class="block text-gray-700 text-sm font-bold mb-2">Assigné(e) <span class="text-danger">*</span></label>
+    <div class="border border-gray-300 rounded-md p-3"> {{-- Boîte avec bordure et padding --}}
+        @foreach ($users as $user)
+            <div class="flex items-center mb-2 last:mb-0"> {{-- flex pour aligner checkbox et label, last:mb-0 pour retirer la marge du dernier élément --}}
+                <input type="checkbox" name="user_ids[]" id="user_{{ $user->id }}" value="{{ $user->id }}"
+                       class="h-4 w-4 text-primary-red border-gray-300 rounded focus:ring-primary-red focus:ring-offset-0"
+                       {{-- Logique de pré-sélection pour l'édition --}}
+                       {{ in_array($user->id, old('user_ids', $objectif->users->pluck('id')->toArray())) ? 'checked' : '' }}>
+                
+                <label for="user_{{ $user->id }}" class="ml-2 text-gray-800 text-base cursor-pointer">
+                    {{ $user->name }} ({{ $user->email }})
+                </label>
+            </div>
+        @endforeach
+    </div>
+    @error('user_ids')
+        <div class="invalid-feedback">{{ $message }}</div> {{-- Utilise la classe d'erreur existante --}}
+    @enderror
+</div>
 
                                 {{-- Progression (manuelle, 0-100%) --}}
                                 <div class="col-span-1">

@@ -6,11 +6,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Permission\Traits\HasRoles;
+use Spatie\Permission\Traits\HasRoles; // Vérifie si ce trait est vraiment nécessaire ici
 
 class Objectif extends Model
 {
-    use HasFactory, HasRoles, Notifiable;
+    use HasFactory, Notifiable; // Retiré HasRoles si ce n'est pas le modèle Objectif qui gère les permissions
 
     /**
      * Les attributs pouvant être assignés en masse.
@@ -22,25 +22,24 @@ class Objectif extends Model
         'type',
         'description',
         'ca',
-        // 'status', // Le champ 'status' a été supprimé de la base de données et donc du fillable
         'afaire',
-        'iduser',
+       
         'created_by',
         'progress',
-        'duree_value', // Ajouté pour permettre l'assignation massive
-        'duree_type',  // Ajouté pour permettre l'assignation massive
-        'explanation_for_incomplete', // Ajouté pour permettre l'assignation massive
+        'duree_value',
+        'duree_type',
+        'explanation_for_incomplete',
     ];
 
     /**
-     * Définition de la relation avec l'utilisateur principal (celui à qui l'objectif est assigné).
-     * Chaque objectif appartient à un utilisateur.
+     * Définition de la relation avec les utilisateurs (plusieurs utilisateurs par objectif).
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function user()
+    public function users()
     {
-        return $this->belongsTo(User::class, 'iduser');
+        // Relation Many-to-Many via la table pivot 'objectif_user'
+        return $this->belongsToMany(User::class, 'objectif_user', 'objectif_id', 'user_id');
     }
 
     /**
