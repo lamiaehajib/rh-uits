@@ -242,22 +242,21 @@
                                 </div>
 
                                 <!-- Assigné à l'utilisateur -->
-                          <div class="form-group mb-4"> {{-- mb-4 pour marge bottom --}}
-    <label class="block text-gray-700 text-sm font-bold mb-2">Utilisateurs Assignés:</label>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"> {{-- Grille pour afficher les checkboxes sur plusieurs colonnes --}}
+                          <div class="form-group mb-4">
+    <label class="form-label" for="user_ids">Assigné(e) <span class="text-danger">*</span></label> {{-- ou text-muted --}}
+    <div class="border rounded p-3"> {{-- Pour créer la bordure autour de la liste --}}
         @foreach ($users as $user)
-            <div class="flex items-center bg-white border border-gray-300 rounded-lg p-3 shadow-sm">
-                <input type="checkbox" name="user_ids[]" id="user_{{ $user->id }}" value="{{ $user->id }}"
-                       class="form-checkbox h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-gray-300"
-                       {{ in_array($user->id, old('user_ids', [])) ? 'checked' : '' }}> {{-- old() pour conserver les sélections en cas d'erreur --}}
-                <label for="user_{{ $user->id }}" class="ml-3 text-gray-800 text-base cursor-pointer">
-                    {{ $user->name }}
+            <div class="form-check mb-2"> {{-- mb-2 pour un petit espacement entre les checkboxes --}}
+                <input class="form-check-input" type="checkbox" name="user_ids[]" value="{{ $user->id }}" id="user_{{ $user->id }}"
+                       {{ in_array($user->id, old('user_ids', [])) ? 'checked' : '' }}>
+                <label class="form-check-label" for="user_{{ $user->id }}">
+                    {{ $user->name }} ({{ $user->email }})
                 </label>
             </div>
         @endforeach
     </div>
     @error('user_ids')
-        <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
+        <div class="text-danger mt-2">{{ $message }}</div> {{-- Classe Bootstrap pour les erreurs --}}
     @enderror
 </div>
 

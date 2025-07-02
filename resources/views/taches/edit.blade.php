@@ -262,24 +262,24 @@
 
                                 <!-- Assigné à l'utilisateur -->
                                 <div class="form-group mb-4">
-    <label class="block text-gray-700 text-sm font-bold mb-2">Utilisateurs Assignés:</label>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        @foreach ($users as $user)
-            <div class="flex items-center bg-white border border-gray-300 rounded-lg p-3 shadow-sm">
-                <input type="checkbox" name="user_ids[]" id="user_{{ $user->id }}" value="{{ $user->id }}"
-                       class="form-checkbox h-5 w-5 text-indigo-600 focus:ring-indigo-500 rounded border-gray-300"
-                       {{-- Vérifier si l'utilisateur est déjà assigné à la tâche OU s'il était coché avant une erreur de validation --}}
-                       {{ in_array($user->id, old('user_ids', $tache->users->pluck('id')->toArray())) ? 'checked' : '' }}>
-                <label for="user_{{ $user->id }}" class="ml-3 text-gray-800 text-base cursor-pointer">
-                    {{ $user->name }}
-                </label>
-            </div>
-        @endforeach
-    </div>
-    @error('user_ids')
-        <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
-    @enderror
-</div>
+                            <label class="form-label" for="user_ids">Assigné(e) <span class="text-danger">*</span></label>
+                            <div class="border rounded p-3"> {{-- Boîte avec bordure et padding --}}
+                                @foreach ($users as $user)
+                                    <div class="form-check mb-2"> {{-- Chaque checkbox sur une nouvelle ligne avec espacement --}}
+                                        <input class="form-check-input" type="checkbox" name="user_ids[]" value="{{ $user->id }}" id="user_{{ $user->id }}"
+                                               {{-- Logique de pré-sélection: coche si l'ID est dans les old() values ou dans les utilisateurs assignés à la tâche --}}
+                                               {{ in_array($user->id, old('user_ids', $tache->users->pluck('id')->toArray())) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="user_{{ $user->id }}">
+                                            {{ $user->name }} ({{ $user->email }})
+                                        </label>
+                                    </div>
+                                @endforeach
+                            </div>
+                            @error('user_ids')
+                                <div class="text-danger mt-2">{{ $message }}</div> {{-- Message d'erreur --}}
+                            @enderror
+                        </div>
+
 
                                 <!-- Priorité de la Tâche -->
                                 <div>
