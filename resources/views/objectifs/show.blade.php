@@ -224,7 +224,19 @@
                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Non spécifié</span>
                                     @endif
                                 </p>
-                                <p class="sm:col-span-2"><strong><i class="fas fa-user-circle mr-2 text-gray-500"></i> Assigné à:</strong> {{ $objectif->user->name ?? 'N/A' }}</p>
+                               {{-- Assigné à (multiple users) --}}
+                                <p class="sm:col-span-2">
+                                    <strong><i class="fas fa-users mr-2 text-gray-500"></i> Assigné(s) à:</strong>
+                                    <span class="inline-flex flex-wrap items-center space-x-2 mt-1"> {{-- mt-1 pour un petit espacement avec le label --}}
+                                        @forelse ($objectif->users as $assignedUser)
+                                            <span class="px-2 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 flex items-center">
+                                                <i class="fas fa-user mr-1"></i> {{ $assignedUser->name }}
+                                            </span>
+                                        @empty
+                                            <span class="text-sm text-gray-500">Non assigné</span>
+                                        @endforelse
+                                    </span>
+                                </p>
 
                                 <div class="sm:col-span-2">
                                     <p class="font-bold text-gray-700 mb-2 flex items-center"><i class="fas fa-comment-dots mr-2 text-gray-500"></i> Description:</p>

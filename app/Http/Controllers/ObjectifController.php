@@ -383,22 +383,23 @@ class ObjectifController extends Controller
     }
 
     public function show($id)
-    {
-        $user = auth()->user();
-        // Charger la relation 'users'
-        $objectif = Objectif::with('users')->findOrFail($id); // MODIFIED
+{
+    $user = auth()->user();
+    $objectif = Objectif::with('users')->findOrFail($id);
 
-        // Access control: check if admin OR if current user is one of the assigned users
-        if ($this->isAdmin($user) || $objectif->users->contains($user->id)) { // MODIFIED
-            $this->markAsViewed($objectif, $user);
-            $objectif->calculated_progress = $this->calculateObjectifProgress($objectif);
-            $objectif->needs_explanation = $this->needsExplanation($objectif);
+    // Access control: check if admin OR if current user is one of the assigned users
+    if ($this->isAdmin($user) || $objectif->users->contains($user->id)) {
+        // Supprime ou commente cette ligne :
+        // $this->markAsViewed($objectif, $user);
 
-            return view('objectifs.show', compact('objectif'));
-        }
+        $objectif->calculated_progress = $this->calculateObjectifProgress($objectif);
+        $objectif->needs_explanation = $this->needsExplanation($objectif);
 
-        return redirect()->route('objectifs.index')->with('error', 'Accès refusé.');
+        return view('objectifs.show', compact('objectif'));
     }
+
+    return redirect()->route('objectifs.index')->with('error', 'Accès refusé.');
+}
 
     public function edit(Objectif $objectif)
     {
