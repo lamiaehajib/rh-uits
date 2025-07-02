@@ -318,12 +318,14 @@
                                                         {{ ucfirst($tache->priorite) }}
                                                     </span>
                                                 </td>
-                                                <td class="py-4 px-6">
-                                                    <div class="flex items-center">
-                                                        <i class="fas fa-user-circle text-gray-400 mr-2"></i>
-                                                        {{ $tache->user->name ?? 'N/A' }}
-                                                    </div>
-                                                </td>
+                                               <td class="py-4 px-6">
+        <div class="flex items-center">
+        <i class="fas fa-user-circle text-gray-400 mr-2"></i>
+        @foreach ($tache->users as $assignedUser)
+            {{ $assignedUser->name }}{{ !$loop->last ? ', ' : '' }}
+        @endforeach
+    </div>
+</td>
                                                 
                                                 <td class="py-4 px-6 flex items-center space-x-4">
                                                     @can('tache-show')

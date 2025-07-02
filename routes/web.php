@@ -102,7 +102,7 @@ Route::get('taches/export', [TacheController::class, 'export'])->name('taches.ex
 Route::resource('taches', TacheController::class);
 
 Route::resource('formations', FormationController::class);
-
+ Route::post('formations/{formation}/duplicate', [FormationController::class, 'duplicate'])->name('formations.duplicate');
 // Additional routes that are not part of the standard resource methods
 
 // Route for downloading a file associated with a formation

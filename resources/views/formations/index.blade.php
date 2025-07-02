@@ -294,7 +294,7 @@
                                 <table class="w-full text-sm text-left text-gray-700">
                                     <thead class="text-xs text-gray-700 uppercase bg-gray-100 rounded-t-lg">
                                         <tr>
-                                            <th scope="col" class="py-3 px-6">{{ __('ID') }}</th>
+                                          
                                             <th scope="col" class="py-3 px-6">{{ __('Nom') }}</th>
                                             <th scope="col" class="py-3 px-6">{{ __('Type') }}</th>
                                             <th scope="col" class="py-3 px-6">{{ __('Formateur') }}</th>
@@ -307,7 +307,7 @@
                                     <tbody>
                                         @forelse ($formations as $formation)
                                             <tr class="bg-white border-b hover:bg-gray-50 transition duration-150 ease-in-out">
-                                                <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">{{ $formation->id }}</td>
+                                               
                                                 <td class="py-4 px-6">{{ $formation->name }}</td>
                                                 <td class="py-4 px-6">
                                                     @if($formation->status == 'en ligne')
@@ -340,6 +340,14 @@
                                                         <a href="{{ route('formations.edit', $formation->id) }}" title="{{ __('Modifier') }}" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out transform hover:scale-110">
                                                             <i class="fas fa-pencil-alt text-lg"></i>
                                                         </a>
+                                                    @endcan
+                                                    @can('formation-create') {{-- Check 'formation-create' permission for duplicate --}}
+                                                        <form action="{{ route('formations.duplicate', $formation->id) }}" method="POST" class="inline-block">
+                                                            @csrf
+                                                            <button type="submit" title="{{ __('Dupliquer') }}" class="text-purple-600 hover:text-purple-800 transition duration-150 ease-in-out transform hover:scale-110">
+                                                                <i class="fas fa-copy text-lg"></i>
+                                                            </button>
+                                                        </form>
                                                     @endcan
                                                     @can('formation-delete')
                                                         <button type="button" title="{{ __('Supprimer') }}" onclick="showCustomConfirm('{{ __('Êtes-vous sûr de vouloir supprimer cette formation ?') }}', function() { document.getElementById('delete-form-{{ $formation->id }}').submit(); });" class="text-primary-red hover:text-red-700 transition duration-150 ease-in-out transform hover:scale-110">

@@ -23,6 +23,7 @@ class Formation extends Model
         'duree',   
         'duree_unit',       // تم التأكد من وجوده في الهجرة
         'created_by',    // **تم التأكد من وجوده في الهجرة الآن**
+         'updated_by',
     ];
 
     /**
@@ -48,5 +49,10 @@ class Formation extends Model
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+     public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

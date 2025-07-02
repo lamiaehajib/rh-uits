@@ -10,43 +10,42 @@ use Spatie\Permission\Traits\HasRoles;
 
 class Tache extends Model
 {
-    use HasFactory, HasRoles, Notifiable;
+    use HasFactory, Notifiable; // أزل HasRoles إذا لم يكن Tache هو الذي يحمل الصلاحيات
 
     protected $fillable = [
         'description',
         'duree',
         'status',
         'date',
-        'iduser',
+        // 'iduser', // <-- قم بإزالة هذا السطر
         'datedebut',
         'created_by',
         'updated_by',
-        'titre',    // Added the 'titre' field
-        'priorite', // Added the 'priorite' field
-        'retour',   // Added the 'retour' field
+        'titre',
+        'priorite',
+        'retour',
     ];
 
-    public function user()
+    /**
+     * Get the users assigned to the task.
+     */
+    public function users()
     {
-        return $this->belongsTo(User::class, 'iduser');
+        // العلاقة Many-to-Many عبر الجدول الوسيط 'tache_users'
+        // 'tache_id' هو المفتاح الخارجي في الجدول الوسيط الذي يشير إلى Tache
+        // 'user_id' هو المفتاح الخارجي في الجدول الوسيط الذي يشير إلى User
+        return $this->belongsToMany(User::class, 'tache_users', 'tache_id', 'user_id');
     }
 
-    public function Dashboard()
-    {
-        return $this->hasMany(Dashboard::class, 'idtach');
-    }
+    // ... باقي العلاقات والدوال الأخرى تبقى كما هي
 
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    /**
-     * Get the user who last updated the task.
-     */
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 }
-

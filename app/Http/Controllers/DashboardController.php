@@ -67,10 +67,10 @@ class DashboardController extends Controller
             });
 
             // Apply search and filters for Sup_Admin (these are likely just for the tables on the dashboard, not the charts)
-            $tasks = Tache::with(['user'])
+            $tasks = Tache::with(['users']) // Load the 'users' relationship for tasks
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('description', 'like', '%' . $searchTerm . '%')
-                                 ->orWhereHas('user', function ($q) use ($searchTerm) {
+                                 ->orWhereHas('users', function ($q) use ($searchTerm) { // Use whereHas for related users
                                      $q->where('name', 'like', '%' . $searchTerm . '%');
                                  });
                 })
@@ -136,7 +136,10 @@ class DashboardController extends Controller
                 return $this->getUserStats($user->id, $dateFilter);
             });
 
-            $tasks = Tache::where('iduser', $user->id)
+            // *** IMPORTANT: Changed Tache::where('iduser', ...) to whereHas('users', ...) ***
+            $tasks = Tache::whereHas('users', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
                 ->where('datedebut', '<=', Carbon::now()) // Apply the date debut filter here for regular users
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('description', 'like', '%' . $searchTerm . '%');
@@ -258,7 +261,7 @@ class DashboardController extends Controller
                 $pointage->heure_depart = Carbon::now();
                 // Update location on clock-out as well, if desired
                 $pointage->longitude_depart = $userLongitude; // Assuming column exists
-                $pointage->latitude_depart = $userLatitude;   // Assuming column exists
+                $pointage->latitude_depart = $userLatitude;  // Assuming column exists
                 $pointage->save();
                 return redirect()->back()->with('success', 'Vous avez pointé votre départ avec succès !');
             } else {
@@ -274,7 +277,7 @@ class DashboardController extends Controller
             
             // Store latitude and longitude for arrival
             $newPointage->longitude_arrivee = $userLongitude; // Assuming column exists
-            $newPointage->latitude_arrivee = $userLatitude;   // Assuming column exists
+            $newPointage->latitude_arrivee = $userLatitude;  // Assuming column exists
 
             $newPointage->save();
             return redirect()->back()->with('success', 'Vous avez pointé votre arrivée avec succès !');
@@ -321,13 +324,13 @@ class DashboardController extends Controller
     private function getUserStats($userId, $dateFilter = null)
     {
         $queryForUser = function($model) use ($userId, $dateFilter) {
-            // For projects and formations, the relation is Many-to-Many via `users`
-            if ($model === Project::class || $model === Formation::class) {
+            // For Tache, Project, and Formation, the relation is Many-to-Many via `users`
+            if ($model === Tache::class || $model === Project::class || $model === Formation::class) {
                 $q = $model::whereHas('users', function($q_inner) use ($userId) {
-                    $q_inner->where('users.id', $userId);
+                    $q_inner->where('user_id', $userId); // Use user_id for the pivot table
                 });
             } else {
-                // For Tache, Objectif, VenteObjectif, it's directly by 'iduser'
+                // For Objectif, VenteObjectif, it's directly by 'iduser'
                 $q = $model::where('iduser', $userId);
             }
 
@@ -398,7 +401,10 @@ class DashboardController extends Controller
         // Recent tasks
         $taskQuery = Tache::query();
         if (!$isAdmin) {
-            $taskQuery->where('iduser', $user->id);
+            // *** IMPORTANT: Changed where('iduser', ...) to whereHas('users', ...) ***
+            $taskQuery->whereHas('users', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
         }
         // Always apply datedebut filter for tasks
         $taskQuery->where('datedebut', '<=', Carbon::now()); 
@@ -455,8 +461,13 @@ class DashboardController extends Controller
         $lastMonthTasksQuery = Tache::query();
 
         if (!$isAdmin) {
-            $thisMonthTasksQuery->where('iduser', $user->id);
-            $lastMonthTasksQuery->where('iduser', $user->id);
+            // *** IMPORTANT: Changed where('iduser', ...) to whereHas('users', ...) ***
+            $thisMonthTasksQuery->whereHas('users', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+            $lastMonthTasksQuery->whereHas('users', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
         }
         // Always apply datedebut filter for tasks in productivity metrics
         $thisMonthTasksQuery->where('datedebut', '<=', Carbon::now()); 
@@ -520,8 +531,11 @@ class DashboardController extends Controller
      */
     private function getUserCompletionRate($userId, $dateFilter = null)
     {
-        $query = Tache::where('iduser', $userId)
-                      ->where('datedebut', '<=', Carbon::now()); // Apply date debut filter for user-specific stats
+        // *** IMPORTANT: Changed where('iduser', ...) to whereHas('users', ...) ***
+        $query = Tache::whereHas('users', function ($q) use ($userId) {
+            $q->where('user_id', $userId);
+        })
+            ->where('datedebut', '<=', Carbon::now()); // Apply date debut filter for user-specific stats
         if ($dateFilter) {
             $query = $this->applyDateFilter($query, $dateFilter);
         }
@@ -664,7 +678,10 @@ class DashboardController extends Controller
         $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
         if (!$isAdmin) {
-            $query->where('iduser', $user->id);
+            // *** IMPORTANT: Changed where('iduser', ...) to whereHas('users', ...) ***
+            $query->whereHas('users', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
         }
         // Always apply datedebut filter for tasks in charts
         $query->where('datedebut', '<=', Carbon::now());
@@ -737,7 +754,10 @@ class DashboardController extends Controller
                             ->whereBetween('updated_at', [$currentWeekStart, $currentWeekEnd]);
 
             if (!$isAdmin) {
-                $query->where('iduser', $user->id);
+                // *** IMPORTANT: Changed where('iduser', ...) to whereHas('users', ...) ***
+                $query->whereHas('users', function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                });
             }
             // Always apply datedebut filter for tasks in productivity charts
             $query->where('datedebut', '<=', Carbon::now());

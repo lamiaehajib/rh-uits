@@ -242,22 +242,17 @@
                                 </div>
 
                                 <!-- Assigné à l'utilisateur -->
-                                <div>
-                                    <label for="iduser" class="block text-sm font-semibold text-gray-700 mb-1">
-                                        <i class="fas fa-user-tag mr-2 text-teal-500"></i> {{ __('Assigné à l\'utilisateur') }} <span class="text-primary-red text-lg">*</span>
-                                    </label>
-                                    <select name="iduser" id="iduser"
-                                        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
-                                        focus:ring-primary-red focus:border-primary-red
-                                        @error('iduser') border-primary-red ring-red-200 @enderror" required>
-                                        @foreach($users as $userOption)
-                                            <option value="{{ $userOption->id }}" {{ old('iduser') == $userOption->id ? 'selected' : '' }}>{{ $userOption->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    @error('iduser')
-                                        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
-                                    @enderror
-                                </div>
+                           <div class="form-group">
+    <label for="user_ids">Utilisateurs Assignés:</label>
+    <select class="form-control" name="user_ids[]" id="user_ids" multiple required>
+        @foreach ($users as $user)
+            <option value="{{ $user->id }}">{{ $user->name }}</option>
+        @endforeach
+    </select>
+    @error('user_ids')
+        <div class="alert alert-danger">{{ $message }}</div>
+    @enderror
+</div>
 
                                 <!-- Priorité de la Tâche -->
                                 <div>

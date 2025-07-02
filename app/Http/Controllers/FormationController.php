@@ -4,24 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\Formation;
 use App\Models\User;
-use App\Notifications\FormationCreatedNotification; // Assurez-vous que cette notification existe et est configurée correctement
+use App\Notifications\FormationCreatedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str; // Pour utiliser Str::slug dans le nommage des fichiers
+use Illuminate\Support\Str;
 
 class FormationController extends Controller
 {
     function __construct()
     {
-        // Ces permissions doivent être définies dans votre système de permissions (ex: Spatie Permission)
         $this->middleware('permission:formation-list|formation-create|formation-edit|formation-delete|formation-show', ['only' => ['index','show']]);
-        $this->middleware('permission:formation-create', ['only' => ['create','store']]);
+        $this->middleware('permission:formation-create', ['only' => ['create','store', 'duplicate']]);
         $this->middleware('permission:formation-edit', ['only' => ['edit','update']]);
         $this->middleware('permission:formation-delete', ['only' => ['destroy']]);
-        // 'formation-show' est incluse dans le premier groupe, mais peut être laissée ici pour plus de clarté
-        // $this->middleware('permission:formation-show', ['only' => ['show']]);
     }
 
     /**
@@ -32,32 +29,28 @@ class FormationController extends Controller
         try {
             $user = auth()->user();
             $search = request()->get('search');
-            $status = request()->get('status'); // Filtre par type de formation (en ligne, lieu)
-            $statutFilter = request()->get('statut'); // Filtre par statut de formation (nouveu, encour, fini)
-            $perPage = request()->get('per_page', 10); // Nombre d'éléments par page
+            $status = request()->get('status');
+            $statutFilter = request()->get('statut');
+            $perPage = request()->get('per_page', 10);
 
-            $query = Formation::with('users'); // Chargement de la relation des utilisateurs pour éviter le problème N+1
+            $query = Formation::with('users');
 
-            // Logique de recherche et de filtrage pour les utilisateurs administrateurs (Admin ou )
             if ($user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin')) {
                 if ($search) {
                     $query->where(function($q) use ($search) {
                         $q->where('name', 'like', '%' . $search . '%')
-                          ->orWhere('status', 'like', '%' . $search . '%')
-                          ->orWhere('nomformateur', 'like', '%' . $search . '%');
+                            ->orWhere('status', 'like', '%' . $search . '%')
+                            ->orWhere('nomformateur', 'like', '%' . $search . '%');
                     });
                 }
-                // Appliquer le filtre par type de formation
                 if ($status) {
                     $query->where('status', $status);
                 }
-                // Appliquer le filtre par statut de formation
                 if ($statutFilter) {
                     $query->where('statut', $statutFilter);
                 }
                 $formations = $query->orderBy('created_at', 'desc')->paginate($perPage);
             } else {
-                // Logique de recherche et de filtrage pour les utilisateurs réguliers (ils ne voient que leurs formations)
                 $formations = Formation::with('users')
                     ->whereHas('users', function ($q) use ($user) {
                         $q->where('users.id', $user->id);
@@ -65,8 +58,8 @@ class FormationController extends Controller
                     ->when($search, function ($q) use ($search) {
                         $q->where(function($subQ) use ($search) {
                             $subQ->where('name', 'like', '%' . $search . '%')
-                                 ->orWhere('status', 'like', '%' . $search . '%')
-                                 ->orWhere('nomformateur', 'like', '%' . $search . '%');
+                                    ->orWhere('status', 'like', '%' . $search . '%')
+                                    ->orWhere('nomformateur', 'like', '%' . $search . '%');
                         });
                     })
                     ->when($status, function ($q) use ($status) {
@@ -79,7 +72,6 @@ class FormationController extends Controller
                     ->paginate($perPage);
             }
 
-            // Statistiques rapides pour le tableau de bord (vous pouvez les ajuster pour votre nouveau modèle)
             $stats = [
                 'total' => Formation::count(),
                 'en_cours' => Formation::where('statut', 'encour')->count(),
@@ -100,7 +92,6 @@ class FormationController extends Controller
      */
     public function create()
     {
-        // Récupérer tous les utilisateurs pour pouvoir les associer à la formation
         $users = User::orderBy('name')->get();
         return view('formations.create', compact('users'));
     }
@@ -112,22 +103,21 @@ class FormationController extends Controller
     {
         // Règles de validation des données soumises par le formulaire
         $request->validate([
-            'name' => 'required|string|max:255|unique:formations,name', // Le nom de la formation doit être unique
-            'status' => 'required|in:en ligne,lieu', // Le type de formation (doit être l'une des valeurs spécifiées)
-            'nomformateur' => 'required|string|max:255', // Le nom du formateur est requis
-            'iduser' => 'required|array|min:1', // Au moins un utilisateur doit être sélectionné pour participer
-            'iduser.*' => 'exists:users,id', // Les IDs des utilisateurs doivent exister dans la table des utilisateurs
-            'date' => 'required|date|after_or_equal:today', // La date de début doit être aujourd'hui ou dans le futur
-            'file' => 'nullable|file|mimes:pdf,doc,docx,png,jpg,jpeg,mp4|max:10240', // Fichier optionnel (max 10MB)
-            'statut' => 'required|in:fini,encour,nouveu', // Le statut de la formation (doit être l'une des valeurs spécifiées)
-            'nombre_heures' => 'required|integer|min:1|max:1000', // Nombre d'heures (entier entre 1 et 1000)
-            'nombre_seances' => 'required|integer|min:1|max:100', // Nombre de séances (entier entre 1 et 100)
-            'prix' => 'required|numeric|min:0', // Le prix (numérique, supérieur ou égal à 0)
-            'duree' => 'required|integer|min:1|max:365', // Durée en jours (entier entre 1 et 365)
+            'name' => 'required|string|max:255', // Supprimé 'unique:formations,name'
+            'status' => 'required|in:en ligne,lieu',
+            'nomformateur' => 'required|string|max:255',
+            'iduser' => 'required|array|min:1',
+            'iduser.*' => 'exists:users,id',
+            'date' => 'required|date|after_or_equal:today',
+            'file' => 'nullable|file|mimes:pdf,doc,docx,png,jpg,jpeg,mp4|max:10240',
+            'statut' => 'required|in:fini,encour,nouveu',
+            'nombre_heures' => 'required|integer|min:1|max:1000',
+            'nombre_seances' => 'required|integer|min:1|max:100',
+            'prix' => 'required|numeric|min:0',
+            'duree' => 'required|integer|min:1|max:365',
             'duree_unit' => 'required|string|in:jours,semaines,mois',
         ], [
-            // Messages d'erreur personnalisés
-            'name.unique' => 'Une formation avec ce nom existe déjà.',
+           
             'date.after_or_equal' => 'La date de la formation doit être aujourd\'hui ou dans le futur.',
             'iduser.min' => 'Vous devez sélectionner au moins un utilisateur.',
             'file.max' => 'La taille du fichier ne doit pas dépasser 10 Mo.',
@@ -135,54 +125,42 @@ class FormationController extends Controller
             'statut.in' => 'Le statut de la formation n\'est pas valide.',
         ]);
 
-        // Début de la transaction de base de données pour assurer l'intégrité des données
         DB::beginTransaction();
 
         try {
             $filePath = null;
-            // Gestion du téléchargement du fichier si présent
             if ($request->hasFile('file')) {
                 $originalName = $request->file('file')->getClientOriginalName();
-                // Création d'un nom de fichier unique et sécurisé en utilisant l'heure et le slug du nom original
                 $fileName = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $request->file('file')->getClientOriginalExtension();
                 $filePath = $request->file('file')->storeAs('formations', $fileName, 'public');
             }
 
-            // Création de la formation dans la base de données
             $formation = Formation::create(array_merge(
-                $request->except(['iduser', 'file']), // Exclure 'iduser' et 'file' car ils sont gérés séparément
+                $request->except(['iduser', 'file']),
                 [
-                    'file_path' => $filePath, // Enregistrer le chemin du fichier
-                    'created_by' => auth()->id(), // Enregistrer l'ID de l'utilisateur qui a créé la formation
+                    'file_path' => $filePath,
+                    'created_by' => auth()->id(),
                 ]
             ));
 
-            // Associer les utilisateurs sélectionnés à la nouvelle formation (pour la relation Many-to-Many)
             $formation->users()->attach($request->iduser);
 
-            // Envoi de notifications aux utilisateurs sélectionnés
             $usersToNotify = User::whereIn('id', $request->iduser)->get();
             foreach ($usersToNotify as $user) {
                 try {
                     $user->notify(new FormationCreatedNotification($formation));
                 } catch (\Exception $e) {
-                    // Enregistrer un avertissement si l'envoi de la notification échoue pour un utilisateur spécifique
                     Log::warning('Échec de l\'envoi de la notification à l\'utilisateur ' . $user->id . ': ' . $e->getMessage());
                 }
             }
 
-            // Confirmer la transaction de base de données si tout s'est bien passé
             DB::commit();
 
-            // Redirection avec un message de succès
             return redirect()->route('formations.index')->with('success', 'La formation a été créée avec succès.');
 
         } catch (\Exception $e) {
-            // Annuler la transaction de base de données en cas d'erreur
             DB::rollback();
-            // Enregistrer l'erreur détaillée dans les logs de Laravel
             Log::error('Erreur lors de la création de la formation: ' . $e->getMessage());
-            // Rediriger vers le formulaire avec un message d'erreur et conserver les anciennes entrées
             return redirect()->back()->withInput()->with('error', 'Une erreur est survenue lors de la création de la formation. Veuillez réessayer.');
         }
     }
@@ -223,14 +201,14 @@ class FormationController extends Controller
     {
         // Règles de validation des données pour la mise à jour
         $request->validate([
-            'name' => 'required|string|max:255|unique:formations,name,' . $id, // Le nom est unique sauf pour la formation actuelle
+            'name' => 'required|string|max:255', // Supprimé '|unique:formations,name,' . $id
             'status' => 'required|in:en ligne,lieu',
             'nomformateur' => 'required|string|max:255',
             'iduser' => 'required|array|min:1',
             'iduser.*' => 'exists:users,id',
-            'date' => 'required|date', // Peut être une date passée lors de la mise à jour si nécessaire
+            'date' => 'required|date',
             'file' => 'nullable|file|mimes:pdf,doc,docx,png,jpg,jpeg,mp4|max:10240',
-            'statut' => 'required|in:fini,encour,nouveu', // Doit être requis car la valeur par défaut 'nouveu' ne suffit pas toujours
+            'statut' => 'required|in:fini,encour,nouveu',
             'nombre_heures' => 'required|integer|min:1|max:1000',
             'nombre_seances' => 'required|integer|min:1|max:100',
             'prix' => 'required|numeric|min:0',
@@ -238,7 +216,7 @@ class FormationController extends Controller
             'duree_unit' => 'required|string|in:jours,semaines,mois',
         ], [
             // Messages d'erreur personnalisés
-            'name.unique' => 'Une formation avec ce nom existe déjà.',
+            // 'name.unique' => 'Une formation avec ce nom existe déjà.', // Ce message n'est plus pertinent
             'iduser.min' => 'Vous devez sélectionner au moins un utilisateur.',
             'file.max' => 'La taille du fichier ne doit pas dépasser 10 Mo.',
             'file.mimes' => 'Le format de fichier n\'est pas pris en charge (PDF, DOC, DOCX, PNG, JPG, JPEG, MP4 uniquement).',
@@ -249,29 +227,25 @@ class FormationController extends Controller
         try {
             $formation = Formation::findOrFail($id);
 
-            // Gestion du téléchargement du nouveau fichier
             if ($request->hasFile('file')) {
-                // Supprimer l'ancien fichier si existant
                 if ($formation->file_path && Storage::exists('public/' . $formation->file_path)) {
                     Storage::delete('public/' . $formation->file_path);
                 }
                 $originalName = $request->file('file')->getClientOriginalName();
                 $fileName = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $request->file('file')->getClientOriginalExtension();
                 $formation->file_path = $request->file('file')->storeAs('formations', $fileName, 'public');
-            } elseif ($request->boolean('remove_file')) { // Optionnel: si une case à cocher est présente pour supprimer le fichier
+            } elseif ($request->boolean('remove_file')) {
                 if ($formation->file_path && Storage::exists('public/' . $formation->file_path)) {
                     Storage::delete('public/' . $formation->file_path);
                     $formation->file_path = null;
                 }
             }
 
-            // Mise à jour des données de la formation
             $formation->update(array_merge(
                 $request->except(['iduser', 'file', 'remove_file']),
-                ['updated_by' => auth()->id()] // Enregistrer l'ID de l'utilisateur qui a mis à jour
+                ['updated_by' => auth()->id()]
             ));
 
-            // Synchronisation des utilisateurs associés (ajoute, supprime et met à jour les relations)
             $formation->users()->sync($request->iduser);
 
             DB::commit();
@@ -294,15 +268,12 @@ class FormationController extends Controller
         try {
             $formation = Formation::findOrFail($id);
 
-            // Supprimer le fichier associé si existant
             if ($formation->file_path && Storage::exists('public/' . $formation->file_path)) {
                 Storage::delete('public/' . $formation->file_path);
             }
 
-            // Dissocier tous les utilisateurs liés à cette formation de la table pivot
             $formation->users()->detach();
 
-            // Supprimer la formation elle-même
             $formation->delete();
 
             DB::commit();
@@ -324,23 +295,70 @@ class FormationController extends Controller
             $formation = Formation::findOrFail($id);
             $user = auth()->user();
 
-            // Vérification des permissions: Admin, , ou un utilisateur associé à la formation
             if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin') && !$formation->users->contains('id', $user->id)) {
                 return redirect()->back()->with('error', 'Vous n\'avez pas la permission de télécharger ce fichier.');
             }
 
-            // Vérifier si le fichier existe
             if (!$formation->file_path || !Storage::exists('public/' . $formation->file_path)) {
                 return redirect()->back()->with('error', 'Le fichier n\'existe pas.');
             }
 
-            // Retourner le fichier pour le téléchargement
             return Storage::download('public/' . $formation->file_path);
         } catch (\Exception $e) {
             Log::error('Erreur lors du téléchargement: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Une erreur est survenue lors du téléchargement du fichier.');
         }
     }
+
+    /**
+     * Duplicates a specific formation, including its associated file.
+     */
+public function duplicate($id)
+    {
+        try {
+            $originalFormation = Formation::findOrFail($id);
+            $user = auth()->user();
+
+            if (!$user->can('formation-create')) {
+                return redirect()->back()->with('error', 'Vous n\'avez pas la permission de dupliquer cette formation.');
+            }
+
+            DB::beginTransaction();
+
+            $newFormation = $originalFormation->replicate();
+
+            $newFormation->name = $originalFormation->name . ' (Copie ' . now()->format('Y-m-d H:i:s') . ' - ' . Str::random(4) . ')';
+
+            $newFilePath = null;
+            if ($originalFormation->file_path && Storage::disk('public')->exists($originalFormation->file_path)) {
+                $originalFileName = pathinfo($originalFormation->file_path, PATHINFO_BASENAME);
+                $originalExtension = pathinfo($originalFormation->file_path, PATHINFO_EXTENSION);
+                $newFileName = time() . '_duplicate_' . Str::slug(pathinfo($originalFileName, PATHINFO_FILENAME)) . '.' . $originalExtension;
+                $newFilePath = 'formations/' . $newFileName;
+
+                Storage::disk('public')->copy($originalFormation->file_path, $newFilePath);
+            }
+            $newFormation->file_path = $newFilePath;
+
+            $newFormation->created_by = auth()->id();
+            $newFormation->updated_by = null; // Cette ligne est maintenant valide car la colonne est nullable et fillable.
+
+            $newFormation->save();
+
+            $newFormation->users()->attach($originalFormation->users->pluck('id'));
+
+            DB::commit();
+
+            return redirect()->route('formations.edit', $newFormation->id)->with('success', 'La formation a été dupliquée avec succès. Vous pouvez maintenant la modifier.');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Erreur lors de la duplication de la formation: ' . $e->getMessage());
+            // Laissez ce message détaillé pour le moment si l'erreur persiste.
+            return redirect()->back()->with('error', 'Une erreur est survenue lors de la duplication de la formation: ' . $e->getMessage());
+        }
+    }
+
 
     /**
      * Récupère les statistiques des formations.
@@ -350,7 +368,6 @@ class FormationController extends Controller
         try {
             $user = auth()->user();
 
-            // Statistiques pour les administrateurs (Admin ou )
             if ($user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin')) {
                 $stats = [
                     'total_formations' => Formation::count(),
@@ -360,7 +377,6 @@ class FormationController extends Controller
                     'total_utilisateurs_inscrits' => DB::table('formation_user')->distinct('user_id')->count(),
                 ];
             } else {
-                // Statistiques pour les utilisateurs réguliers (uniquement leurs formations)
                 $userFormations = $user->formations();
                 $stats = [
                     'mes_formations' => $userFormations->count(),
@@ -377,4 +393,3 @@ class FormationController extends Controller
         }
     }
 }
-
