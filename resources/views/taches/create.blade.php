@@ -177,18 +177,20 @@
 
                                 <!-- Durée Estimée -->
                                 <div>
-                                    <label for="duree" class="block text-sm font-semibold text-gray-700 mb-1">
-                                        <i class="fas fa-hourglass-half mr-2 text-green-500"></i> {{ __('Durée Estimée') }} <span class="text-primary-red text-lg">*</span>
-                                    </label>
-                                    <input type="text" name="duree" id="duree"
-                                        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
-                                        focus:ring-primary-red focus:border-primary-red
-                                        @error('duree') border-primary-red ring-red-200 @enderror"
-                                        value="{{ old('duree') }}" placeholder="{{ __('Ex: 2 heures, 1 jour, 3 semaines') }}" required>
-                                    @error('duree')
-                                        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
-                                    @enderror
-                                </div>
+    <label for="duree" class="block text-sm font-semibold text-gray-700 mb-1">
+        <i class="fas fa-hourglass-half mr-2 text-green-500"></i> {{ __('Durée Estimée') }} <span class="text-primary-red text-lg">*</span>
+    </label>
+    <input type="text" name="duree" id="duree"
+        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
+        focus:ring-primary-red focus:border-primary-red
+        @error('duree') border-primary-red ring-red-200 @enderror"
+        value="{{ old('duree') }}" 
+        placeholder="{{ __('Ex: 1 jour, 3 jours, 2 semaines, 1 mois') }}" {{-- MODIFIED LINE HERE --}}
+        required>
+    @error('duree')
+        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
+    @enderror
+</div>
 
                                 <!-- Date de Début -->
                                 <div>
