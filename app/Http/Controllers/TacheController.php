@@ -23,78 +23,104 @@ class TacheController extends Controller
     }
 
     public function index(Request $request)
-    {
-        $user = auth()->user();
-        $search = $request->get('search');
-        $status = $request->get('status');
-        $date_filter = $request->get('date_filter');
-        $user_filter = $request->get('user_filter');
-        $sort_by = $request->get('sort_by', 'created_at');
-        $sort_direction = $request->get('sort_direction', 'desc');
+{
+    $user = auth()->user();
+    $search = $request->get('search');
+    $status = $request->get('status');
+    $date_filter = $request->get('date_filter');
+    $user_filter = $request->get('user_filter');
+    $sort_by = $request->get('sort_by', 'created_at');
+    $sort_direction = $request->get('sort_direction', 'desc');
 
-        $query = Tache::with('users');
+    $query = Tache::with('users');
 
-        if (!$this->isAdmin($user)) {
-            $query->whereHas('users', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
-        }
-
-        if ($search) {
-            $query->where(function($q) use ($search) {
-                $q->where('description', 'like', "%{$search}%")
-                    ->orWhere('status', 'like', "%{$search}%")
-                    ->orWhere('titre', 'like', "%{$search}%")
-                    ->orWhereDate('date', 'like', "%{$search}%");
-            });
-        }
-
-        if ($status && $status !== 'all') {
-            $query->where('status', $status);
-        }
-
-        // Had l'logic dyal filter "overdue" khdamna bih b `date_fin_prevue`
-        if ($date_filter) {
-            switch ($date_filter) {
-                case 'today':
-                    $query->whereDate('datedebut', Carbon::today());
-                    break;
-                case 'this_week':
-                    $query->whereBetween('datedebut', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
-                    break;
-                case 'this_month':
-                    $query->whereMonth('datedebut', Carbon::now()->month);
-                    break;
-                case 'overdue':
-                    // Hada howa l'filter lli bghiti, katsta3mel date_fin_prevue
-                    $query->where('status', '!=', 'termine')
-                          ->whereNotNull('date_fin_prevue')
-                          ->where('date_fin_prevue', '<', Carbon::now());
-                    break;
-            }
-        }
-
-        if ($user_filter && $user_filter !== 'all' && $this->isAdmin($user)) {
-            $query->whereHas('users', function ($q) use ($user_filter) {
-                $q->where('user_id', $user_filter);
-            });
-        }
-
-        if ($sort_by === 'priorite') {
-            $query->orderByRaw("FIELD(priorite, 'élevé', 'moyen', 'faible') " . $sort_direction);
-        } else {
-            $query->orderBy($sort_by, $sort_direction);
-        }
-
-        $taches = $query->paginate(10)->appends($request->query());
-
-        // Hna kan3aytou 3la getTaskStats bach njibou les comptes kamlin
-        $stats = $this->getTaskStats($user);
-
-        $users = $this->isAdmin($user) ? User::all() : collect();
-
-        return view('taches.index', compact('taches', 'stats', 'users'));
+    // THIS IS THE KEY CHANGE FOR TacheController@index
+    // Apply datedebut filter only if the user is NOT an admin
+    if (!$this->isAdmin($user)) {
+        $query->whereHas('users', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        });
+        $query->where('datedebut', '<=', Carbon::now()); // Apply for non-admins
     }
+    // If it's an admin, no datedebut filter is applied here by default, which is what we want for total tasks.
+    // If you had a line like `$query->where('datedebut', '<=', Carbon::now());` outside the `if (!$this->isAdmin($user))` block, remove it.
+
+
+    if ($search) {
+        $query->where(function($q) use ($search) {
+            $q->where('description', 'like', "%{$search}%")
+              ->orWhere('status', 'like', "%{$search}%")
+              ->orWhere('titre', 'like', "%{$search}%")
+              ->orWhereDate('date', 'like', "%{$search}%");
+        });
+    }
+
+    if ($status && $status !== 'all') {
+        $query->where('status', $status);
+    }
+
+    // Had l'logic dyal filter "overdue" khdamna bih b `date_fin_prevue`
+    if ($date_filter) {
+        switch ($date_filter) {
+            case 'today':
+                // For admin, this will filter all tasks today. For non-admin, it will filter their tasks today.
+                $query->whereDate('datedebut', Carbon::today());
+                break;
+            case 'this_week':
+                $query->whereBetween('datedebut', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                break;
+            case 'this_month':
+                $query->whereMonth('datedebut', Carbon::now()->month);
+                break;
+            case 'overdue':
+                // Hada howa l'filter lli bghiti, katsta3mel date_fin_prevue
+                $query->where('status', '!=', 'termine')
+                      ->whereNotNull('date_fin_prevue')
+                      ->where('date_fin_prevue', '<', Carbon::now());
+                break;
+            case 'future': // Add a future filter if needed for admin to see them explicitly
+                 if ($this->isAdmin($user)) {
+                     $query->where('datedebut', '>', Carbon::now());
+                 }
+                 break;
+            // For other date filters, applyDateFilter should handle it.
+            // Consider if applyDateFilter needs to be explicitly called here for non-admins to ensure datedebut is used.
+            // The existing `->when($dateFilter, function ($query, $dateFilter) { return $this->applyDateFilter($query, $dateFilter); })` is fine IF `applyDateFilter` is called for `datedebut` for Taches.
+            // Looking at `DashboardController::applyDateFilter`, it uses `created_at` by default.
+            // So, for Taches, you might want to explicitly specify `datedebut` here in `TacheController`.
+
+            // Example:
+            // if ($date_filter && !in_array($date_filter, ['today', 'this_week', 'this_month', 'overdue', 'future'])) {
+            //     $query->when($date_filter, function ($query, $dateFilter) {
+            //         return $this->applyDateFilter($query, $dateFilter, 'datedebut'); // Make sure it applies to datedebut
+            //     });
+            // }
+
+        }
+    }
+
+
+    if ($user_filter && $user_filter !== 'all' && $this->isAdmin($user)) {
+        $query->whereHas('users', function ($q) use ($user_filter) {
+            $q->where('user_id', $user_filter);
+        });
+    }
+
+    if ($sort_by === 'priorite') {
+        $query->orderByRaw("FIELD(priorite, 'élevé', 'moyen', 'faible') " . $sort_direction);
+    } else {
+        $query->orderBy($sort_by, $sort_direction);
+    }
+
+    $taches = $query->paginate(10)->appends($request->query());
+
+    // Hna kan3aytou 3la getTaskStats bach njibou les comptes kamlin
+    $stats = $this->getTaskStats($user);
+
+    $users = $this->isAdmin($user) ? User::all() : collect();
+
+    return view('taches.index', compact('taches', 'stats', 'users'));
+}
 
     public function create()
     {
@@ -338,29 +364,44 @@ class TacheController extends Controller
 
     // Had L'fonction kat7eseb ga3 les stats, menhom overdue count
     private function getTaskStats($user)
-    {
-        $baseQuery = Tache::query(); 
-        
-        if (!$this->isAdmin($user)) {
-            $baseQuery->whereHas('users', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
-        }
+{
+    $baseQuery = Tache::query();
 
-        // Overdue count kanakhdouha direkt men database
-        $overdueCount = (clone $baseQuery)->where('status', '!=', 'termine')
-                                           ->whereNotNull('date_fin_prevue')
-                                           ->where('date_fin_prevue', '<', Carbon::now())
-                                           ->count();
-
-        return [
-            'total' => (clone $baseQuery)->count(), 
-            'nouveau' => (clone $baseQuery)->where('status', 'nouveau')->count(),
-            'en_cours' => (clone $baseQuery)->where('status', 'en cours')->count(),
-            'termine' => (clone $baseQuery)->where('status', 'termine')->count(),
-            'overdue' => $overdueCount, // Hada houwa l'nombre dyal les tâches en retard
-        ];
+    // The condition for filtering by user_id
+    if (!$this->isAdmin($user)) {
+        $baseQuery->whereHas('users', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        });
+        // For non-admins, their 'total' tasks should also exclude future ones
+        $baseQuery->where('datedebut', '<=', Carbon::now()); // <--- ADD/KEEP THIS FOR NON-ADMIN'S TOTAL STAT
     }
+    // If it's an admin, no datedebut filter is applied to $baseQuery for 'total' count
+
+    // Overdue count kanakhdouha direkt men database
+    // This query is specific to overdue, so it will always have its own conditions
+    $overdueQuery = (clone $baseQuery)->where('status', '!=', 'termine')
+                                       ->whereNotNull('date_fin_prevue')
+                                       ->where('date_fin_prevue', '<', Carbon::now());
+    // If it's an admin, $baseQuery doesn't have datedebut filter, so this will be on ALL tasks
+    // If it's a regular user, $baseQuery has datedebut filter, so this will be on their active tasks.
+
+    // Calculate specific statuses
+    $newTasks = (clone $baseQuery)->where('status', 'nouveau')->count();
+    $inProgressTasks = (clone $baseQuery)->where('status', 'en cours')->count();
+    $completedTasks = (clone $baseQuery)->where('status', 'termine')->count();
+
+
+    return [
+        // THIS IS THE KEY CHANGE FOR getTaskStats
+        // For admin, $baseQuery doesn't have datedebut filter, so it's total.
+        // For non-admin, $baseQuery has datedebut filter, so it's total of active tasks.
+        'total' => (clone $baseQuery)->count(), 
+        'nouveau' => $newTasks,
+        'en_cours' => $inProgressTasks,
+        'termine' => $completedTasks,
+        'overdue' => $overdueQuery->count(), // Hada houwa l'nombre dyal les tâches en retard
+    ];
+}
 
     // Had L'fonction katjib les tâches li en retard bach ytbano f dashboard (top 5)
     private function getOverdueTasks($user)
