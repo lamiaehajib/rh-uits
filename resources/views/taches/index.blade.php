@@ -1,5 +1,3 @@
-{{-- resources/views/taches/index.blade.php --}}
-
 <x-app-layout>
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -160,7 +158,6 @@
                                 </div>
                                 <i class="fas fa-check-circle text-green-500 text-5xl opacity-75"></i>
                             </div>
-                            {{-- Had l'bloc houwa lli ghayban fih "Tâches en Retard" --}}
                             <div class="bg-red-50 p-6 rounded-xl shadow-lg flex items-center justify-between card-hover-effect animate-fade-in delay-700">
                                 <div>
                                     <h3 class="text-lg font-semibold text-red-700">{{ __('Tâches en Retard') }}</h3>
@@ -200,7 +197,8 @@
                                         <option value="today" {{ request('date_filter') == 'today' ? 'selected' : '' }}>{{ __('Aujourd\'hui') }}</option>
                                         <option value="this_week" {{ request('date_filter') == 'this_week' ? 'selected' : '' }}>{{ __('Cette Semaine') }}</option>
                                         <option value="this_month" {{ request('date_filter') == 'this_month' ? 'selected' : '' }}>{{ __('Ce Mois-ci') }}</option>
-                                        <option value="overdue" {{ request('date_filter') == 'overdue' ? 'selected' : '' }}>{{ __('En Retard') }}</option> {{-- Had L'option hiya li bghiti --}}
+                                        <option value="overdue" {{ request('date_filter') == 'overdue' ? 'selected' : '' }}>{{ __('En Retard') }}</option>
+                                        <option value="future" {{ request('date_filter') == 'future' ? 'selected' : '' }}>{{ __('Futur') }}</option>
                                     </select>
                                 </div>
 
@@ -332,8 +330,8 @@
                                                         </a>
                                                     @endcan
                                                     @can('tache-edit')
-                                                        {{-- Hna kanswftou les filtres f link dial edit --}}
-                                                       <a href="{{ route('taches.edit', array_merge(['tach' => $tache->id], request()->query())) }}" title="Modifier" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out transform hover:scale-110">
+                                                        {{-- Hna kanswftou les filtres f link dial edit, corrected parameter name to 'tach' --}}
+                                                        <a href="{{ route('taches.edit', array_merge(['tach' => $tache->id], request()->query())) }}" title="Modifier" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out transform hover:scale-110">
                                                             <i class="fas fa-edit text-lg"></i>
                                                         </a>
                                                     @endcan

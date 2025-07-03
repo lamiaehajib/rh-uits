@@ -2,7 +2,6 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Modifier la Tâche</title>
-        <!-- Tailwind CSS CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
             // Configure Tailwind CSS to use a custom primary color
@@ -19,7 +18,6 @@
                 }
             }
         </script>
-        <!-- Font Awesome for icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
         <style>
             /* Custom CSS for animations and improved aesthetics */
@@ -139,20 +137,20 @@
                         <form action="{{ route('taches.update', $tache->id) }}" method="POST" class="space-y-6">
                             @csrf
                             @method('PUT') {{-- Use PUT method for update requests --}}
-@foreach ($filterParams as $key => $value)
-        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
-    @endforeach
-                            {{-- Determine if the current user is an Sup_Admin or Custom_Admin --}}
+
+                            {{-- Hidden fields to pass existing filter parameters --}}
+                            @foreach ($filterParams as $key => $value)
+                                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                            @endforeach
+
                             @php
                                 $user = auth()->user();
                                 $isAdminOrAdmin1 = $user->hasAnyRole(['Sup_Admin', 'Custom_Admin']);
-                                // Define roles that can modify 'retour'
                                 $canModifyRetourRoles = ['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH'];
                                 $canEditRetour = $user->hasAnyRole($canModifyRetourRoles);
                             @endphp
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                                <!-- Titre de la Tâche -->
                                 <div>
                                     <label for="titre" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-heading mr-2 text-indigo-500"></i> {{ __('Titre de la Tâche') }} <span class="text-primary-red text-lg">*</span>
@@ -169,7 +167,6 @@
                                     @enderror
                                 </div>
 
-                                <!-- Description de la Tâche -->
                                 <div>
                                     <label for="description" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-file-alt mr-2 text-blue-500"></i> {{ __('Description de la Tâche') }} <span class="text-primary-red text-lg">*</span>
@@ -186,24 +183,22 @@
                                     @enderror
                                 </div>
 
-                                <!-- Durée Estimée -->
-                               <div>
-    <label for="duree" class="block text-sm font-semibold text-gray-700 mb-1">
-        <i class="fas fa-hourglass-half mr-2 text-green-500"></i> {{ __('Durée Estimée') }} <span class="text-primary-red text-lg">*</span>
-    </label>
-    <input type="text" name="duree" id="duree"
-        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
-        focus:ring-primary-red focus:border-primary-red
-        @error('duree') border-primary-red ring-red-200 @enderror"
-        value="{{ old('duree', $tache->duree) }}" {{-- Note: 'old' for errors, '$tache->duree' for existing value --}}
-        placeholder="{{ __('Ex: 1 jour, 3 jours, 2 semaines, 1 mois') }}" {{-- MODIFIED LINE HERE --}}
-        required>
-    @error('duree')
-        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
-    @enderror
-</div>
+                                <div>
+                                    <label for="duree" class="block text-sm font-semibold text-gray-700 mb-1">
+                                        <i class="fas fa-hourglass-half mr-2 text-green-500"></i> {{ __('Durée Estimée') }} <span class="text-primary-red text-lg">*</span>
+                                    </label>
+                                    <input type="text" name="duree" id="duree"
+                                        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
+                                        focus:ring-primary-red focus:border-primary-red
+                                        @error('duree') border-primary-red ring-red-200 @enderror"
+                                        value="{{ old('duree', $tache->duree) }}"
+                                        placeholder="{{ __('Ex: 1 jour, 3 jours, 2 semaines, 1 mois') }}"
+                                        required>
+                                    @error('duree')
+                                        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-                                <!-- Date de Début -->
                                 <div>
                                     <label for="datedebut" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-calendar-alt mr-2 text-purple-500"></i> {{ __('Date de Début') }} <span class="text-primary-red text-lg">*</span>
@@ -220,7 +215,6 @@
                                     @enderror
                                 </div>
 
-                                <!-- Statut de la Tâche -->
                                 <div>
                                     <label for="status" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-info-circle mr-2 text-yellow-500"></i> {{ __('Statut de la Tâche') }} <span class="text-primary-red text-lg">*</span>
@@ -238,7 +232,6 @@
                                     @enderror
                                 </div>
 
-                                <!-- Type de Planification -->
                                 <div>
                                     <label for="date" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-clock mr-2 text-orange-500"></i> {{ __('Type de Planification') }} <span class="text-primary-red text-lg">*</span>
@@ -262,28 +255,32 @@
                                     @endif
                                 </div>
 
-                                <!-- Assigné à l'utilisateur -->
                                 <div class="form-group mb-4">
-                            <label class="form-label" for="user_ids">Assigné(e) <span class="text-danger">*</span></label>
-                            <div class="border rounded p-3"> {{-- Boîte avec bordure et padding --}}
-                                @foreach ($users as $user)
-                                    <div class="form-check mb-2"> {{-- Chaque checkbox sur une nouvelle ligne avec espacement --}}
-                                        <input class="form-check-input" type="checkbox" name="user_ids[]" value="{{ $user->id }}" id="user_{{ $user->id }}"
-                                               {{-- Logique de pré-sélection: coche si l'ID est dans les old() values ou dans les utilisateurs assignés à la tâche --}}
-                                               {{ in_array($user->id, old('user_ids', $tache->users->pluck('id')->toArray())) ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="user_{{ $user->id }}">
-                                            {{ $user->name }} ({{ $user->email }})
-                                        </label>
+                                    <label class="form-label" for="user_ids">Assigné(e) <span class="text-danger">*</span></label>
+                                    <div class="border rounded p-3">
+                                        @foreach ($users as $user)
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="user_ids[]" value="{{ $user->id }}" id="user_{{ $user->id }}"
+                                                    {{-- Logique de pré-sélection: coche si l'ID est dans les old() values ou dans les utilisateurs assignés à la tâche --}}
+                                                    {{ in_array($user->id, old('user_ids', $tache->users->pluck('id')->toArray())) ? 'checked' : '' }}
+                                                    {{ !$isAdminOrAdmin1 ? 'disabled' : '' }}>
+                                                <label class="form-check-label" for="user_{{ $user->id }}">
+                                                    {{ $user->name }} ({{ $user->email }})
+                                                </label>
+                                            </div>
+                                        @endforeach
                                     </div>
-                                @endforeach
-                            </div>
-                            @error('user_ids')
-                                <div class="text-danger mt-2">{{ $message }}</div> {{-- Message d'erreur --}}
-                            @enderror
-                        </div>
+                                    @error('user_ids')
+                                        <div class="text-danger mt-2">{{ $message }}</div>
+                                    @enderror
+                                    {{-- If disabled, ensure selected user_ids are sent via hidden inputs --}}
+                                    @if (!$isAdminOrAdmin1)
+                                        @foreach ($tache->users->pluck('id')->toArray() as $userId)
+                                            <input type="hidden" name="user_ids[]" value="{{ $userId }}">
+                                        @endforeach
+                                    @endif
+                                </div>
 
-
-                                <!-- Priorité de la Tâche -->
                                 <div>
                                     <label for="priorite" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-exclamation-triangle mr-2 text-red-500"></i> {{ __('Priorité') }} <span class="text-primary-red text-lg">*</span>
@@ -307,8 +304,7 @@
                                     @endif
                                 </div>
 
-                                <!-- Retour de la Tâche (optional) -->
-                                <div class="md:col-span-2"> <!-- Span across two columns for better layout -->
+                                <div class="md:col-span-2">
                                     <label for="retour" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-comment-dots mr-2 text-gray-500"></i> {{ __('Retour/Notes (Optionnel)') }}
                                     </label>
@@ -326,7 +322,7 @@
                             </div>
 
                             <div class="mt-8 flex items-center justify-end space-x-4">
-                                <a href="{{ route('taches.index') }}"
+                                <a href="{{ route('taches.index', $filterParams) }}"
                                     class="inline-flex items-center px-6 py-3 bg-gray-200 border border-transparent rounded-full font-bold text-sm text-gray-700 uppercase tracking-wider shadow-md btn-secondary transform hover:scale-105">
                                     <i class="fas fa-arrow-left mr-2"></i> {{ __('Annuler') }}
                                 </a>
