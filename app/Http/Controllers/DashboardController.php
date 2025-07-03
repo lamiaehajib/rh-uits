@@ -70,7 +70,7 @@ class DashboardController extends Controller
             $tasks = Tache::with(['users'])
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('description', 'like', '%' . $searchTerm . '%')
-                                 ->orWhereHas('user', function ($q) use ($searchTerm) {
+                                 ->orWhereHas('users', function ($q) use ($searchTerm) {
                                      $q->where('name', 'like', '%' . $searchTerm . '%');
                                  });
                 })
@@ -136,7 +136,10 @@ class DashboardController extends Controller
                 return $this->getUserStats($user->id, $dateFilter);
             });
 
-            $tasks = Tache::where('iduser', $user->id)
+            // Corrected: Use whereHas for Tache model
+            $tasks = Tache::whereHas('users', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            })
                 ->where('datedebut', '<=', Carbon::now()) // Apply the date debut filter here for regular users
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('description', 'like', '%' . $searchTerm . '%');
@@ -150,7 +153,10 @@ class DashboardController extends Controller
                 ->orderBy($sortBy, $sortOrder)
                 ->paginate(10);
 
-            $objectifs = Objectif::where('iduser', $user->id)
+            // Corrected: Use whereHas for Objectif model
+            $objectifs = Objectif::whereHas('users', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            })
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('description', 'like', '%' . $searchTerm . '%');
                 })
@@ -191,7 +197,7 @@ class DashboardController extends Controller
                 ->orderBy($sortBy, $sortOrder)
                 ->paginate(10);
 
-            $venteObjectifs = VenteObjectif::where('iduser', $user->id)
+            $venteObjectifs = VenteObjectif::where('iduser', $user->id) // Assuming VenteObjectif still uses iduser
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('description', 'like', '%' . $searchTerm . '%');
                 })
@@ -202,7 +208,7 @@ class DashboardController extends Controller
                 ->paginate(10);
 
             $dashboards = Dashboard::with(['user', 'task', 'project', 'formation', 'venteObjectif', 'objectif'])
-                ->where('iduser', $user->id)
+                ->where('iduser', $user->id) // Assuming Dashboard model has iduser
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('task', 'like', '%' . $searchTerm . '%')
                                  ->orWhere('project', 'like', '%' . $searchTerm . '%');
@@ -292,11 +298,10 @@ class DashboardController extends Controller
             if ($dateFilter) {
                 $q = $this->applyDateFilter($q, $dateFilter);
             }
-            // --- NEW ADDITION START: Apply datedebut filter for Tache model ---
+            // Apply datedebut filter for Tache model
             if ($model === Tache::class) {
                 $q->where('datedebut', '<=', Carbon::now());
             }
-            // --- NEW ADDITION END ---
             return $q;
         };
 
@@ -321,32 +326,34 @@ class DashboardController extends Controller
     private function getUserStats($userId, $dateFilter = null)
     {
         $queryForUser = function($model) use ($userId, $dateFilter) {
-            // For projects and formations, the relation is Many-to-Many via `users`
-            if ($model === Project::class || $model === Formation::class) {
-                $q = $model::whereHas('users', function($q_inner) use ($userId) {
+            $q = $model::query(); // Start with a fresh query instance
+
+            // Check if the model has a 'users' many-to-many relationship
+            if (method_exists($model, 'users')) {
+                $q->whereHas('users', function($q_inner) use ($userId) {
                     $q_inner->where('users.id', $userId);
                 });
             } else {
-                // For Tache, Objectif, VenteObjectif, it's directly by 'iduser'
-                $q = $model::where('iduser', $userId);
+                // Fallback for models that still use 'iduser' directly
+                $q->where('iduser', $userId);
             }
 
             if ($dateFilter) {
-                // Apply date filter based on the model and appropriate column
-                $dateColumn = 'created_at'; // Default column
+                $dateColumn = 'created_at';
                 if ($model === Project::class) {
                     $dateColumn = 'date_project';
                 } elseif ($model === Formation::class) {
                     $dateColumn = 'date';
+                } elseif ($model === Tache::class) { // Tache uses 'datedebut' for its primary date filter
+                    $dateColumn = 'datedebut';
                 }
                 $q = $this->applyDateFilter($q, $dateFilter, $dateColumn);
             }
 
-            // --- NEW ADDITION START FOR TASKS IN getUserStats ---
+            // Apply datedebut filter for Tache model specifically, regardless of general dateFilter
             if ($model === Tache::class) {
                 $q->where('datedebut', '<=', Carbon::now());
             }
-            // --- NEW ADDITION END ---
 
             return $q;
         };
@@ -398,7 +405,10 @@ class DashboardController extends Controller
         // Recent tasks
         $taskQuery = Tache::query();
         if (!$isAdmin) {
-            $taskQuery->where('iduser', $user->id);
+            // Corrected: Use whereHas for Tache model
+            $taskQuery->whereHas('users', function($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
         }
         // Always apply datedebut filter for tasks
         $taskQuery->where('datedebut', '<=', Carbon::now()); 
@@ -455,8 +465,14 @@ class DashboardController extends Controller
         $lastMonthTasksQuery = Tache::query();
 
         if (!$isAdmin) {
-            $thisMonthTasksQuery->where('iduser', $user->id);
-            $lastMonthTasksQuery->where('iduser', $user->id);
+            // Corrected: Use whereHas for Tache model
+            $thisMonthTasksQuery->whereHas('users', function($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
+            // Corrected: Use whereHas for Tache model
+            $lastMonthTasksQuery->whereHas('users', function($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
         }
         // Always apply datedebut filter for tasks in productivity metrics
         $thisMonthTasksQuery->where('datedebut', '<=', Carbon::now()); 
@@ -499,9 +515,7 @@ class DashboardController extends Controller
         if ($dateFilter) {
             $query = $this->applyDateFilter($query, $dateFilter);
         }
-        // --- NEW ADDITION START: Apply datedebut filter for completion rate ---
-        // This will apply to both admin and user if called this way.
-        // If you need separate admin/user logic, split this method or pass an $isAdmin flag.
+        // Apply datedebut filter for completion rate
         $query->where('datedebut', '<=', Carbon::now());
         // --- NEW ADDITION END ---
 
@@ -520,8 +534,11 @@ class DashboardController extends Controller
      */
     private function getUserCompletionRate($userId, $dateFilter = null)
     {
-        $query = Tache::where('iduser', $userId)
-                      ->where('datedebut', '<=', Carbon::now()); // Apply date debut filter for user-specific stats
+        // Corrected: Use whereHas for Tache model
+        $query = Tache::whereHas('users', function ($q) use ($userId) {
+            $q->where('users.id', $userId);
+        })
+            ->where('datedebut', '<=', Carbon::now()); // Apply date debut filter for user-specific stats
         if ($dateFilter) {
             $query = $this->applyDateFilter($query, $dateFilter);
         }
@@ -664,7 +681,10 @@ class DashboardController extends Controller
         $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
         if (!$isAdmin) {
-            $query->where('iduser', $user->id);
+            // Corrected: Use whereHas for Tache model
+            $query->whereHas('users', function($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
         }
         // Always apply datedebut filter for tasks in charts
         $query->where('datedebut', '<=', Carbon::now());
@@ -737,7 +757,10 @@ class DashboardController extends Controller
                             ->whereBetween('updated_at', [$currentWeekStart, $currentWeekEnd]);
 
             if (!$isAdmin) {
-                $query->where('iduser', $user->id);
+                // Corrected: Use whereHas for Tache model
+                $query->whereHas('users', function($q) use ($user) {
+                    $q->where('users.id', $user->id);
+                });
             }
             // Always apply datedebut filter for tasks in productivity charts
             $query->where('datedebut', '<=', Carbon::now());
