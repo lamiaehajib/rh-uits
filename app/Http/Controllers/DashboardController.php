@@ -65,8 +65,7 @@ class DashboardController extends Controller
             $stats = Cache::remember($cacheKey . '_admin', 300, function () use ($dateFilter) {
                 return $this->getAdvancedStats($dateFilter);
             });
-
-            // Apply search and filters for Sup_Admin (these are likely just for the tables on the dashboard, not the charts)
+  // Apply search and filters for Sup_Admin (these are likely just for the tables on the dashboard, not the charts)
             $tasks = Tache::with(['users'])
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('description', 'like', '%' . $searchTerm . '%')
@@ -80,6 +79,8 @@ class DashboardController extends Controller
                 ->when($dateFilter, function ($query, $dateFilter) {
                     return $this->applyDateFilter($query, $dateFilter);
                 })
+                // LOOK HERE: If there was a line like the one below, you would remove it.
+                // ->where('datedebut', '<=', Carbon::now()) // <--- THIS IS THE LINE TO REMOVE/COMMENT OUT IF IT EXISTS HERE
                 ->orderBy($sortBy, $sortOrder)
                 ->paginate(10);
 
@@ -292,34 +293,46 @@ class DashboardController extends Controller
      * Get advanced statistics for admin dashboard
      */
     private function getAdvancedStats($dateFilter = null)
-    {
-        $query = function($model) use ($dateFilter) {
-            $q = $model::query();
-            if ($dateFilter) {
-                $q = $this->applyDateFilter($q, $dateFilter);
-            }
-            // Apply datedebut filter for Tache model
-            if ($model === Tache::class) {
-                $q->where('datedebut', '<=', Carbon::now());
-            }
-            return $q;
-        };
+{
+    // Hada howa l-query builder li ghadi ykoun fih datedebut filter,
+    // ghadi nsta3emloh l-les statistiques dyal completed, pending, productivity, etc.
+    // Lli kaykhasshom ykono kay3etamdou 3la les tâches li bdaaw.
+    $tacheQueryFilteredByStartDate = function() use ($dateFilter) {
+        $q = Tache::query();
+        if ($dateFilter) {
+            $q = $this->applyDateFilter($q, $dateFilter);
+        }
+        $q->where('datedebut', '<=', Carbon::now()); // Filter hna
+        return $q;
+    };
 
-        return [
-            'total_tasks' => $query(Tache::class)->count(),
-            'completed_tasks' => (clone $query(Tache::class))->where('status', 'terminé')->count(),
-            'pending_tasks' => (clone $query(Tache::class))->where('status', 'en cours')->count(),
-            'total_projects' => $query(Project::class)->count(),
-            'active_projects' => (clone $query(Project::class))->whereNotNull('date_project')->count(),
-            'total_formations' => $query(Formation::class)->count(),
-            'completed_formations' => (clone $query(Formation::class))->where('status', 'terminé')->count(),
-            'total_users' => User::count(),
-            'active_users' => User::where('created_at', '>=', now()->subDays(30))->count(),
-            'completion_rate' => $this->getCompletionRate($dateFilter),
-            'productivity_score' => $this->getProductivityScore($dateFilter)
-        ];
-    }
-    
+    // Hada howa l-query builder general, ghadi nsta3emloh l-les modèles lokhrin
+    // b7al Project, Formation, w l-total exact dyal les tâches l-admin.
+    $generalQuery = function($model) use ($dateFilter) {
+        $q = $model::query();
+        if ($dateFilter) {
+            // Note: Hna mamkaddinch datedebut filter by default, la baghiin ghir l-date filter 3la created_at wla chi haja
+            // depends 3la achmn date column baghi tfilter biha for other models.
+            // For Project, Formation, VenteObjectif, Objectif, kayn $this->applyDateFilter.
+        }
+        return $q;
+    };
+
+    return [
+        // Hna Total des tâches l'admin, ghadi ykoun le total exact bla datedebut filter
+        'total_tasks' => Tache::count(), // <--- NEW: No datedebut filter here
+        'completed_tasks' => $tacheQueryFilteredByStartDate()->where('status', 'terminé')->count(),
+        'pending_tasks' => $tacheQueryFilteredByStartDate()->where('status', 'en cours')->count(),
+        'total_projects' => Project::count(), // Généralement, les projets kayt7esbo kamlin
+        'active_projects' => Project::whereNotNull('date_project')->count(), // Hadik katb9a ki kanet
+        'total_formations' => Formation::count(), // Formations 7ta homa kamlin
+        'completed_formations' => Formation::where('status', 'terminé')->count(),
+        'total_users' => User::count(),
+        'active_users' => User::where('created_at', '>=', now()->subDays(30))->count(),
+        'completion_rate' => $this->getCompletionRate($dateFilter), // Khaso yebqa 3la datedebut li bdaat
+        'productivity_score' => $this->getProductivityScore($dateFilter) // Khaso yebqa 3la datedebut li bdaat
+    ];
+}
     /**
      * Get user-specific statistics
      */
