@@ -152,7 +152,7 @@ class TacheController extends Controller
         }
     }
 
-    public function show($id)
+   public function show($id, Request $request) 
     {
         $user = auth()->user();
         $tache = Tache::with(['users', 'creator'])->findOrFail($id);
@@ -162,7 +162,11 @@ class TacheController extends Controller
                                 ->with('error', 'Accès refusé.');
         }
 
-        return view('taches.show', compact('tache'));
+        // Nakhdou ga3 les query parameters men l-URL li kanti fihom (page index)
+        // Hadchi ghay7tafed b: search, status, date_filter, user_filter, sort_by, sort_direction, page.
+        $filterParams = $request->query(); 
+
+        return view('taches.show', compact('tache', 'filterParams')); // Passi filterParams l-view
     }
 
     public function edit($id, Request $request)

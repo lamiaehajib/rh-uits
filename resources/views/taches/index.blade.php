@@ -325,10 +325,11 @@
                                                 
                                                 <td class="py-4 px-6 flex items-center space-x-4">
                                                     @can('tache-show')
-                                                        <a href="{{ route('taches.show', $tache->id) }}" title="Voir" class="text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out transform hover:scale-110">
-                                                            <i class="fas fa-eye text-lg"></i>
-                                                        </a>
-                                                    @endcan
+        {{-- Hna kanswftou les filtres f link dial show --}}
+        <a href="{{ route('taches.show', array_merge(['tach' => $tache->id], request()->query())) }}" title="Voir" class="text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out transform hover:scale-110">
+            <i class="fas fa-eye text-lg"></i>
+        </a>
+    @endcan
                                                     @can('tache-edit')
     <a href="{{ route('taches.edit', array_merge(['tach' => $tache->id], request()->query())) }}" title="Modifier" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out transform hover:scale-110">
         <i class="fas fa-edit text-lg"></i>

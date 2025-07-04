@@ -2,7 +2,6 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Détails de la Tâche</title>
-        <!-- Tailwind CSS CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
             // Configure Tailwind CSS to use a custom primary color
@@ -19,7 +18,6 @@
                 }
             }
         </script>
-        <!-- Font Awesome for icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
         <style>
             /* Custom CSS for animations and improved aesthetics */
@@ -106,18 +104,15 @@
 
                         <div class="space-y-6">
                             <div class="pb-4 border-b border-gray-200">
-                                <!-- Titre de la Tâche -->
                                 <h3 class="text-2xl font-bold text-gray-900 flex items-center mb-2">
                                     <i class="fas fa-heading mr-3 text-indigo-600"></i> {{ $tache->titre }}
                                 </h3>
-                                <!-- Description de la Tâche -->
                                 <p class="text-lg text-gray-800 flex items-center">
                                     <i class="fas fa-file-alt mr-3 text-blue-600"></i> {{ $tache->description }}
                                 </p>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                                <!-- Statut de la Tâche -->
                                 <div>
                                     <p class="text-sm font-semibold text-gray-700 flex items-center mb-1">
                                         <i class="fas fa-info-circle mr-2 text-yellow-500"></i> {{ __('Statut:') }}
@@ -131,7 +126,6 @@
                                     </span>
                                 </div>
 
-                                <!-- Priorité de la Tâche -->
                                 <div>
                                     <p class="text-sm font-semibold text-gray-700 flex items-center mb-1">
                                         <i class="fas fa-exclamation-triangle mr-2 text-red-500"></i> {{ __('Priorité:') }}
@@ -145,7 +139,6 @@
                                     </span>
                                 </div>
 
-                                <!-- Durée Estimée -->
                                 <div>
                                     <p class="text-sm font-semibold text-gray-700 flex items-center mb-1">
                                         <i class="fas fa-hourglass-half mr-2 text-green-500"></i> {{ __('Durée Estimée:') }}
@@ -153,7 +146,6 @@
                                     <p class="text-gray-800 ml-5">{{ $tache->duree }}</p>
                                 </div>
 
-                                <!-- Date de Début -->
                                 <div>
                                     <p class="text-sm font-semibold text-gray-700 flex items-center mb-1">
                                         <i class="fas fa-calendar-alt mr-2 text-purple-500"></i> {{ __('Date de Début:') }}
@@ -161,7 +153,6 @@
                                     <p class="text-gray-800 ml-5">{{ \Carbon\Carbon::parse($tache->datedebut)->format('d F Y') }}</p>
                                 </div>
 
-                                <!-- Type de Planification -->
                                 <div>
                                     <p class="text-sm font-semibold text-gray-700 flex items-center mb-1">
                                         <i class="fas fa-clock mr-2 text-orange-500"></i> {{ __('Type de Planification:') }}
@@ -169,10 +160,9 @@
                                     <p class="text-gray-800 ml-5">{{ ucfirst($tache->date) }}</p>
                                 </div>
 
-                                <!-- Assigné à l'utilisateur -->
                                 <p class="sm:col-span-2">
                                     <strong><i class="fas fa-users mr-2 text-gray-500"></i> Assigné(s) à:</strong>
-                                    <span class="inline-flex flex-wrap items-center space-x-2 mt-1"> {{-- mt-1 pour un petit espacement avec le label --}}
+                                    <span class="inline-flex flex-wrap items-center space-x-2 mt-1">
                                         @forelse ($tache->users as $assignedUser)
                                             <span class="px-2 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 flex items-center">
                                                 <i class="fas fa-user mr-1"></i> {{ $assignedUser->name }}
@@ -183,9 +173,8 @@
                                     </span>
                                 </p>
                                 
-                                <!-- Retour de la Tâche -->
                                 @if ($tache->retour)
-                                    <div class="md:col-span-2"> <!-- Span across two columns -->
+                                    <div class="md:col-span-2">
                                         <p class="text-sm font-semibold text-gray-700 flex items-center mb-1">
                                             <i class="fas fa-comment-dots mr-2 text-gray-500"></i> {{ __('Retour/Notes:') }}
                                         </p>
@@ -229,13 +218,15 @@
 
                         <div class="mt-10 flex items-center justify-end space-x-4 border-t pt-6 border-gray-200">
                             @can('tache-edit')
-                                <a href="{{ route('taches.edit', $tache->id) }}"
+                                {{-- The edit link should also pass the filterParams --}}
+                                <a href="{{ route('taches.edit', array_merge(['tach' => $tache->id], $filterParams)) }}"
                                     class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-wider
                                     hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition ease-in-out duration-150">
                                     <i class="fas fa-edit mr-2"></i> {{ __('Modifier la Tâche') }}
                                 </a>
                             @endcan
-                            <a href="{{ route('taches.index') }}"
+                            {{-- This "Retour à la Liste" link will now pass the original filter parameters --}}
+                            <a href="{{ route('taches.index', $filterParams) }}"
                                 class="inline-flex items-center px-6 py-3 bg-gray-200 border border-transparent rounded-md font-bold text-xs text-gray-700 uppercase tracking-wider
                                 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition ease-in-out duration-150">
                                 <i class="fas fa-arrow-left mr-2"></i> {{ __('Retour à la Liste') }}
