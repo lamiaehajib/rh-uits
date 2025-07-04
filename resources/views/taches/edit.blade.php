@@ -140,7 +140,12 @@
 
                             {{-- Hidden fields to pass existing filter parameters --}}
                             @foreach ($filterParams as $key => $value)
-                                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                                @if ($key === 'status')
+                                    {{-- Rename status filter parameter to avoid conflict with task status --}}
+                                    <input type="hidden" name="original_status_filter" value="{{ $value }}">
+                                @else
+                                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                                @endif
                             @endforeach
 
                             @php

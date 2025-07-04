@@ -330,11 +330,10 @@
                                                         </a>
                                                     @endcan
                                                     @can('tache-edit')
-                                                        {{-- Hna kanswftou les filtres f link dial edit, corrected parameter name to 'tach' --}}
-                                                        <a href="{{ route('taches.edit', array_merge(['tach' => $tache->id], request()->query())) }}" title="Modifier" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out transform hover:scale-110">
-                                                            <i class="fas fa-edit text-lg"></i>
-                                                        </a>
-                                                    @endcan
+    <a href="{{ route('taches.edit', array_merge(['tach' => $tache->id], request()->query())) }}" title="Modifier" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out transform hover:scale-110">
+        <i class="fas fa-edit text-lg"></i>
+    </a>
+@endcan
                                                     @can('tache-delete')
                                                         <button type="button" title="Supprimer" onclick="if(confirm('{{ __('Êtes-vous sûr de vouloir supprimer cette tâche ?') }}')) { document.getElementById('delete-form-{{ $tache->id }}').submit(); }" class="text-primary-red hover:text-red-700 transition duration-150 ease-in-out transform hover:scale-110">
                                                             <i class="fas fa-trash text-lg"></i>

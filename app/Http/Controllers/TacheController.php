@@ -41,7 +41,6 @@ class TacheController extends Controller
             // Apply datedebut filter only if the user is NOT an admin for their general tasks list
             $query->where('datedebut', '<=', Carbon::now());
         }
-        // If it's an admin, no datedebut filter is applied here by default for the main index list.
 
         if ($search) {
             $query->where(function($q) use ($search) {
@@ -56,7 +55,6 @@ class TacheController extends Controller
             $query->where('status', $status);
         }
 
-        // Apply date filters
         if ($date_filter) {
             switch ($date_filter) {
                 case 'today':
@@ -73,7 +71,7 @@ class TacheController extends Controller
                           ->whereNotNull('date_fin_prevue')
                           ->where('date_fin_prevue', '<', Carbon::now());
                     break;
-                case 'future': // Added for admins to explicitly see future tasks
+                case 'future':
                     if ($this->isAdmin($user)) {
                         $query->where('datedebut', '>', Carbon::now());
                     }
@@ -167,7 +165,7 @@ class TacheController extends Controller
         return view('taches.show', compact('tache'));
     }
 
-    public function edit($id, Request $request) // Zidna Request $request hna
+    public function edit($id, Request $request)
     {
         $user = auth()->user();
         $tache = Tache::with('users')->findOrFail($id);
@@ -178,8 +176,9 @@ class TacheController extends Controller
         }
 
         $users = User::all();
-        // Passi ga3 les filter parameters l'edit view, inclus 'page' bach pagination tbqa m9ada
-        $filterParams = $request->only(['search', 'status', 'date_filter', 'user_filter', 'sort_by', 'sort_direction', 'page']);
+        // Pass all filter parameters from the current URL query to the edit view.
+        // This is key: it captures the *original* filters (like user_filter, and potentially status if set).
+        $filterParams = $request->query(); 
         return view('taches.edit', compact('tache', 'users', 'filterParams'));
     }
 
@@ -195,7 +194,7 @@ class TacheController extends Controller
                 'description' => 'required|string|max:5000',
                 'duree' => 'required|string|max:255',
                 'datedebut' => 'required|date',
-                'status' => 'required|in:nouveau,en cours,termine',
+                'status' => 'required|in:nouveau,en cours,termine', // This is the task's own status field
                 'date' => 'required|in:jour,semaine,mois',
                 'user_ids' => 'required|array',
                 'user_ids.*' => 'exists:users,id',
@@ -214,7 +213,7 @@ class TacheController extends Controller
 
         } elseif ($user->hasAnyRole(['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH'])) {
             $request->validate([
-                'status' => 'required|in:nouveau,en cours,termine',
+                'status' => 'required|in:nouveau,en cours,termine', // This is the task's own status field
                 'retour' => 'nullable|string|max:5000',
             ]);
 
@@ -234,9 +233,57 @@ class TacheController extends Controller
             }
         }
 
-        // Recuperer ga3 les filter parameters men l-request
-        $filterParams = $request->only(['search', 'status', 'date_filter', 'user_filter', 'sort_by', 'sort_direction', 'page']);
-        return redirect()->route('taches.index', $filterParams)
+        // --- THE FINAL KEY CHANGE IS HERE ---
+        // Start with the full set of filters that were passed from the index page via URL query string.
+        // These are guaranteed to be the *original* filters, not the task's modified status.
+        $finalRedirectParams = $request->only([
+            'search', 'date_filter', 'user_filter', 'sort_by', 'sort_direction', 'page'
+        ]);
+
+        // Now, *explicitly re-add the 'status' filter ONLY if it was present in the original query parameters.*
+        // The `status` field from the form (`$request->input('status')`) should NOT become a filter unless
+        // there was already a `status` filter in the original URL query.
+        if ($request->has('status') && $request->input('status') !== 'all') { // Check if 'status' field exists and is not 'all' (meaning it was explicitly selected)
+            // Now, we need to know if the original filter was set. The best way is to pass the original query string
+            // as a separate parameter from the edit link, or use Session.
+            // Since we're passing all `filterParams` from edit to update via hidden fields,
+            // $request->input('status') from hidden field will reflect the original status filter if it was set.
+            // However, the problem is that 'status' is also the *task's status*.
+
+            // Let's assume `filterParams['status']` holds the original status filter from the URL.
+            // If `filterParams['status']` is present and not 'all', then we keep it.
+            // If it's not present or 'all', then we want no status filter.
+
+            // The 'status' field in the form (`<select name="status" id="status">`) is ALWAYS sent.
+            // So, `request()->input('status')` will always give the task's actual status.
+            // But we want the *filter's* status from the index page.
+            
+            // The `filterParams` array from the `edit` method is passed via hidden inputs in the form.
+            // So, to get the original 'status' filter, we should check `request()->input('status')` coming from the *hidden input*
+            // that represents the original filter, not the task's status select.
+            // To differentiate, we need to rename the hidden input for the *filter status*.
+
+            // Let's adjust `edit.blade.php` first, then come back here.
+            // Assuming `edit.blade.php` now passes `original_status_filter` if it exists.
+
+            // Daba l-code dyal `update` method khassou ykoun haka:
+            if ($request->filled('original_status_filter') && $request->input('original_status_filter') !== 'all') {
+                $finalRedirectParams['status'] = $request->input('original_status_filter');
+            } else {
+                // If there was no original status filter or it was 'all', ensure it's not in the final URL.
+                unset($finalRedirectParams['status']);
+            }
+        } else {
+             // If the user is a non-admin and can only change status/retour, we still want to respect initial filters.
+             if ($request->filled('original_status_filter') && $request->input('original_status_filter') !== 'all') {
+                $finalRedirectParams['status'] = $request->input('original_status_filter');
+            } else {
+                unset($finalRedirectParams['status']);
+            }
+        }
+
+
+        return redirect()->route('taches.index', $finalRedirectParams)
                             ->with('success', 'Tâche mise à jour avec succès.');
     }
 
@@ -344,7 +391,6 @@ class TacheController extends Controller
             $baseQuery->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
-            // For non-admins, their 'total' tasks should also exclude future ones
             $baseQuery->where('datedebut', '<=', Carbon::now());
         }
 
