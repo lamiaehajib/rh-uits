@@ -351,27 +351,32 @@
                         <div class="flex items-center justify-between">
                             <div class="flex space-x-2">
                                 @can('formation-show')
-                                    <button class="p-2 bg-blue-500/20 text-blue-700 rounded-lg hover:bg-blue-500/30 transition-all">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                @endcan
-                                @can('formation-edit')
-                                    <button class="p-2 bg-indigo-500/20 text-indigo-700 rounded-lg hover:bg-indigo-500/30 transition-all">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                @endcan
-                                @can('formation-delete')
-                                    <button class="p-2 bg-red-500/20 text-red-700 rounded-lg hover:bg-red-500/30 transition-all"
-                                            onclick="showCustomConfirm('{{ __('Êtes-vous sûr de vouloir supprimer cette formation ?') }}', function() { console.log('Delete formation'); });">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                @endcan
+                                                        <a href="{{ route('formations.show', $formation->id) }}" title="{{ __('Voir') }}" class="text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out transform hover:scale-110">
+                                                            <i class="fas fa-eye text-lg"></i>
+                                                        </a>
+                                           @endcan
+                               @can('formation-edit')
+                                                        <a href="{{ route('formations.edit', $formation->id) }}" title="{{ __('Modifier') }}" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out transform hover:scale-110">
+                                                            <i class="fas fa-pencil-alt text-lg"></i>
+                                                        </a>
+                                           @endcan
+                               @can('formation-delete')
+                                                        <button type="button" title="{{ __('Supprimer') }}" onclick="showCustomConfirm('{{ __('Êtes-vous sûr de vouloir supprimer cette formation ?') }}', function() { document.getElementById('delete-form-{{ $formation->id }}').submit(); });" class="text-primary-red hover:text-red-700 transition duration-150 ease-in-out transform hover:scale-110">
+                                                            <i class="fas fa-trash-alt text-lg"></i>
+                                                        </button>
+                                                        <form id="delete-form-{{ $formation->id }}" action="{{ route('formations.destroy', $formation->id) }}" method="POST" class="hidden">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                        </form>
+                                                    @endcan
                             </div>
-                            @if($formation->file_path ?? false)
-                                <button class="p-2 bg-green-500/20 text-green-700 rounded-lg hover:bg-green-500/30 transition-all">
-                                    <i class="fas fa-download"></i>
-                                </button>
-                            @endif
+                           @if($formation->file_path)
+                                                        @can('formation-list') {{-- Assuming 'formation-list' implies ability to download, or create a specific 'formation-download' permission --}}
+                                                            <a href="{{ route('formations.download', $formation->id) }}" title="{{ __('Télécharger Fichier') }}" class="text-green-600 hover:text-green-800 transition duration-150 ease-in-out transform hover:scale-110">
+                                                                <i class="fas fa-download text-lg"></i>
+                                                            </a>
+                                                        @endcan
+                                          @endif
                         </div>
                     </div>
                 @empty
@@ -385,7 +390,9 @@
                 @endforelse
             </div>
 
-           
+           <div class="mt-6 flex justify-center">
+                                {{ $formations->links('pagination::tailwind') }}
+                            </div>
         </div>
 
         @can('formation-create')

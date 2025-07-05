@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Carbon\Carbon; // تأكد من استيراد Carbon إذا كنت تستخدمه في مكان ما هنا
 
 class FormationController extends Controller
 {
@@ -103,7 +104,7 @@ class FormationController extends Controller
     {
         // Règles de validation des données soumises par le formulaire
         $request->validate([
-            'name' => 'required|string|max:255', // Supprimé 'unique:formations,name'
+            'name' => 'required|string|max:255',
             'status' => 'required|in:en ligne,lieu',
             'nomformateur' => 'required|string|max:255',
             'iduser' => 'required|array|min:1',
@@ -117,7 +118,6 @@ class FormationController extends Controller
             'duree' => 'required|integer|min:1|max:365',
             'duree_unit' => 'required|string|in:jours,semaines,mois',
         ], [
-           
             'date.after_or_equal' => 'La date de la formation doit être aujourd\'hui ou dans le futur.',
             'iduser.min' => 'Vous devez sélectionner au moins un utilisateur.',
             'file.max' => 'La taille du fichier ne doit pas dépasser 10 Mo.',
@@ -132,6 +132,7 @@ class FormationController extends Controller
             if ($request->hasFile('file')) {
                 $originalName = $request->file('file')->getClientOriginalName();
                 $fileName = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $request->file('file')->getClientOriginalExtension();
+                // هنا يتم تخزين الملف على القرص 'public' داخل مجلد 'formations'
                 $filePath = $request->file('file')->storeAs('formations', $fileName, 'public');
             }
 
@@ -201,7 +202,7 @@ class FormationController extends Controller
     {
         // Règles de validation des données pour la mise à jour
         $request->validate([
-            'name' => 'required|string|max:255', // Supprimé '|unique:formations,name,' . $id
+            'name' => 'required|string|max:255',
             'status' => 'required|in:en ligne,lieu',
             'nomformateur' => 'required|string|max:255',
             'iduser' => 'required|array|min:1',
@@ -216,7 +217,6 @@ class FormationController extends Controller
             'duree_unit' => 'required|string|in:jours,semaines,mois',
         ], [
             // Messages d'erreur personnalisés
-            // 'name.unique' => 'Une formation avec ce nom existe déjà.', // Ce message n'est plus pertinent
             'iduser.min' => 'Vous devez sélectionner au moins un utilisateur.',
             'file.max' => 'La taille du fichier ne doit pas dépasser 10 Mo.',
             'file.mimes' => 'Le format de fichier n\'est pas pris en charge (PDF, DOC, DOCX, PNG, JPG, JPEG, MP4 uniquement).',
@@ -227,19 +227,22 @@ class FormationController extends Controller
         try {
             $formation = Formation::findOrFail($id);
 
+            // التحقق من وجود ملف جديد أو طلب حذف ملف
             if ($request->hasFile('file')) {
-                if ($formation->file_path && Storage::exists('public/' . $formation->file_path)) {
-                    Storage::delete('public/' . $formation->file_path);
+                // حذف الملف القديم إذا كان موجوداً
+                if ($formation->file_path && Storage::disk('public')->exists($formation->file_path)) {
+                    Storage::disk('public')->delete($formation->file_path);
                 }
                 $originalName = $request->file('file')->getClientOriginalName();
                 $fileName = time() . '_' . Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) . '.' . $request->file('file')->getClientOriginalExtension();
                 $formation->file_path = $request->file('file')->storeAs('formations', $fileName, 'public');
-            } elseif ($request->boolean('remove_file')) {
-                if ($formation->file_path && Storage::exists('public/' . $formation->file_path)) {
-                    Storage::delete('public/' . $formation->file_path);
+            } elseif ($request->boolean('remove_file')) { // إذا تم تحديد خانة اختيار حذف الملف
+                if ($formation->file_path && Storage::disk('public')->exists($formation->file_path)) {
+                    Storage::disk('public')->delete($formation->file_path);
                     $formation->file_path = null;
                 }
             }
+            // إذا لم يتم تحميل ملف جديد ولم يتم طلب حذف الملف، فإن file_path يبقى كما هو في قاعدة البيانات.
 
             $formation->update(array_merge(
                 $request->except(['iduser', 'file', 'remove_file']),
@@ -268,11 +271,12 @@ class FormationController extends Controller
         try {
             $formation = Formation::findOrFail($id);
 
-            if ($formation->file_path && Storage::exists('public/' . $formation->file_path)) {
-                Storage::delete('public/' . $formation->file_path);
+            // حذف الملف المرتبط إذا كان موجوداً على القرص 'public'
+            if ($formation->file_path && Storage::disk('public')->exists($formation->file_path)) {
+                Storage::disk('public')->delete($formation->file_path);
             }
 
-            $formation->users()->detach();
+            $formation->users()->detach(); // فصل المستخدمين المرتبطين
 
             $formation->delete();
 
@@ -295,15 +299,18 @@ class FormationController extends Controller
             $formation = Formation::findOrFail($id);
             $user = auth()->user();
 
+            // التحقق من الأذونات: فقط المشرفون أو المستخدمون المعينون يمكنهم التنزيل
             if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin') && !$formation->users->contains('id', $user->id)) {
                 return redirect()->back()->with('error', 'Vous n\'avez pas la permission de télécharger ce fichier.');
             }
 
-            if (!$formation->file_path || !Storage::exists('public/' . $formation->file_path)) {
+            // التأكد من وجود المسار والملف على القرص 'public'
+            if (!$formation->file_path || !Storage::disk('public')->exists($formation->file_path)) {
                 return redirect()->back()->with('error', 'Le fichier n\'existe pas.');
             }
 
-            return Storage::download('public/' . $formation->file_path);
+            // تنزيل الملف من القرص 'public'
+            return Storage::disk('public')->download($formation->file_path);
         } catch (\Exception $e) {
             Log::error('Erreur lors du téléchargement: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Une erreur est survenue lors du téléchargement du fichier.');
@@ -313,7 +320,7 @@ class FormationController extends Controller
     /**
      * Duplicates a specific formation, including its associated file.
      */
-public function duplicate($id)
+    public function duplicate($id)
     {
         try {
             $originalFormation = Formation::findOrFail($id);
@@ -330,6 +337,7 @@ public function duplicate($id)
             $newFormation->name = $originalFormation->name . ' (Copie ' . now()->format('Y-m-d H:i:s') . ' - ' . Str::random(4) . ')';
 
             $newFilePath = null;
+            // نسخ الملف إذا كان موجوداً على القرص 'public'
             if ($originalFormation->file_path && Storage::disk('public')->exists($originalFormation->file_path)) {
                 $originalFileName = pathinfo($originalFormation->file_path, PATHINFO_BASENAME);
                 $originalExtension = pathinfo($originalFormation->file_path, PATHINFO_EXTENSION);
@@ -341,7 +349,7 @@ public function duplicate($id)
             $newFormation->file_path = $newFilePath;
 
             $newFormation->created_by = auth()->id();
-            $newFormation->updated_by = null; // Cette ligne est maintenant valide car la colonne est nullable et fillable.
+            $newFormation->updated_by = null; // هذه السطر صحيح الآن حيث أن العمود قد يكون null
 
             $newFormation->save();
 
@@ -354,11 +362,10 @@ public function duplicate($id)
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Erreur lors de la duplication de la formation: ' . $e->getMessage());
-            // Laissez ce message détaillé pour le moment si l'erreur persiste.
+            // نترك هذه الرسالة مفصلة في الوقت الحالي إذا استمر الخطأ.
             return redirect()->back()->with('error', 'Une erreur est survenue lors de la duplication de la formation: ' . $e->getMessage());
         }
     }
-
 
     /**
      * Récupère les statistiques des formations.

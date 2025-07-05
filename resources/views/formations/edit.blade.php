@@ -321,7 +321,7 @@
                     @enderror
                     @if ($formation->file_path)
                         <small class="mt-2 text-sm text-gray-500 block">
-                            Fichier actuel: <a href="{{ Storage::url($formation->file_path) }}" target="_blank" class="text-blue-600 hover:underline">{{ basename($formation->file_path) }}</a>
+                            Fichier actuel: <a href="{{ Storage::disk('public')->url($formation->file_path) }}" title="Télécharger" target="_blank" class="text-blue-600 hover:underline">{{ basename($formation->file_path) }}</a>
                             <span class="ml-2">(Laisser vide pour conserver le fichier actuel)</span>
                         </small>
                     @endif
