@@ -340,7 +340,7 @@
                             </div>
                             <div class="flex items-center text-gray-700">
                                 <i class="fas fa-users mr-3 text-primary-icon"></i>
-                                <span class="text-sm">{{ $formation->users->count() ?? 25 }} participants</span>
+                                <span class="text-sm">{{ $formation->users->count() ?? 25 }} Assigné(e)</span>
                             </div>
                             <div class="flex items-center text-gray-700">
                                 <i class="fas fa-{{ ($formation->status ?? 'lieu') == 'en ligne' ? 'globe' : 'map-marker-alt' }} mr-3 text-primary-icon"></i>
