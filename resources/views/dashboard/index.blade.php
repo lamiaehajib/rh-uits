@@ -894,7 +894,7 @@
                                             <td class="p-4 text-center">{{ \Carbon\Carbon::parse($formation->date)->format('d/m/Y') }}</td>
                                             <td class="p-4 text-center">
                                                 @if($formation->file_path)
-                                                    <a href="{{ Storage::url($formation->file_path) }}" title="Télécharger" target="_blank" class="text-blue-500 hover:text-blue-700">
+                                                   <a href="{{ Storage::disk('public')->url($formation->file_path) }}" title="Télécharger" target="_blank" class="text-blue-500 hover:text-blue-700">
                                                         <i class="fas fa-download text-lg"></i>
                                                     </a>
                                                 @else
