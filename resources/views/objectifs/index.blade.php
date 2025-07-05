@@ -78,11 +78,7 @@
         
         <style>
             /* Enhanced Custom Styles */
-            body {
-                font-family: 'Inter', 'Poppins', sans-serif;
-               
-                min-height: 100vh;
-            }
+            
 
             .glass-morphism {
                 background: rgba(255, 255, 255, 0.15);
@@ -293,13 +289,10 @@
         </style>
     </head>
     <body class="relative">
-        <!-- Background Pattern -->
         <div class="background-pattern"></div>
         
-        <!-- Floating Elements -->
         <div class="floating-elements fixed inset-0 pointer-events-none z-0"></div>
 
-        <!-- Custom Modal -->
         <div id="custom-modal" class="modal-overlay">
             <div class="modal-content">
                 <div id="modal-icon" class="text-center text-4xl mb-4"></div>
@@ -321,7 +314,6 @@
         <div class="py-8 relative z-10">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
-                <!-- Enhanced Notifications -->
                 @if (session('success'))
                     <div class="notification-modern border-l-4 border-green-500 text-green-700 p-6 mb-6 animate-slide-in" role="alert">
                         <div class="flex items-center">
@@ -352,11 +344,9 @@
                     </div>
                 @endif
 
-                <!-- Main Content Card -->
                 <div class="modern-card rounded-3xl shadow-modern animate-fade-in-up" style="animation-delay: 0.2s;">
                     <div class="p-8">
                         
-                        <!-- Header Section -->
                         <div class="flex flex-col lg:flex-row justify-between items-center mb-8">
                             <div class="text-center lg:text-left mb-6 lg:mb-0">
                                 <h3 class="text-3xl font-bold gradient-text mb-2">Vos Objectifs</h3>
@@ -376,7 +366,6 @@
                             </div>
                         </div>
 
-                        <!-- Enhanced Search Form -->
                         <div class="glass-morphism rounded-2xl p-6 mb-8 animate-fade-in" style="animation-delay: 0.4s;">
                             <form action="{{ route('objectifs.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                                 <div>
@@ -399,13 +388,16 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="status" class="block text-sm font-semibold text-gray-700 mb-2">Statut</label>
-                                    <select name="status" id="status" class="form-input-modern block w-full text-sm">
-                                        <option value="">Tous les statuts</option>
-                                        <option value="mois" {{ request('status') == 'mois' ? 'selected' : '' }}>Mois</option>
-                                        <option value="annee" {{ request('status') == 'annee' ? 'selected' : '' }}>Année</option>
+                                    <label for="duree_filter" class="block text-sm font-semibold text-gray-700 mb-2">Durée (Type)</label>
+                                    <select name="duree_filter" id="duree_filter" class="form-input-modern block w-full text-sm">
+                                        <option value="">Toutes les durées</option>
+                                        <option value="jours" {{ request('duree_filter') == 'jours' ? 'selected' : '' }}>Jour</option>
+                                        <option value="semaines" {{ request('duree_filter') == 'semaines' ? 'selected' : '' }}>Semaine</option>
+                                        <option value="mois" {{ request('duree_filter') == 'mois' ? 'selected' : '' }}>Mois</option>
+                                        <option value="annee" {{ request('duree_filter') == 'annee' ? 'selected' : '' }}>Année</option>
                                     </select>
                                 </div>
+                                
                                 <div>
                                     <label for="date_from" class="block text-sm font-semibold text-gray-700 mb-2">Date Début</label>
                                     <input type="date" name="date_from" id="date_from" 
@@ -427,7 +419,6 @@
                             </form>
                         </div>
 
-                        <!-- Enhanced Table -->
                         @if ($objectifs->isEmpty())
                             <div class="glass-morphism rounded-2xl p-12 text-center animate-bounce-soft">
                                 <i class="fas fa-inbox text-6xl text-gray-400 mb-6"></i>
@@ -547,33 +538,35 @@
                                                             </button>
                                                             @endcan
                                                     {{-- Nouveau bouton de duplication --}}
-                                                   
+                                                    
                                                     @can('objectif-create')
-                                                                    <button type="button" title="Dupliquer l'objectif" onclick="confirmDuplicate({{ $objectif->id }})" class="text-teal-600 hover:text-teal-800 transition duration-150 ease-in-out transform hover:scale-110">
-                                                                        <i class="fas fa-copy text-lg"></i>
-                                                                    </button>
-                                                                    <form id="duplicate-form-{{ $objectif->id }}" action="{{ route('objectifs.duplicate', $objectif->id) }}" method="POST" style="display: none;">
-                                                                        @csrf
-                                                                    </form>
-                                                                    @endcan
-                                                   
+                                                                <button type="button" title="Dupliquer l'objectif" onclick="confirmDuplicate({{ $objectif->id }})" class="action-button bg-teal-100 text-teal-600 hover:bg-teal-200">
+                                                                    <i class="fas fa-copy"></i>
+                                                                </button>
+                                                                <form id="duplicate-form-{{ $objectif->id }}" action="{{ route('objectifs.duplicate', $objectif->id) }}" method="POST" style="display: none;">
+                                                                    @csrf
+                                                                </form>
+                                                                @endcan
+                                                    
                                                     @can('objectif-delete')
-                                                    <button type="button" title="Supprimer" onclick="confirmDelete({{ $objectif->id }})" class="text-primary-red hover:text-red-700 transition duration-150 ease-in-out transform hover:scale-110">
-                                                        <i class="fas fa-trash text-lg"></i>
-                                                    </button>
-                                                    <form id="delete-form-{{ $objectif->id }}" action="{{ route('objectifs.destroy', $objectif->id) }}" method="POST" style="display: none;">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                    </form>
-                                                    @endcan
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-8 flex justify-center animate-fade-in delay-300 pagination-custom">
-                                {{ $objectifs->links() }}
+                                                    <button type="button" title="Supprimer" onclick="confirmDelete({{ $objectif->id }})" class="action-button bg-red-100 text-primary-red hover:bg-red-200">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                            <form id="delete-form-{{ $objectif->id }}" action="{{ route('objectifs.destroy', $objectif->id) }}" method="POST" style="display: none;">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                            </form>
+                                                            @endcan
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-8 flex justify-center animate-fade-in delay-300 pagination-custom">
+                                    {{ $objectifs->links() }}
+                                </div>
                             </div>
                         @endif
                     </div>
@@ -599,7 +592,7 @@
                         modalIcon.innerHTML = '<i class="fas fa-question-circle text-blue-500"></i>';
                         const confirmBtn = document.createElement('button');
                         confirmBtn.textContent = 'Confirmer';
-                        confirmBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
+                        confirmBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-gradient'; // Changed to btn-gradient
                         confirmBtn.onclick = () => {
                             customModal.classList.remove('show');
                             if (onConfirm) onConfirm();
@@ -609,7 +602,7 @@
 
                         const cancelBtn = document.createElement('button');
                         cancelBtn.textContent = 'Annuler';
-                        cancelBtn.className = 'px-6 py-3 rounded-full font-bold text-sm uppercase tracking-wider shadow-md btn-secondary';
+                        cancelBtn.className = 'px-6 py-3 rounded-full font-bold text-sm uppercase tracking-wider shadow-md btn-secondary-modern'; // Changed to btn-secondary-modern
                         cancelBtn.onclick = () => {
                             customModal.classList.remove('show');
                             resolveModalPromise(false);
@@ -619,7 +612,7 @@
                         modalIcon.innerHTML = '<i class="fas fa-info-circle text-gray-500"></i>';
                         const okBtn = document.createElement('button');
                         okBtn.textContent = 'OK';
-                        okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
+                        okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-gradient'; // Changed to btn-gradient
                         okBtn.onclick = () => {
                             customModal.classList.remove('show');
                             if (onConfirm) onConfirm(); // Use onConfirm for alert callbacks too
@@ -630,7 +623,7 @@
                         modalIcon.innerHTML = '<i class="fas fa-check-circle text-green-500"></i>';
                         const okBtn = document.createElement('button');
                         okBtn.textContent = 'OK';
-                        okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
+                        okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-gradient'; // Changed to btn-gradient
                         okBtn.onclick = () => {
                             customModal.classList.remove('show');
                             if (onConfirm) onConfirm();
@@ -641,7 +634,7 @@
                         modalIcon.innerHTML = '<i class="fas fa-times-circle text-primary-red"></i>';
                         const okBtn = document.createElement('button');
                         okBtn.textContent = 'OK';
-                        okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
+                        okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-gradient'; // Changed to btn-gradient
                         okBtn.onclick = () => {
                             customModal.classList.remove('show');
                             if (onConfirm) onConfirm();

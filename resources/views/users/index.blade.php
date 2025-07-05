@@ -404,6 +404,7 @@
 
 {{-- Custom CSS (non modifié) --}}
 <style>
+    
     /* Primary Red for consistent branding */
     .text-primary-red {
         color: #D32F2F;

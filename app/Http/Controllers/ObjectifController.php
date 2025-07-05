@@ -32,12 +32,12 @@ class ObjectifController extends Controller
         $user = auth()->user();
 
         // Charger la relation 'users'
-        $query = Objectif::with('users'); // MODIFIED
+        $query = Objectif::with('users'); 
 
         // Access control: if not admin, filter by assigned users
         if (!$user->hasRole('Sup_Admin')) {
-            $query->whereHas('users', function ($q) use ($user) { // MODIFIED
-                $q->where('user_id', $user->id); // MODIFIED
+            $query->whereHas('users', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
             });
         }
 
@@ -62,14 +62,42 @@ class ObjectifController extends Controller
         if ($request->has('date_to') && !empty($request->date_to)) {
             $query->where('date', '<=', $request->date_to);
         }
+
+        // --- MODIFIED FILTER LOGIC FOR DUREE_TYPE ---
+        if ($request->has('duree_filter') && !empty($request->duree_filter)) {
+            $dureeFilter = $request->input('duree_filter');
+            // Filter by the duree_type stored in the database
+            $query->where('duree_type', $dureeFilter);
+        }
+
+        // Existing status filters (completed, in progress, overdue, etc.)
+        if ($request->has('status') && !empty($request->status)) {
+            $status = $request->input('status');
+            $now = Carbon::now();
+
+            if ($status === 'overdue') {
+                $query->whereDate('date', '<', $now->toDateString())
+                      ->where('progress', '<', 100);
+            } elseif ($status === 'completed') {
+                $query->where('progress', '>=', 100);
+            } elseif ($status === 'in_progress') {
+                $query->where('progress', '>', 0)
+                      ->where('progress', '<', 100);
+            } elseif ($status === 'not_started') {
+                $query->where('progress', 0);
+            }
+            // If you want to keep "day", "week", "month", "year" as *deadline proximity* filters,
+            // you'd add similar Carbon logic here based on the 'date' field.
+            // For now, I'm assuming 'duree_type' replaces those as the primary meaning.
+        }
+        // --- END MODIFIED FILTER LOGIC ---
         
-        // User filter (for admins) // NEW FILTER ADDED FOR ADMINS
+        // User filter (for admins)
         if ($request->has('user_filter') && !empty($request->user_filter) && $user->hasRole('Sup_Admin')) {
             $query->whereHas('users', function ($q) use ($request) {
                 $q->where('user_id', $request->user_filter);
             });
         }
-
 
         // Sorting
         $sortBy = $request->get('sort_by', 'date');
@@ -88,9 +116,9 @@ class ObjectifController extends Controller
         $stats = $this->getObjectifStats($user);
         
         // Get users for filter (only for admins)
-        $users = $this->isAdmin($user) ? User::all() : collect(); // NEW: Pass all users for the filter dropdown
+        $users = $this->isAdmin($user) ? User::all() : collect(); 
 
-        return view('objectifs.index', compact('objectifs', 'stats', 'users')); // MODIFIED: Pass users
+        return view('objectifs.index', compact('objectifs', 'stats', 'users'));
     }
 
     private function getObjectifStats($user): array
@@ -98,8 +126,8 @@ class ObjectifController extends Controller
         $query = Objectif::query();
 
         if (!$user->hasRole('Sup_Admin')) {
-            $query->whereHas('users', function ($q) use ($user) { // MODIFIED
-                $q->where('user_id', $user->id); // MODIFIED
+            $query->whereHas('users', function ($q) use ($user) { 
+                $q->where('user_id', $user->id);
             });
         }
 
@@ -136,14 +164,14 @@ class ObjectifController extends Controller
 
     private function getUpcomingObjectifs($user)
     {
-        $query = Objectif::with('users') // MODIFIED
+        $query = Objectif::with('users') 
             ->where('date', '>=', Carbon::now()->startOfDay())
             ->where('date', '<=', Carbon::now()->addDays(30)->endOfDay())
             ->orderBy('date', 'asc');
 
         if (!$user->hasRole('Sup_Admin')) {
-            $query->whereHas('users', function ($q) use ($user) { // MODIFIED
-                $q->where('user_id', $user->id); // MODIFIED
+            $query->whereHas('users', function ($q) use ($user) { 
+                $q->where('user_id', $user->id);
             });
         }
 
@@ -163,11 +191,11 @@ class ObjectifController extends Controller
         \Log::info('FullCalendar Request received:', $request->all());
 
         // Charger la relation 'users'
-        $query = Objectif::with(['users:id,name', 'creator:id,name']); // MODIFIED
+        $query = Objectif::with(['users:id,name', 'creator:id,name']); 
 
         if (!$user->hasRole('Sup_Admin')) {
-            $query->whereHas('users', function ($q) use ($user) { // MODIFIED
-                $q->where('user_id', $user->id); // MODIFIED
+            $query->whereHas('users', function ($q) use ($user) { 
+                $q->where('user_id', $user->id);
             });
         }
 
@@ -182,6 +210,11 @@ class ObjectifController extends Controller
             $query->whereIn('type', $types);
         }
 
+        // Add duree_type filter to calendar
+        if ($request->has('duree_filter') && !empty($request->duree_filter)) {
+            $query->where('duree_type', $request->duree_filter);
+        }
+
         \Log::info('Generated SQL Query:', ['sql' => $query->toSql(), 'bindings' => $query->getBindings()]);
 
         $objectifs = $query->get()->map(function ($objectif) {
@@ -189,7 +222,7 @@ class ObjectifController extends Controller
             $needsExplanation = $this->needsExplanation($objectif);
             $eventColors = $this->getEventColor($objectif, $calculatedProgress, $needsExplanation);
 
-            // Get assigned user names, comma-separated // NEW
+            // Get assigned user names, comma-separated
             $assignedUsersNames = $objectif->users->pluck('name')->implode(', ');
 
             return [
@@ -211,7 +244,7 @@ class ObjectifController extends Controller
                     'needs_explanation' => $needsExplanation,
                     'duree_value' => $objectif->duree_value,
                     'duree_type' => $objectif->duree_type,
-                    'user_names' => $assignedUsersNames, // MODIFIED: now an array of names
+                    'user_names' => $assignedUsersNames, 
                     'creator_name' => $objectif->creator->name ?? 'N/A',
                     'days_until_deadline' => $this->getDaysUntilDeadline($objectif),
                     'is_overdue' => $this->isOverdue($objectif),
@@ -238,12 +271,12 @@ class ObjectifController extends Controller
     {
         $user = auth()->user();
         // Charger la relation 'users'
-        $query = Objectif::with('users'); // MODIFIED
+        $query = Objectif::with('users'); 
 
         // Access control
         if (!$user->hasRole('Sup_Admin')) {
-            $query->whereHas('users', function ($q) use ($user) { // MODIFIED
-                $q->where('user_id', $user->id); // MODIFIED
+            $query->whereHas('users', function ($q) use ($user) { 
+                $q->where('user_id', $user->id);
             });
         }
 
@@ -251,6 +284,11 @@ class ObjectifController extends Controller
         if ($request->has('type') && !empty($request->type)) {
             $types = is_array($request->type) ? $request->type : [$request->type];
             $query->whereIn('type', $types);
+        }
+
+        // Add duree_type filter to getAllObjectifs
+        if ($request->has('duree_filter') && !empty($request->duree_filter)) {
+            $query->where('duree_type', $request->duree_filter);
         }
 
         // Sorting
@@ -262,7 +300,7 @@ class ObjectifController extends Controller
             $calculatedProgress = $this->calculateObjectifProgress($objectif);
             $needsExplanation = $this->needsExplanation($objectif);
             
-            // Get assigned user names, comma-separated // NEW
+            // Get assigned user names, comma-separated
             $assignedUsersNames = $objectif->users->pluck('name')->implode(', ');
 
             return [
@@ -278,7 +316,7 @@ class ObjectifController extends Controller
                 'duree_value' => $objectif->duree_value,
                 'duree_type' => $objectif->duree_type,
                 'explanation_for_incomplete' => $objectif->explanation_for_incomplete,
-                'user_names' => $assignedUsersNames, // MODIFIED
+                'user_names' => $assignedUsersNames, 
                 'creator' => [
                     'id' => $objectif->creator->id ?? null,
                     'name' => $objectif->creator->name ?? 'N/A'
@@ -315,24 +353,24 @@ class ObjectifController extends Controller
             'duree_value' => 'nullable|integer|min:1',
             'duree_type' => 'nullable|in:jours,semaines,mois,annee',
             'afaire' => 'required|string|min:10|max:1000',
-            'user_ids' => 'required|array', // MODIFIED: Validation for multiple users
-            'user_ids.*' => 'exists:users,id', // MODIFIED
+            'user_ids' => 'required|array', 
+            'user_ids.*' => 'exists:users,id', 
         ]);
 
         try {
             DB::beginTransaction();
 
             // Create objective data, excluding user_ids
-            $objectifData = $request->except('user_ids'); // MODIFIED
+            $objectifData = $request->except('user_ids'); 
             $objectifData['created_by'] = auth()->id();
             $objectifData['progress'] = 0; // Ensure progress defaults to 0 on creation
 
-            $objectif = Objectif::create($objectifData); // MODIFIED
+            $objectif = Objectif::create($objectifData); 
 
-            // Attach multiple users to the objective // NEW
+            // Attach multiple users to the objective
             $objectif->users()->attach($request->input('user_ids'));
 
-            // Clear cache for all assigned users // MODIFIED
+            // Clear cache for all assigned users
             foreach ($request->input('user_ids') as $userId) {
                 Cache::forget('objectif_stats_' . $userId);
             }
@@ -340,7 +378,7 @@ class ObjectifController extends Controller
                 Cache::forget('objectif_stats_' . auth()->id());
             }
 
-            // Send notification to each assigned user // MODIFIED
+            // Send notification to each assigned user
             foreach ($request->input('user_ids') as $userId) {
                 $user = User::find($userId);
                 if ($user) { 
@@ -352,7 +390,7 @@ class ObjectifController extends Controller
             Log::info('Objectif created', [
                 'objectif_id' => $objectif->id,
                 'created_by' => auth()->id(),
-                'assigned_to_users' => $request->user_ids // MODIFIED
+                'assigned_to_users' => $request->user_ids 
             ]);
 
             DB::commit();
@@ -361,7 +399,7 @@ class ObjectifController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Objectif créé avec succès.',
-                    'objectif' => $objectif->load('users') // MODIFIED
+                    'objectif' => $objectif->load('users') 
                 ]);
             }
 
@@ -404,7 +442,7 @@ class ObjectifController extends Controller
     public function edit(Objectif $objectif)
     {
         // Charger la relation 'users' pour pré-sélectionner les checkboxes
-        $objectif->load('users'); // NEW: Ensure 'users' are loaded for the view
+        $objectif->load('users'); 
 
         $users = User::all();
         return view('objectifs.edit', compact('objectif', 'users'));
@@ -420,8 +458,8 @@ class ObjectifController extends Controller
             'duree_value' => 'nullable|integer|min:1',
             'duree_type' => 'nullable|in:jours,semaines,mois,annee',
             'afaire' => 'nullable|string|min:10|max:1000', 
-            'user_ids' => 'required|array', // MODIFIED: Validation for multiple users
-            'user_ids.*' => 'exists:users,id', // MODIFIED
+            'user_ids' => 'required|array', 
+            'user_ids.*' => 'exists:users,id', 
             'progress' => 'sometimes|integer|min:0|max:100', 
             'explanation_for_incomplete' => 'nullable|string|max:1000',
         ]);
@@ -430,18 +468,18 @@ class ObjectifController extends Controller
             DB::beginTransaction();
 
             // Capture old assigned users for cache clearing and notifications
-            $oldUserIds = $objectif->users->pluck('id')->toArray(); // MODIFIED
+            $oldUserIds = $objectif->users->pluck('id')->toArray(); 
 
             // Update objective basic data, excluding user_ids
-            $objectifData = $request->except('user_ids'); // MODIFIED
+            $objectifData = $request->except('user_ids'); 
             $objectifData['progress'] = $request->progress ?? $objectif->progress; 
             
-            $objectif->update($objectifData); // MODIFIED
+            $objectif->update($objectifData); 
 
-            // Sync multiple users to the objective // NEW
+            // Sync multiple users to the objective
             $objectif->users()->sync($request->input('user_ids'));
 
-            // Clear cache for all old and new users // MODIFIED
+            // Clear cache for all old and new users
             $allAffectedUserIds = array_unique(array_merge($oldUserIds, $request->input('user_ids')));
             foreach ($allAffectedUserIds as $userId) {
                 Cache::forget('objectif_stats_' . $userId);
@@ -450,15 +488,12 @@ class ObjectifController extends Controller
                 Cache::forget('objectif_stats_' . auth()->id());
             }
 
-            // Send notification to changed users (newly assigned or removed) // MODIFIED: More complex logic if needed
-            // For simplicity, we notify newly assigned users, or if progress changed.
-            // A more robust solution would track actual changes in user assignment.
+            // Send notification to changed users (newly assigned or removed)
             $newlyAssignedUsers = array_diff($request->input('user_ids'), $oldUserIds);
             $removedUsers = array_diff($oldUserIds, $request->input('user_ids'));
 
             foreach ($newlyAssignedUsers as $userId) {
                 $user = User::find($userId);
-              
             }
             // You might also notify removed users or creator, depending on your logic
 
@@ -466,8 +501,8 @@ class ObjectifController extends Controller
             Log::info('Objectif updated', [
                 'objectif_id' => $objectif->id,
                 'updated_by' => auth()->id(),
-                'old_assigned_users' => $oldUserIds, // MODIFIED
-                'new_assigned_users' => $request->user_ids // MODIFIED
+                'old_assigned_users' => $oldUserIds, 
+                'new_assigned_users' => $request->user_ids 
             ]);
 
             DB::commit();
@@ -476,7 +511,7 @@ class ObjectifController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Objectif mis à jour avec succès.',
-                    'objectif' => $objectif->load('users') // MODIFIED
+                    'objectif' => $objectif->load('users') 
                 ]);
             }
 
@@ -503,7 +538,7 @@ class ObjectifController extends Controller
             // No specific user unlink needed, cascade delete in migration handles it
             $objectif->delete(); 
             // Clear cache for potentially affected users (users who were assigned)
-            $objectif->users->pluck('id')->each(function($userId) { // NEW
+            $objectif->users->pluck('id')->each(function($userId) { 
                 Cache::forget('objectif_stats_' . $userId);
             });
             if (auth()->user()->hasRole('Sup_Admin')) {
@@ -511,7 +546,7 @@ class ObjectifController extends Controller
             }
             return back()->with('success', 'Objectif supprimé avec succès.');
         } catch (\Exception $e) {
-            Log::error('Error deleting objectif', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]); // NEW
+            Log::error('Error deleting objectif', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]); 
             return back()->with('error', 'Une erreur est survenue lors de la suppression.');
         }
     }
@@ -521,17 +556,22 @@ class ObjectifController extends Controller
     public function export(Request $request)
     {
         $user = auth()->user();
-        $query = Objectif::with('users'); // MODIFIED
+        $query = Objectif::with('users'); 
 
         if (!$user->hasRole('Sup_Admin')) {
-            $query->whereHas('users', function ($q) use ($user) { // MODIFIED
-                $q->where('user_id', $user->id); // MODIFIED
+            $query->whereHas('users', function ($q) use ($user) { 
+                $q->where('user_id', $user->id);
             });
         }
 
         // Apply same filters as index
         if ($request->has('type') && !empty($request->type)) {
             $query->where('type', $request->type);
+        }
+
+        // Add duree_type filter to export
+        if ($request->has('duree_filter') && !empty($request->duree_filter)) {
+            $query->where('duree_type', $request->duree_filter);
         }
 
         $objectifs = $query->get();
@@ -547,11 +587,11 @@ class ObjectifController extends Controller
             $file = fopen('php://output', 'w');
 
             // Headers updated: 'Utilisateurs Assignés'
-            fputcsv($file, ['Date', 'Type', 'Description', 'CA', 'À faire', 'Durée Valeur', 'Durée Type', 'Utilisateurs Assignés', 'Progression', 'Explication Incomplète']); // MODIFIED
+            fputcsv($file, ['Date', 'Type', 'Description', 'CA', 'À faire', 'Durée Valeur', 'Durée Type', 'Utilisateurs Assignés', 'Progression', 'Explication Incomplète']); 
 
             foreach ($objectifs as $objectif) {
                 $calculatedProgress = $this->calculateObjectifProgress($objectif); 
-                // Get assigned user names, comma-separated // NEW
+                // Get assigned user names, comma-separated
                 $assignedUsersNames = $objectif->users->pluck('name')->implode(', ');
 
                 fputcsv($file, [
@@ -562,7 +602,7 @@ class ObjectifController extends Controller
                     $objectif->afaire,
                     $objectif->duree_value,
                     $objectif->duree_type,
-                    $assignedUsersNames, // MODIFIED
+                    $assignedUsersNames, 
                     $calculatedProgress . '%',
                     $objectif->explanation_for_incomplete ?? '',
                 ]);
@@ -579,10 +619,10 @@ class ObjectifController extends Controller
         $user = auth()->user();
         $stats = $this->getObjectifStats($user);
 
-        $recentQuery = Objectif::with('users')->latest()->limit(5); // MODIFIED
+        $recentQuery = Objectif::with('users')->latest()->limit(5); 
         if (!$user->hasRole('Sup_Admin')) {
-            $recentQuery->whereHas('users', function ($q) use ($user) { // MODIFIED
-                $q->where('user_id', $user->id); // MODIFIED
+            $recentQuery->whereHas('users', function ($q) use ($user) { 
+                $q->where('user_id', $user->id);
             });
         }
         $recent = $recentQuery->get();
@@ -591,13 +631,13 @@ class ObjectifController extends Controller
             $objectif->needs_explanation = $this->needsExplanation($objectif);
         });
 
-        $upcomingQuery = Objectif::with('users') // MODIFIED
+        $upcomingQuery = Objectif::with('users') 
             ->where('date', '>', Carbon::now()->startOfDay())
             ->orderBy('date');
 
         if (!$user->hasRole('Sup_Admin')) {
-            $upcomingQuery->whereHas('users', function ($q) use ($user) { // MODIFIED
-                $q->where('user_id', $user->id); // MODIFIED
+            $upcomingQuery->whereHas('users', function ($q) use ($user) { 
+                $q->where('user_id', $user->id);
             });
         }
         $upcoming = $upcomingQuery->get()->filter(function($objectif) {
@@ -629,7 +669,7 @@ class ObjectifController extends Controller
             'explanation_for_incomplete' => $request->explanation_for_incomplete,
         ]);
 
-        // Clear cache for all assigned users // MODIFIED
+        // Clear cache for all assigned users
         $objectif->users->pluck('id')->each(function($userId) {
             Cache::forget('objectif_stats_' . $userId);
         });
@@ -668,10 +708,10 @@ class ObjectifController extends Controller
 
             $newObjectif->save();
 
-            // Duplicate assigned users // NEW
+            // Duplicate assigned users
             $newObjectif->users()->attach($objectif->users->pluck('id'));
 
-            // Clear cache for newly assigned users // MODIFIED
+            // Clear cache for newly assigned users
             $newObjectif->users->pluck('id')->each(function($userId) {
                 Cache::forget('objectif_stats_' . $userId);
             });
@@ -683,7 +723,7 @@ class ObjectifController extends Controller
                 'original_objectif_id' => $objectif->id,
                 'new_objectif_id' => $newObjectif->id,
                 'duplicated_by' => auth()->id(),
-                'assigned_to_users' => $newObjectif->users->pluck('id')->toArray() // MODIFIED
+                'assigned_to_users' => $newObjectif->users->pluck('id')->toArray() 
             ]);
 
             DB::commit();
