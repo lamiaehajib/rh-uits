@@ -63,7 +63,7 @@ class DashboardController extends Controller
 
             // Get advanced statistics
             $stats = Cache::remember($cacheKey . '_admin', 300, function () use ($dateFilter) {
-                return $this->getAdvancedStats($dateFilter);
+                return $this->getAdvancedStats($dateFilter); // This method will be modified
             });
 
             // Apply search and filters for Sup_Admin (these are likely just for the tables on the dashboard, not the charts)
@@ -78,7 +78,8 @@ class DashboardController extends Controller
                     return $query->where('status', $statusFilter);
                 })
                 ->when($dateFilter, function ($query, $dateFilter) {
-                    return $this->applyDateFilter($query, $dateFilter);
+                    // For the table display, datedebut filter is still applied
+                    return $this->applyDateFilter($query, $dateFilter, 'datedebut');
                 })
                 ->orderBy($sortBy, $sortOrder)
                 ->paginate(10);
@@ -291,34 +292,53 @@ class DashboardController extends Controller
     /**
      * Get advanced statistics for admin dashboard
      */
-    private function getAdvancedStats($dateFilter = null)
-    {
-        $query = function($model) use ($dateFilter) {
-            $q = $model::query();
-            if ($dateFilter) {
-                $q = $this->applyDateFilter($q, $dateFilter);
-            }
-            // Apply datedebut filter for Tache model
-            if ($model === Tache::class) {
-                $q->where('datedebut', '<=', Carbon::now());
-            }
-            return $q;
-        };
+   private function getAdvancedStats($dateFilter = null)
+{
+    $query = function($model) use ($dateFilter) {
+        $q = $model::query();
+        if ($dateFilter) {
+            $q = $this->applyDateFilter($q, $dateFilter);
+        }
+        // Remove the datedebut filter for Tache model when calculating overall totals for admins
+        // This line below should be removed or made conditional.
+        // if ($model === Tache::class) {
+        //     $q->where('datedebut', '<=', Carbon::now()); // <-- REMOVE OR MODIFY THIS FOR ADMIN TOTALS
+        // }
+        return $q;
+    };
 
-        return [
-            'total_tasks' => $query(Tache::class)->count(),
-            'completed_tasks' => (clone $query(Tache::class))->where('status', 'terminé')->count(),
-            'pending_tasks' => (clone $query(Tache::class))->where('status', 'en cours')->count(),
-            'total_projects' => $query(Project::class)->count(),
-            'active_projects' => (clone $query(Project::class))->whereNotNull('date_project')->count(),
-            'total_formations' => $query(Formation::class)->count(),
-            'completed_formations' => (clone $query(Formation::class))->where('status', 'terminé')->count(),
-            'total_users' => User::count(),
-            'active_users' => User::where('created_at', '>=', now()->subDays(30))->count(),
-            'completion_rate' => $this->getCompletionRate($dateFilter),
-            'productivity_score' => $this->getProductivityScore($dateFilter)
-        ];
-    }
+    // New helper function to get a base query without date debut filter for total tasks
+    $totalTacheQuery = function() use ($dateFilter) {
+        $q = Tache::query();
+        if ($dateFilter) {
+            // Apply general date filters like today, week, month, year if applicable to 'created_at'
+            // For total tasks, we usually want all of them, regardless of datedebut, within the selected period.
+            // If dateFilter is for task creation date, you'd apply it here.
+            // If it's meant to filter by datedebut for *specific* views, then this total should not have it.
+            // Given "Tâches Totales", it implies ALL tasks in the system.
+            // If you want "Total Tasks created today/this week/etc.", then apply dateFilter on 'created_at'.
+            // For now, I'll assume 'Tâches Totales' means all tasks, no datedebut filter.
+            // If $dateFilter should apply to created_at for total tasks for admins, you'd add:
+            // $q = $this->applyDateFilter($q, $dateFilter, 'created_at');
+        }
+        return $q;
+    };
+
+    return [
+        // Use $totalTacheQuery for 'total_tasks' to include all tasks regardless of 'datedebut'
+        'total_tasks' => $totalTacheQuery()->count(), 
+        'completed_tasks' => (clone $query(Tache::class))->where('status', 'terminé')->count(),
+        'pending_tasks' => (clone $query(Tache::class))->where('status', 'en cours')->count(),
+        'total_projects' => $query(Project::class)->count(),
+        'active_projects' => (clone $query(Project::class))->whereNotNull('date_project')->count(),
+        'total_formations' => $query(Formation::class)->count(),
+        'completed_formations' => (clone $query(Formation::class))->where('status', 'terminé')->count(),
+        'total_users' => User::count(),
+        'active_users' => User::where('created_at', '>=', now()->subDays(30))->count(),
+        'completion_rate' => $this->getCompletionRate($dateFilter),
+        'productivity_score' => $this->getProductivityScore($dateFilter)
+    ];
+}
     
     /**
      * Get user-specific statistics

@@ -4,83 +4,193 @@
         <title>{{ __('Liste des Objectifs') }}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
-            // Configure Tailwind CSS to use a custom primary color
             tailwind.config = {
                 theme: {
                     extend: {
                         colors: {
-                            'primary-red': '#D32F2F', // Your specified color
+                            'primary-red': '#DC2626',
+                            'dark-red': '#991B1B',
+                            'light-red': '#FEF2F2',
+                            'accent-blue': '#3B82F6',
+                            'accent-green': '#10B981',
+                            'accent-purple': '#8B5CF6',
+                            'accent-orange': '#F59E0B',
+                            'glass-white': 'rgba(255, 255, 255, 0.9)',
+                            'glass-gray': 'rgba(249, 250, 251, 0.8)',
                         },
                         fontFamily: {
-                            sans: ['Inter', 'sans-serif'], // Set Inter as the default font
+                            sans: ['Inter', 'Poppins', 'sans-serif'],
+                        },
+                        animation: {
+                            'fade-in': 'fadeIn 0.8s ease-out forwards',
+                            'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                            'slide-in': 'slideIn 0.6s ease-out forwards',
+                            'bounce-soft': 'bounceSoft 0.6s ease-out',
+                            'pulse-glow': 'pulseGlow 2s infinite',
+                            'scale-hover': 'scaleHover 0.3s ease-in-out',
+                            'float': 'float 3s ease-in-out infinite',
+                        },
+                        keyframes: {
+                            fadeIn: {
+                                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                                '100%': { opacity: '1', transform: 'translateY(0)' }
+                            },
+                            fadeInUp: {
+                                '0%': { opacity: '0', transform: 'translateY(40px)' },
+                                '100%': { opacity: '1', transform: 'translateY(0)' }
+                            },
+                            slideIn: {
+                                '0%': { transform: 'translateX(-100%)', opacity: '0' },
+                                '100%': { transform: 'translateX(0)', opacity: '1' }
+                            },
+                            bounceSoft: {
+                                '0%, 100%': { transform: 'translateY(0)' },
+                                '50%': { transform: 'translateY(-10px)' }
+                            },
+                            pulseGlow: {
+                                '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+                                '50%': { opacity: '0.8', transform: 'scale(1.02)' }
+                            },
+                            scaleHover: {
+                                '0%': { transform: 'scale(1)' },
+                                '100%': { transform: 'scale(1.05)' }
+                            },
+                            float: {
+                                '0%, 100%': { transform: 'translateY(0px)' },
+                                '50%': { transform: 'translateY(-8px)' }
+                            }
+                        },
+                        backdropBlur: {
+                            'xs': '2px',
+                        },
+                        boxShadow: {
+                            'modern': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                            'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+                            'glow': '0 0 30px rgba(220, 38, 38, 0.3)',
+                            'soft': '0 4px 20px rgba(0, 0, 0, 0.08)',
                         }
                     }
                 }
             }
         </script>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        
         <style>
-            /* Custom CSS for animations and improved aesthetics */
+            /* Enhanced Custom Styles */
             body {
-                font-family: 'Inter', sans-serif;
+                font-family: 'Inter', 'Poppins', sans-serif;
+               
+                min-height: 100vh;
             }
 
-            /* Fade-in animation for elements */
-            .animate-fade-in {
-                animation: fadeIn 0.5s ease-out forwards;
-                opacity: 0;
+            .glass-morphism {
+                background: rgba(255, 255, 255, 0.15);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
             }
 
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(10px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
+            .modern-card {
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             }
 
-            /* Scale-up effect on hover for cards */
-            .card-hover-effect {
-                transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            .gradient-text {
+                background: linear-gradient(135deg, #DC2626, #991B1B);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
             }
 
-            .card-hover-effect:hover {
-                transform: translateY(-5px) scale(1.01);
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            .btn-gradient {
+                background: linear-gradient(135deg, #DC2626, #991B1B);
+                box-shadow: 0 10px 20px rgba(220, 38, 38, 0.3);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
 
-            /* Pulse animation for important buttons/alerts */
-            @keyframes pulse {
-                0%, 100% {
-                    opacity: 1;
-                }
-                50% {
-                    opacity: 0.7;
-                }
+            .btn-gradient:hover {
+                background: linear-gradient(135deg, #991B1B, #DC2626);
+                transform: translateY(-3px);
+                box-shadow: 0 15px 30px rgba(220, 38, 38, 0.4);
             }
 
-            .animate-pulse-subtle {
-                animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            .btn-secondary-modern {
+                background: linear-gradient(135deg, #F3F4F6, #E5E7EB);
+                color: #374151;
+                border: 1px solid rgba(209, 213, 219, 0.5);
+                backdrop-filter: blur(10px);
+                transition: all 0.3s ease;
             }
 
-            /* Custom modal styling */
+            .btn-secondary-modern:hover {
+                background: linear-gradient(135deg, #E5E7EB, #D1D5DB);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            }
+
+            .floating-elements::before {
+                content: '';
+                position: absolute;
+                top: 10%;
+                left: 10%;
+                width: 100px;
+                height: 100px;
+                background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+                border-radius: 50%;
+                animation: float 4s ease-in-out infinite;
+            }
+
+            .floating-elements::after {
+                content: '';
+                position: absolute;
+                bottom: 10%;
+                right: 10%;
+                width: 80px;
+                height: 80px;
+                background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+                border-radius: 50%;
+                animation: float 3s ease-in-out infinite reverse;
+            }
+
+            .progress-bar-animated {
+                background: linear-gradient(90deg, #DC2626, #F59E0B, #10B981);
+                background-size: 200% 100%;
+                animation: progress-shimmer 2s infinite;
+            }
+
+            @keyframes progress-shimmer {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+
+            .table-row-hover {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .table-row-hover:hover {
+                background: linear-gradient(90deg, rgba(255, 255, 255, 0.8), rgba(249, 250, 251, 0.9));
+                transform: translateX(8px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            }
+
             .modal-overlay {
                 position: fixed;
                 top: 0;
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background-color: rgba(0, 0, 0, 0.6);
+                background: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(5px);
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 z-index: 1000;
                 opacity: 0;
                 visibility: hidden;
-                transition: opacity 0.3s ease, visibility 0.3s ease;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
 
             .modal-overlay.show {
@@ -89,261 +199,353 @@
             }
 
             .modal-content {
-                background: white;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
                 padding: 2.5rem;
-                border-radius: 0.75rem;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                border-radius: 20px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
                 max-width: 90%;
                 width: 400px;
-                transform: translateY(-20px);
-                transition: transform 0.3s ease-out;
-                position: relative;
-                overflow: hidden; /* For rounded corners on child elements */
+                transform: translateY(-50px) scale(0.9);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                border: 1px solid rgba(255, 255, 255, 0.3);
             }
 
             .modal-overlay.show .modal-content {
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
 
-            .modal-content .header-icon {
-                font-size: 2.5rem;
-                margin-bottom: 1rem;
-                text-align: center;
+            .tag-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 0.5rem 1rem;
+                border-radius: 50px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                backdrop-filter: blur(10px);
+                transition: all 0.3s ease;
             }
 
-            .modal-content .message {
-                text-align: center;
-                margin-bottom: 1.5rem;
-                font-size: 1.125rem; /* text-lg */
-                color: #374151; /* gray-700 */
+            .tag-badge:hover {
+                transform: scale(1.05);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             }
 
-            .modal-content .buttons {
-                display: flex;
+            .form-input-modern {
+                background: rgba(255, 255, 255, 0.9);
+                border: 1px solid rgba(229, 231, 235, 0.6);
+                border-radius: 12px;
+                padding: 0.75rem 1rem;
+                transition: all 0.3s ease;
+                backdrop-filter: blur(10px);
+            }
+
+            .form-input-modern:focus {
+                background: rgba(255, 255, 255, 1);
+                border-color: #DC2626;
+                box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+                transform: translateY(-1px);
+            }
+
+            .action-button {
+                display: inline-flex;
+                align-items: center;
                 justify-content: center;
-                gap: 1rem;
+                padding: 0.5rem;
+                border-radius: 50%;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.3);
             }
 
-            /* Button gradients and shadows */
-            .btn-primary-red {
-                background: linear-gradient(to right, #D32F2F, #B71C1C); /* Deeper red gradient */
-                box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3);
-                transition: all 0.3s ease;
+            .action-button:hover {
+                transform: translateY(-2px) scale(1.1);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
             }
 
-            .btn-primary-red:hover {
-                background: linear-gradient(to right, #B71C1C, #D32F2F);
-                box-shadow: 0 6px 15px rgba(211, 47, 47, 0.4);
-                transform: translateY(-2px);
+            .notification-modern {
+                background: rgba(255, 255, 255, 0.9);
+                backdrop-filter: blur(15px);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 16px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             }
 
-            .btn-secondary {
-                background-color: #e5e7eb; /* gray-200 */
-                color: #4b5563; /* gray-700 */
-                transition: all 0.3s ease;
+            .animate-delayed {
+                animation-delay: var(--delay, 0s);
             }
 
-            .btn-secondary:hover {
-                background-color: #d1d5db; /* gray-300 */
-                transform: translateY(-2px);
-            }
-
-            /* Form input/select styles */
-            .form-input-custom, .form-select-custom {
-                @apply border-gray-300 focus:border-primary-red focus:ring focus:ring-red-200 focus:ring-opacity-50 rounded-md shadow-sm p-3;
-            }
-
-            /* Pagination Links */
-            .pagination-custom nav {
-                @apply inline-flex -space-x-px rounded-md shadow-sm;
-            }
-            .pagination-custom a, .pagination-custom span {
-                @apply px-4 py-2 text-sm leading-5 font-medium border border-gray-300;
-            }
-            .pagination-custom a.current {
-                @apply bg-primary-red text-white border-primary-red;
-            }
-            .pagination-custom a:not(.current):hover {
-                @apply bg-gray-100;
-            }
-            .pagination-custom .disabled {
-                @apply text-gray-400 cursor-not-allowed;
+            .background-pattern {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                opacity: 0.03;
+                background-image: radial-gradient(circle at 25px 25px, #000 2px, transparent 0);
+                background-size: 50px 50px;
+                pointer-events: none;
+                z-index: -1;
             }
         </style>
     </head>
-    <body>
+    <body class="relative">
+        <!-- Background Pattern -->
+        <div class="background-pattern"></div>
+        
+        <!-- Floating Elements -->
+        <div class="floating-elements fixed inset-0 pointer-events-none z-0"></div>
+
+        <!-- Custom Modal -->
         <div id="custom-modal" class="modal-overlay">
-            <div class="modal-content rounded-xl shadow-2xl">
-                <div id="modal-icon" class="header-icon"></div>
-                <div id="modal-message" class="message"></div>
-                <div id="modal-buttons" class="buttons"></div>
+            <div class="modal-content">
+                <div id="modal-icon" class="text-center text-4xl mb-4"></div>
+                <div id="modal-message" class="text-center text-lg text-gray-700 mb-6"></div>
+                <div id="modal-buttons" class="flex justify-center gap-4"></div>
             </div>
         </div>
 
         <x-slot name="header">
-            <h2 class="font-semibold text-2xl text-gray-800 leading-tight border-b-2 border-primary-red pb-3 mb-6 animate-fade-in delay-100">
-                <i class="fas fa-bullseye mr-3 text-primary-red"></i> {{ __('Liste des Objectifs') }}
-            </h2>
+            <div class="modern-card rounded-2xl p-6 mx-4 animate-fade-in">
+                <h2 class="font-bold text-3xl gradient-text leading-tight flex items-center animate-float">
+                    <i class="fas fa-bullseye mr-4 text-primary-red"></i> 
+                    {{ __('Liste des Objectifs') }}
+                </h2>
+                <div class="w-32 h-1 bg-gradient-to-r from-primary-red to-accent-orange rounded-full mt-3 animate-pulse-glow"></div>
+            </div>
         </x-slot>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-8 relative z-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <!-- Enhanced Notifications -->
                 @if (session('success'))
-                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative mb-4 shadow-md animate-fade-in" role="alert">
-                        <strong class="font-bold">Succès!</strong>
-                        <span class="block sm:inline">{{ session('success') }}</span>
-                        <span class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" onclick="this.parentElement.style.display='none';">
-                            <svg class="fill-current h-6 w-6 text-green-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 2.65a1.2 1.2 0 1 1-1.697-1.697L8.303 10l-2.651-2.651a1.2 1.2 0 1 1 1.697 1.697L11.697 10l2.651 2.651a1.2 1.2 0 0 1 0 1.698z"/></svg>
-                        </span>
+                    <div class="notification-modern border-l-4 border-green-500 text-green-700 p-6 mb-6 animate-slide-in" role="alert">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-2xl mr-4 text-green-500"></i>
+                            <div>
+                                <p class="font-bold text-lg">Succès!</p>
+                                <p>{{ session('success') }}</p>
+                            </div>
+                            <button class="ml-auto text-green-500 hover:text-green-700 text-xl" onclick="this.parentElement.parentElement.style.display='none';">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
                 @endif
 
                 @if (session('error'))
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4 shadow-md animate-fade-in animate-pulse-subtle" role="alert">
-                        <strong class="font-bold">Erreur!</strong>
-                        <span class="block sm:inline">{{ session('error') }}</span>
-                        <span class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" onclick="this.parentElement.style.display='none';">
-                            <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 2.65a1.2 1.2 0 1 1-1.697-1.697L8.303 10l-2.651-2.651a1.2 1.2 0 1 1 1.697 1.697L11.697 10l2.651 2.651a1.2 1.2 0 0 1 0 1.698z"/></svg>
-                        </span>
+                    <div class="notification-modern border-l-4 border-red-500 text-red-700 p-6 mb-6 animate-slide-in animate-pulse-glow" role="alert">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle text-2xl mr-4 text-red-500"></i>
+                            <div>
+                                <p class="font-bold text-lg">Erreur!</p>
+                                <p>{{ session('error') }}</p>
+                            </div>
+                            <button class="ml-auto text-red-500 hover:text-red-700 text-xl" onclick="this.parentElement.parentElement.style.display='none';">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
                 @endif
 
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg animate-fade-in-up">
-                    <div class="p-6 sm:px-20 bg-white border-b border-gray-200">
-                        <div class="flex flex-col md:flex-row justify-between items-center mb-6">
-                            <h3 class="text-2xl font-bold text-primary-red mb-4 md:mb-0">Vos Objectifs</h3>
-                            <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
-                                <a href="{{ route('objectifs.calendar.view') }}" class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 border border-transparent rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:border-blue-800 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-300 hover:scale-105 w-full sm:w-auto">
+                <!-- Main Content Card -->
+                <div class="modern-card rounded-3xl shadow-modern animate-fade-in-up" style="animation-delay: 0.2s;">
+                    <div class="p-8">
+                        
+                        <!-- Header Section -->
+                        <div class="flex flex-col lg:flex-row justify-between items-center mb-8">
+                            <div class="text-center lg:text-left mb-6 lg:mb-0">
+                                <h3 class="text-3xl font-bold gradient-text mb-2">Vos Objectifs</h3>
+                                <p class="text-gray-600 text-lg">Gérez et suivez vos objectifs efficacement</p>
+                            </div>
+                            <div class="flex flex-col sm:flex-row gap-4">
+                                <a href="{{ route('objectifs.calendar.view') }}" class="btn-secondary-modern px-6 py-3 rounded-full font-semibold text-sm uppercase tracking-wider flex items-center justify-center">
                                     <i class="fas fa-calendar-alt mr-2"></i>
                                     Voir le Calendrier
                                 </a>
                                 @role('Sup_Admin')
-                                <a href="{{ route('objectifs.create') }}" class="inline-flex items-center justify-center px-6 py-3 btn-primary-red rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg hover:scale-105 transition-transform duration-300 w-full sm:w-auto">
-                                    <i class="fas fa-plus-circle mr-2"></i> Créer un Objectif
+                                <a href="{{ route('objectifs.create') }}" class="btn-gradient px-6 py-3 rounded-full font-semibold text-sm text-white uppercase tracking-wider flex items-center justify-center">
+                                    <i class="fas fa-plus-circle mr-2"></i>
+                                    Créer un Objectif
                                 </a>
                                 @endrole
                             </div>
                         </div>
 
-                        <hr class="my-6 border-gray-200">
-
-                        {{-- Search and Filter Form with subtle transitions --}}
-                        <form action="{{ route('objectifs.index') }}" method="GET" class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 animate-fade-in delay-100 bg-gray-50 p-6 rounded-lg shadow-inner">
-                            <div>
-                                <label for="search" class="block text-sm font-medium text-gray-700">{{ __('Recherche') }}</label>
-                                <div class="relative mt-1 rounded-md shadow-sm">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <i class="fas fa-search text-gray-400"></i>
+                        <!-- Enhanced Search Form -->
+                        <div class="glass-morphism rounded-2xl p-6 mb-8 animate-fade-in" style="animation-delay: 0.4s;">
+                            <form action="{{ route('objectifs.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                                <div>
+                                    <label for="search" class="block text-sm font-semibold text-gray-700 mb-2">Recherche</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i class="fas fa-search text-gray-400"></i>
+                                        </div>
+                                        <input type="text" name="search" id="search" placeholder="Rechercher..." 
+                                               class="form-input-modern block w-full pl-10 text-sm" value="{{ request('search') }}">
                                     </div>
-                                    <input type="text" name="search" id="search" placeholder="Rechercher..." class="form-input-custom block w-full pl-10 sm:text-sm" value="{{ request('search') }}">
                                 </div>
-                            </div>
-                            <div>
-                                <label for="type" class="block text-sm font-medium text-gray-700">{{ __('Type') }}</label>
-                                <select name="type" id="type" class="form-select-custom mt-1 block w-full">
-                                    <option value="">Tous les types</option>
-                                    <option value="formations" {{ request('type') == 'formations' ? 'selected' : '' }}>Formations</option>
-                                    <option value="projets" {{ request('type') == 'projets' ? 'selected' : '' }}>Projets</option>
-                                    <option value="vente" {{ request('type') == 'vente' ? 'selected' : '' }}>Vente</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="status" class="block text-sm font-medium text-gray-700">{{ __('Statut') }}</label>
-                                <select name="status" id="status" class="form-select-custom mt-1 block w-full">
-                                    <option value="">Tous les statuts</option>
-                                    <option value="mois" {{ request('status') == 'mois' ? 'selected' : '' }}>Mois</option>
-                                    <option value="annee" {{ request('status') == 'annee' ? 'selected' : '' }}>Année</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="date_from" class="block text-sm font-medium text-gray-700">{{ __('Date Début') }}</label>
-                                <input type="date" name="date_from" id="date_from" class="form-input-custom mt-1 block w-full" value="{{ request('date_from') }}">
-                            </div>
-                            <div>
-                                <label for="date_to" class="block text-sm font-medium text-gray-700">{{ __('Date Fin') }}</label>
-                                <input type="date" name="date_to" id="date_to" class="form-input-custom mt-1 block w-full" value="{{ request('date_to') }}">
-                            </div>
-                            <div class="flex flex-col sm:flex-row items-end space-y-2 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-0">
-                                <button type="submit" class="inline-flex items-center justify-center px-6 py-3 btn-primary-red rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg w-full sm:w-auto">
-                                    <i class="fas fa-filter mr-2"></i> Filtrer
-                                </button>
-                                <a href="{{ route('objectifs.index') }}" class="inline-flex items-center justify-center px-6 py-3 bg-gray-200 border border-transparent rounded-full font-bold text-sm text-gray-700 uppercase tracking-wider shadow-md btn-secondary w-full sm:w-auto">
-                                    <i class="fas fa-undo mr-2"></i>
-                                </a>
-                            </div>
-                        </form>
+                                <div>
+                                    <label for="type" class="block text-sm font-semibold text-gray-700 mb-2">Type</label>
+                                    <select name="type" id="type" class="form-input-modern block w-full text-sm">
+                                        <option value="">Tous les types</option>
+                                        <option value="formations" {{ request('type') == 'formations' ? 'selected' : '' }}>Formations</option>
+                                        <option value="projets" {{ request('type') == 'projets' ? 'selected' : '' }}>Projets</option>
+                                        <option value="vente" {{ request('type') == 'vente' ? 'selected' : '' }}>Vente</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="status" class="block text-sm font-semibold text-gray-700 mb-2">Statut</label>
+                                    <select name="status" id="status" class="form-input-modern block w-full text-sm">
+                                        <option value="">Tous les statuts</option>
+                                        <option value="mois" {{ request('status') == 'mois' ? 'selected' : '' }}>Mois</option>
+                                        <option value="annee" {{ request('status') == 'annee' ? 'selected' : '' }}>Année</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="date_from" class="block text-sm font-semibold text-gray-700 mb-2">Date Début</label>
+                                    <input type="date" name="date_from" id="date_from" 
+                                           class="form-input-modern block w-full text-sm" value="{{ request('date_from') }}">
+                                </div>
+                                <div>
+                                    <label for="date_to" class="block text-sm font-semibold text-gray-700 mb-2">Date Fin</label>
+                                    <input type="date" name="date_to" id="date_to" 
+                                           class="form-input-modern block w-full text-sm" value="{{ request('date_to') }}">
+                                </div>
+                                <div class="flex flex-col justify-end gap-2">
+                                    <button type="submit" class="btn-gradient px-6 py-3 rounded-full font-semibold text-sm text-white uppercase tracking-wider flex items-center justify-center">
+                                        <i class="fas fa-filter mr-2"></i> Filtrer
+                                    </button>
+                                    <a href="{{ route('objectifs.index') }}" class="btn-secondary-modern px-6 py-3 rounded-full font-semibold text-sm uppercase tracking-wider flex items-center justify-center">
+                                        <i class="fas fa-undo mr-2"></i> Reset
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
 
-                        <hr class="my-6 border-gray-200">
-
-                        {{-- Objectives Table with individual row animations --}}
+                        <!-- Enhanced Table -->
                         @if ($objectifs->isEmpty())
-                            <div class="bg-gray-100 p-8 text-center text-gray-600 rounded-lg shadow-lg animate-fade-in delay-900">
-                                <i class="fas fa-info-circle text-6xl text-gray-400 mb-4"></i>
-                                <p class="text-xl font-semibold">Aucun objectif trouvé.</p>
+                            <div class="glass-morphism rounded-2xl p-12 text-center animate-bounce-soft">
+                                <i class="fas fa-inbox text-6xl text-gray-400 mb-6"></i>
+                                <p class="text-2xl font-semibold text-gray-600">Aucun objectif trouvé</p>
+                                <p class="text-gray-500 mt-2">Commencez par créer votre premier objectif</p>
                             </div>
                         @else
-                            <div class="overflow-x-auto relative shadow-lg sm:rounded-lg animate-fade-in delay-200">
-                                <table class="w-full text-sm text-left text-gray-700">
-                                    <thead class="text-xs text-gray-700 uppercase bg-gray-100 rounded-t-lg">
-                                        <tr>
-                                            <th scope="col" class="py-3 px-6">{{ __('Date') }}</th>
-                                            <th scope="col" class="py-3 px-6">{{ __('Type') }}</th>
-                                            <th scope="col" class="py-3 px-6">{{ __('Description') }}</th>
-                                            <th scope="col" class="py-3 px-6">{{ __('Utilisateur') }}</th>
-                                            <th scope="col" class="py-3 px-6">{{ __('Progression') }}</th>
-                                            <th scope="col" class="py-3 px-6">{{ __('Actions') }}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        @foreach ($objectifs as $index => $objectif)
-                                            <tr class="bg-white border-b hover:bg-gray-50 transition duration-150 ease-in-out transform hover:scale-100 animate-fade-in" style="animation-delay: {{ 200 + ($index * 50) }}ms;">
-                                                <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">{{ $objectif->date }}</td>
-                                                <td class="py-4 px-6 whitespace-nowrap text-sm text-gray-800">
-                                                    <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                                        @if($objectif->type == 'formations') bg-blue-200 text-blue-800
-                                                        @elseif($objectif->type == 'projets') bg-purple-200 text-purple-800
-                                                        @elseif($objectif->type == 'vente') bg-green-200 text-green-800
-                                                        @else bg-gray-200 text-gray-800
-                                                        @endif">
-                                                        {{ ucfirst($objectif->type) }}
-                                                    </span>
-                                                </td>
-                                                <td class="py-4 px-6 text-sm text-gray-800 truncate max-w-xs md:max-w-md" title="{{ $objectif->description }}">{{ Str::limit($objectif->description, 70) }}</td>
-                                                <td class="py-4 px-6">
-                                        {{-- AFFICHAGE DES UTILISATEURS ASSIGNÉS (NOUVEAU) --}}
-                                        <div class="flex flex-col space-y-1"> {{-- Pour un affichage vertical si plusieurs noms longs --}}
-                                            @forelse ($objectif->users as $assignedUser)
-                                                <span class="inline-flex items-center text-sm font-medium text-gray-900">
-                                                    <i class="fas fa-user-circle mr-1 text-gray-500"></i>
-                                                    {{ $assignedUser->name }}
-                                                </span>
-                                            @empty
-                                                <span class="text-sm text-gray-500">Non assigné</span>
-                                            @endforelse
-                                        </div>
-                                    </td>
-                                                <td class="py-4 px-6 text-sm">
-                                                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                                                        <div class="h-2.5 rounded-full {{ $objectif->calculated_progress == 100 ? 'bg-green-500' : 'bg-primary-red' }} transition-all duration-500 ease-out" style="width: {{ $objectif->calculated_progress }}%"></div>
-                                                    </div>
-                                                    <span class="text-xs text-gray-600 mt-1 block font-medium">{{ $objectif->calculated_progress }}%</span>
-                                                    @if ($objectif->needs_explanation && $objectif->calculated_progress < 100)
-                                                        <p class="text-primary-red text-xs mt-1 animate-pulse font-semibold">Explication requise !</p>
-                                                        <a href="{{ route('objectifs.show', $objectif->id) }}#explanation" class="text-blue-600 hover:text-blue-800 hover:underline text-xs transition-colors duration-200">Fournir une explication</a>
-                                                    @endif
-                                                </td>
-
-                                                <td class="py-4 px-6 flex items-center space-x-4">
-                                                    @can('objectif-show')
-                                                    <a href="{{ route('objectifs.show', $objectif->id) }}" title="Voir" class="text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out transform hover:scale-110">
-                                                        <i class="fas fa-eye text-lg"></i>
-                                                    </a>
-                                                    @endcan
-                                                    @can('objectif-edit')
-                                                    <a href="{{ route('objectifs.edit', $objectif->id) }}" title="Modifier" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out transform hover:scale-110">
-                                                        <i class="fas fa-edit text-lg"></i>
-                                                    </a>
-                                                    @endcan
+                            <div class="modern-card rounded-2xl overflow-hidden shadow-modern animate-fade-in" style="animation-delay: 0.6s;">
+                                <div class="overflow-x-auto">
+                                    <table class="w-full">
+                                        <thead class="bg-gradient-to-r from-gray-800 to-gray-900 text-white">
+                                            <tr>
+                                                <th class="px-6 py-4 text-left font-semibold uppercase tracking-wider">
+                                                    <i class="fas fa-calendar mr-2"></i>Date
+                                                </th>
+                                                <th class="px-6 py-4 text-left font-semibold uppercase tracking-wider">
+                                                    <i class="fas fa-tag mr-2"></i>Type
+                                                </th>
+                                                <th class="px-6 py-4 text-left font-semibold uppercase tracking-wider">
+                                                    <i class="fas fa-align-left mr-2"></i>Description
+                                                </th>
+                                                <th class="px-6 py-4 text-left font-semibold uppercase tracking-wider">
+                                                    <i class="fas fa-user mr-2"></i>Utilisateur
+                                                </th>
+                                                <th class="px-6 py-4 text-left font-semibold uppercase tracking-wider">
+                                                    <i class="fas fa-chart-line mr-2"></i>Progression
+                                                </th>
+                                                <th class="px-6 py-4 text-left font-semibold uppercase tracking-wider">
+                                                    <i class="fas fa-cog mr-2"></i>Actions
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-100">
+                                            @foreach ($objectifs as $index => $objectif)
+                                                <tr class="table-row-hover animate-fade-in animate-delayed" style="--delay: {{ 0.1 * $index }}s;">
+                                                    <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                                                        {{ $objectif->date }}
+                                                    </td>
+                                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                        <span class="tag-badge
+                                                            @if($objectif->type == 'formations') bg-blue-100 text-blue-800 border-blue-200
+                                                            @elseif($objectif->type == 'projets') bg-purple-100 text-purple-800 border-purple-200
+                                                            @elseif($objectif->type == 'vente') bg-green-100 text-green-800 border-green-200
+                                                            @else bg-gray-100 text-gray-800 border-gray-200
+                                                            @endif">
+                                                            @if($objectif->type == 'formations')
+                                                                <i class="fas fa-graduation-cap mr-1"></i>
+                                                            @elseif($objectif->type == 'projets')
+                                                                <i class="fas fa-project-diagram mr-1"></i>
+                                                            @elseif($objectif->type == 'vente')
+                                                                <i class="fas fa-chart-line mr-1"></i>
+                                                            @endif
+                                                            {{ ucfirst($objectif->type) }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="px-6 py-4 text-gray-800 max-w-xs">
+                                                        <div class="truncate" title="{{ $objectif->description }}">
+                                                            {{ Str::limit($objectif->description, 70) }}
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-6 py-4">
+                                                        <div class="flex flex-col space-y-1">
+                                                            @forelse ($objectif->users as $assignedUser)
+                                                                <span class="inline-flex items-center text-sm font-medium text-gray-900">
+                                                                    <div class="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs mr-2">
+                                                                        {{ substr($assignedUser->name, 0, 1) }}
+                                                                    </div>
+                                                                    {{ $assignedUser->name }}
+                                                                </span>
+                                                            @empty
+                                                                <span class="text-sm text-gray-500">
+                                                                    <i class="fas fa-user-slash mr-1"></i>
+                                                                    Non assigné
+                                                                </span>
+                                                            @endforelse
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-6 py-4">
+                                                        <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
+                                                            <div class="h-3 rounded-full transition-all duration-1000 ease-out
+                                                                {{ $objectif->calculated_progress == 100 ? 'bg-gradient-to-r from-green-400 to-green-600' : 'progress-bar-animated' }}" 
+                                                                style="width: {{ $objectif->calculated_progress }}%"></div>
+                                                        </div>
+                                                        <div class="flex justify-between items-center">
+                                                            <span class="text-sm font-semibold text-gray-700">{{ $objectif->calculated_progress }}%</span>
+                                                            @if ($objectif->calculated_progress == 100)
+                                                                <i class="fas fa-check-circle text-green-500"></i>
+                                                            @endif
+                                                        </div>
+                                                        @if ($objectif->needs_explanation && $objectif->calculated_progress < 100)
+                                                            <div class="mt-2 p-2 bg-red-50 rounded-lg border border-red-200">
+                                                                <p class="text-red-600 text-xs font-semibold animate-pulse-glow">
+                                                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                                    Explication requise !
+                                                                </p>
+                                                                <a href="{{ route('objectifs.show', $objectif->id) }}#explanation" 
+                                                                   class="text-blue-600 hover:text-blue-800 text-xs underline">
+                                                                    Fournir une explication
+                                                                </a>
+                                                            </div>
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-6 py-4">
+                                                        <div class="flex items-center space-x-2">
+                                                            @can('objectif-show')
+                                                            <button class="action-button bg-blue-100 text-blue-600 hover:bg-blue-200" 
+                                                                    onclick="window.location.href='{{ route('objectifs.show', $objectif->id) }}'" 
+                                                                    title="Voir">
+                                                                <i class="fas fa-eye"></i>
+                                                            </button>
+                                                            @endcan
+                                                            @can('objectif-edit')
+                                                            <button class="action-button bg-indigo-100 text-indigo-600 hover:bg-indigo-200" 
+                                                                    onclick="window.location.href='{{ route('objectifs.edit', $objectif->id) }}'" 
+                                                                    title="Modifier">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            @endcan
                                                     {{-- Nouveau bouton de duplication --}}
                                                    
                                                     @can('objectif-create')
