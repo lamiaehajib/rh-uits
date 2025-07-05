@@ -108,8 +108,21 @@
                                     <i class="fas fa-heading mr-3 text-indigo-600"></i> {{ $tache->titre }}
                                 </h3>
                                 <p class="text-lg text-gray-800 flex items-center">
-                                    <i class="fas fa-file-alt mr-3 text-blue-600"></i> {{ $tache->description }}
+                                    <i class="fas fa-file-alt mr-3 text-blue-600"></i> {{ __('Description:') }}
                                 </p>
+                                {{-- Nouvelle logique d'affichage pour la description ou l'audio --}}
+                                <div class="ml-8 mt-2"> {{-- Marge pour aligner avec le texte "Description:" --}}
+                                    @if($tache->audio_description_path)
+                                        <audio controls class="w-full max-w-sm">
+                                            <source src="{{ Storage::disk('public')->url($tache->audio_description_path) }}" type="audio/webm;codecs=opus">
+                                            Votre navigateur ne supporte pas l'élément audio.
+                                        </audio>
+                                    @elseif($tache->description && $tache->description != '-')
+                                        <p class="text-gray-800">{{ $tache->description }}</p>
+                                    @else
+                                        <p class="text-gray-500">-</p>
+                                    @endif
+                                </div>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -161,14 +174,14 @@
                                 </div>
 
                                 <p class="sm:col-span-2">
-                                    <strong><i class="fas fa-users mr-2 text-gray-500"></i> Assigné(s) à:</strong>
+                                    <strong><i class="fas fa-users mr-2 text-gray-500"></i> {{ __('Assigné(s) à:') }}</strong>
                                     <span class="inline-flex flex-wrap items-center space-x-2 mt-1">
                                         @forelse ($tache->users as $assignedUser)
                                             <span class="px-2 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 flex items-center">
                                                 <i class="fas fa-user mr-1"></i> {{ $assignedUser->name }}
                                             </span>
                                         @empty
-                                            <span class="text-sm text-gray-500">Non assigné</span>
+                                            <span class="text-sm text-gray-500">{{ __('Non assigné') }}</span>
                                         @endforelse
                                     </span>
                                 </p>
@@ -218,14 +231,14 @@
 
                         <div class="mt-10 flex items-center justify-end space-x-4 border-t pt-6 border-gray-200">
                             @can('tache-edit')
-                                {{-- The edit link should also pass the filterParams --}}
+                                {{-- Le lien d'édition doit également passer les filterParams --}}
                                 <a href="{{ route('taches.edit', array_merge(['tach' => $tache->id], $filterParams)) }}"
                                     class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-bold text-xs text-white uppercase tracking-wider
                                     hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition ease-in-out duration-150">
                                     <i class="fas fa-edit mr-2"></i> {{ __('Modifier la Tâche') }}
                                 </a>
                             @endcan
-                            {{-- This "Retour à la Liste" link will now pass the original filter parameters --}}
+                            {{-- Ce lien "Retour à la Liste" passera maintenant les paramètres de filtre originaux --}}
                             <a href="{{ route('taches.index', $filterParams) }}"
                                 class="inline-flex items-center px-6 py-3 bg-gray-200 border border-transparent rounded-md font-bold text-xs text-gray-700 uppercase tracking-wider
                                 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition ease-in-out duration-150">

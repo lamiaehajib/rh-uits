@@ -2,7 +2,6 @@
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Créer une Nouvelle Tâche</title>
-        <!-- Tailwind CSS CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
             // Configure Tailwind CSS to use a custom primary color
@@ -19,7 +18,6 @@
                 }
             }
         </script>
-        <!-- Font Awesome for icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
         <style>
             /* Custom CSS for animations and improved aesthetics */
@@ -87,6 +85,22 @@
             textarea:focus,
             select:focus {
                 transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+                border-color: #D32F2F; /* Primary red color for focus */
+                box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2); /* Soft shadow on focus */
+            }
+
+            /* Styles specific to audio recording buttons */
+            #recordButton, #stopButton, #playButton, #clearButton {
+                @apply px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ease-in-out;
+            }
+            #recordButton { @apply bg-blue-500 hover:bg-blue-600 text-white; }
+            #stopButton { @apply bg-red-500 hover:bg-red-600 text-white; }
+            #playButton { @apply bg-green-500 hover:bg-green-600 text-white; }
+            #clearButton { @apply bg-yellow-500 hover:bg-yellow-600 text-white; }
+            
+            /* Styles for disabled buttons */
+            button:disabled {
+                @apply opacity-50 cursor-not-allowed;
             }
         </style>
     </head>
@@ -145,7 +159,6 @@
                             @endphp
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                                <!-- Titre de la Tâche -->
                                 <div>
                                     <label for="titre" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-heading mr-2 text-indigo-500"></i> {{ __('Titre de la Tâche') }} <span class="text-primary-red text-lg">*</span>
@@ -160,39 +173,63 @@
                                     @enderror
                                 </div>
 
-                                <!-- Description de la Tâche -->
                                 <div>
                                     <label for="description" class="block text-sm font-semibold text-gray-700 mb-1">
-                                        <i class="fas fa-file-alt mr-2 text-blue-500"></i> {{ __('Description de la Tâche') }} <span class="text-primary-red text-lg">*</span>
+                                        <i class="fas fa-file-alt mr-2 text-blue-500"></i> {{ __('Description de la Tâche (Texte)') }}
                                     </label>
                                     <textarea name="description" id="description" rows="4"
                                         class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
                                         focus:ring-primary-red focus:border-primary-red
                                         @error('description') border-primary-red ring-red-200 @enderror"
-                                        placeholder="{{ __('Décrivez la tâche en détail...') }}" required>{{ old('description') }}</textarea>
+                                        placeholder="{{ __('Décrivez la tâche en détail ou utilisez l\'enregistrement audio...') }}"
+                                    >{{ old('description') }}</textarea>
                                     @error('description')
                                         <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
 
-                                <!-- Durée Estimée -->
-                                <div>
-    <label for="duree" class="block text-sm font-semibold text-gray-700 mb-1">
-        <i class="fas fa-hourglass-half mr-2 text-green-500"></i> {{ __('Durée Estimée') }} <span class="text-primary-red text-lg">*</span>
-    </label>
-    <input type="text" name="duree" id="duree"
-        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
-        focus:ring-primary-red focus:border-primary-red
-        @error('duree') border-primary-red ring-red-200 @enderror"
-        value="{{ old('duree') }}" 
-        placeholder="{{ __('Ex: 1 jour, 3 jours, 2 semaines, 1 mois') }}" {{-- MODIFIED LINE HERE --}}
-        required>
-    @error('duree')
-        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
-    @enderror
-</div>
+                                <div class="md:col-span-2"> <label for="audio_record_section" class="block text-sm font-semibold text-gray-700 mb-1">
+                                        <i class="fas fa-microphone mr-2 text-purple-500"></i> {{ __('Ou Enregistrer une Description Audio') }}
+                                    </label>
+                                    <div class="flex flex-wrap items-center space-x-2 mt-1">
+                                        <button type="button" id="recordButton" class="btn btn-primary-red"><i class="fas fa-microphone mr-1"></i> Démarrer Enregistrement</button>
+                                        <button type="button" id="stopButton" class="btn bg-red-500 text-white hover:bg-red-600"><i class="fas fa-stop mr-1"></i> Arrêter</button>
+                                        <button type="button" id="playButton" class="btn bg-green-500 text-white hover:bg-green-600"><i class="fas fa-play mr-1"></i> Écouter</button>
+                                        <button type="button" id="clearButton" class="btn bg-yellow-500 text-white hover:bg-yellow-600"><i class="fas fa-trash-alt mr-1"></i> Effacer</button>
+                                    </div>
+                                    <audio id="audioPlayback" controls class="w-full mt-4" style="display: none;"></audio>
+                                    <input type="hidden" name="audio_data" id="audioDataInput" value="{{ old('audio_data') }}">
+                                    @error('audio_data')
+                                        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
+                                    @enderror
 
-                                <!-- Date de Début -->
+                                    @if(isset($tache) && $tache->audio_description_path)
+                                        <p class="mt-4 text-gray-700">Fichier audio actuel:</p>
+                                        <audio src="{{ Storage::url($tache->audio_description_path) }}" controls class="w-full mt-2"></audio>
+                                        <div class="flex items-center mt-2 text-gray-600">
+                                            <input type="checkbox" id="remove_existing_audio" name="remove_existing_audio" value="1" class="rounded border-gray-300 text-primary-red shadow-sm focus:border-primary-red focus:ring focus:ring-primary-red focus:ring-opacity-50">
+                                            <label for="remove_existing_audio" class="ml-2 text-sm">{{ __('Supprimer l\'audio actuel') }}</label>
+                                        </div>
+                                    @endif
+                                </div>
+
+
+                                <div>
+                                    <label for="duree" class="block text-sm font-semibold text-gray-700 mb-1">
+                                        <i class="fas fa-hourglass-half mr-2 text-green-500"></i> {{ __('Durée Estimée') }} <span class="text-primary-red text-lg">*</span>
+                                    </label>
+                                    <input type="text" name="duree" id="duree"
+                                        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
+                                        focus:ring-primary-red focus:border-primary-red
+                                        @error('duree') border-primary-red ring-red-200 @enderror"
+                                        value="{{ old('duree') }}" 
+                                        placeholder="{{ __('Ex: 1 jour, 3 jours, 2 semaines, 1 mois') }}"
+                                        required>
+                                    @error('duree')
+                                        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
                                 <div>
                                     <label for="datedebut" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-calendar-alt mr-2 text-purple-500"></i> {{ __('Date de Début') }} <span class="text-primary-red text-lg">*</span>
@@ -207,7 +244,6 @@
                                     @enderror
                                 </div>
 
-                                <!-- Statut Initial -->
                                 <div>
                                     <label for="status" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-info-circle mr-2 text-yellow-500"></i> {{ __('Statut Initial') }} <span class="text-primary-red text-lg">*</span>
@@ -225,7 +261,6 @@
                                     @enderror
                                 </div>
 
-                                <!-- Type de Planification -->
                                 <div>
                                     <label for="date" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-clock mr-2 text-orange-500"></i> {{ __('Type de Planification') }} <span class="text-primary-red text-lg">*</span>
@@ -243,26 +278,24 @@
                                     @enderror
                                 </div>
 
-                                <!-- Assigné à l'utilisateur -->
-                          <div class="form-group mb-4">
-    <label class="form-label" for="user_ids">Assigné(e) <span class="text-danger">*</span></label> {{-- ou text-muted --}}
-    <div class="border rounded p-3"> {{-- Pour créer la bordure autour de la liste --}}
-        @foreach ($users as $user)
-            <div class="form-check mb-2"> {{-- mb-2 pour un petit espacement entre les checkboxes --}}
-                <input class="form-check-input" type="checkbox" name="user_ids[]" value="{{ $user->id }}" id="user_{{ $user->id }}"
-                       {{ in_array($user->id, old('user_ids', [])) ? 'checked' : '' }}>
-                <label class="form-check-label" for="user_{{ $user->id }}">
-                    {{ $user->name }} ({{ $user->email }})
-                </label>
-            </div>
-        @endforeach
-    </div>
-    @error('user_ids')
-        <div class="text-danger mt-2">{{ $message }}</div> {{-- Classe Bootstrap pour les erreurs --}}
-    @enderror
-</div>
+                                <div class="md:col-span-2"> <label class="block text-sm font-semibold text-gray-700 mb-1" for="user_ids">
+                                        <i class="fas fa-users mr-2 text-cyan-600"></i> {{ __('Assigné(e) à') }} <span class="text-primary-red text-lg">*</span>
+                                    </label>
+                                    <div class="border border-gray-300 rounded-lg p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto"> @foreach ($users as $userItem) {{-- Changed $user to $userItem to avoid conflict with $user in @php --}}
+                                            <div class="flex items-center">
+                                                <input class="rounded border-gray-300 text-primary-red shadow-sm focus:border-primary-red focus:ring focus:ring-primary-red focus:ring-opacity-50" type="checkbox" name="user_ids[]" value="{{ $userItem->id }}" id="user_{{ $userItem->id }}"
+                                                    {{ in_array($userItem->id, old('user_ids', [])) ? 'checked' : '' }}>
+                                                <label class="ml-2 text-sm text-gray-800" for="user_{{ $userItem->id }}">
+                                                    {{ $userItem->name }} ({{ $userItem->email }})
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                    @error('user_ids')
+                                        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
 
-                                <!-- Priorité de la Tâche -->
                                 <div>
                                     <label for="priorite" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-exclamation-triangle mr-2 text-red-500"></i> {{ __('Priorité') }} <span class="text-primary-red text-lg">*</span>
@@ -280,10 +313,8 @@
                                     @enderror
                                 </div>
 
-                                <!-- Retour de la Tâche (optional) - Only visible for specific non-admin roles -->
                                 @if ($canCreateRetour && !$isAdmin)
-                                <div class="md:col-span-2"> <!-- Span across two columns for better layout -->
-                                    <label for="retour" class="block text-sm font-semibold text-gray-700 mb-1">
+                                <div class="md:col-span-2"> <label for="retour" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-comment-dots mr-2 text-gray-500"></i> {{ __('Retour/Notes (Optionnel)') }}
                                     </label>
                                     <textarea name="retour" id="retour" rows="3"
@@ -313,5 +344,194 @@
                 </div>
             </div>
         </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const descriptionField = document.getElementById('description');
+                const recordButton = document.getElementById('recordButton');
+                const stopButton = document.getElementById('stopButton');
+                const playButton = document.getElementById('playButton');
+                const clearButton = document.getElementById('clearButton');
+                const audioPlayback = document.getElementById('audioPlayback');
+                const audioDataInput = document.getElementById('audioDataInput'); // Hidden input for Base64 audio
+                const removeExistingAudioCheckbox = document.getElementById('remove_existing_audio'); // Checkbox for existing audio (if on edit page)
+
+                let mediaRecorder;
+                let audioChunks = [];
+                let recordedAudioBlob = null;
+
+                // Function to enable/disable description field based on audio input/state
+                function toggleDescriptionField() {
+                    if (audioDataInput.value || (audioPlayback.src && audioPlayback.style.display !== 'none')) {
+                        descriptionField.disabled = true;
+                        descriptionField.value = ''; // Clear text description if audio is present
+                    } else {
+                        descriptionField.disabled = false;
+                        // Restore old description if available and no audio
+                        if ("{{ old('description', '') }}" && !audioDataInput.value) {
+                             descriptionField.value = "{{ old('description', '') }}";
+                        }
+                    }
+                }
+
+                // Function to enable/disable audio controls based on description field
+                function toggleAudioControls() {
+                    if (descriptionField.value.trim() !== '') {
+                        recordButton.disabled = true;
+                        stopButton.disabled = true;
+                        playButton.disabled = true;
+                        clearButton.disabled = true;
+                        if (removeExistingAudioCheckbox) removeExistingAudioCheckbox.disabled = true;
+                        // Clear any recorded audio if description is typed
+                        audioChunks = [];
+                        recordedAudioBlob = null;
+                        audioPlayback.src = '';
+                        audioPlayback.style.display = 'none';
+                        audioDataInput.value = '';
+                    } else {
+                        recordButton.disabled = false;
+                        if (removeExistingAudioCheckbox) removeExistingAudioCheckbox.disabled = false; // Enable if description is empty
+                        // Stop/Play/Clear buttons will be handled by recording state below
+                        if (!recordedAudioBlob && !audioDataInput.value) { // Only if no current recorded audio
+                            playButton.disabled = true;
+                            clearButton.disabled = true;
+                        }
+                    }
+                }
+
+                descriptionField.addEventListener('input', toggleAudioControls);
+
+                if (removeExistingAudioCheckbox) {
+                    removeExistingAudioCheckbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            descriptionField.disabled = true;
+                            descriptionField.value = '';
+                            recordButton.disabled = true;
+                            // Clear any new recording if old one is being removed
+                            audioChunks = [];
+                            recordedAudioBlob = null;
+                            audioPlayback.src = '';
+                            audioPlayback.style.display = 'none';
+                            audioDataInput.value = '';
+                        } else {
+                            toggleDescriptionField(); // Re-evaluate if description should be enabled
+                            recordButton.disabled = false; // Enable record if checkbox is unchecked
+                        }
+                    });
+                }
+
+                // Handle record button click
+                recordButton.addEventListener('click', async () => {
+                    recordedAudioBlob = null; // Reset any previous recording
+                    audioChunks = []; // Clear old chunks
+                    audioPlayback.style.display = 'none'; // Hide player
+                    audioPlayback.src = ''; // Clear audio source
+                    audioDataInput.value = ''; // Clear hidden input
+                    playButton.disabled = true;
+                    clearButton.disabled = true;
+                    stopButton.disabled = true; // Initially disable stop until recording starts
+
+                    try {
+                        // Request access to microphone
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        // Prefer opus in webm for better quality and smaller size
+                        const options = { mimeType: 'audio/webm;codecs=opus' }; 
+                        mediaRecorder = new MediaRecorder(stream, options);
+                        
+                        mediaRecorder.ondataavailable = event => {
+                            if (event.data.size > 0) {
+                                audioChunks.push(event.data);
+                            }
+                        };
+
+                        mediaRecorder.onstop = () => {
+                            recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                            const audioUrl = URL.createObjectURL(recordedAudioBlob);
+                            audioPlayback.src = audioUrl;
+                            audioPlayback.style.display = 'block';
+                            playButton.disabled = false;
+                            clearButton.disabled = false;
+
+                            // Convert blob to Base64 to send via hidden input
+                            const reader = new FileReader();
+                            reader.readAsDataURL(recordedAudioBlob);
+                            reader.onloadend = () => {
+                                audioDataInput.value = reader.result; // Base64 string
+                                toggleDescriptionField(); // Update field states after recording
+                            };
+
+                            // Stop microphone stream (important!)
+                            stream.getTracks().forEach(track => track.stop());
+                        };
+
+                        mediaRecorder.start();
+                        recordButton.disabled = true;
+                        stopButton.disabled = false;
+                        toggleDescriptionField(); // Disable description as we are recording
+                    } catch (err) {
+                        console.error('Error accessing microphone:', err);
+                        alert('Impossible d\'accéder au microphone. Assurez-vous que les permissions sont accordées.');
+                        recordButton.disabled = false;
+                        stopButton.disabled = true;
+                        playButton.disabled = true;
+                        clearButton.disabled = true;
+                        toggleDescriptionField(); // Re-enable description if recording failed
+                    }
+                });
+
+                // Handle stop button click
+                stopButton.addEventListener('click', () => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                        recordButton.disabled = false;
+                        stopButton.disabled = true;
+                    }
+                });
+
+                // Handle play button click
+                playButton.addEventListener('click', () => {
+                    if (audioPlayback.src) {
+                        audioPlayback.play();
+                    }
+                });
+
+                // Handle clear button click
+                clearButton.addEventListener('click', () => {
+                    audioChunks = [];
+                    recordedAudioBlob = null;
+                    audioPlayback.src = '';
+                    audioPlayback.style.display = 'none';
+                    audioDataInput.value = ''; // Clear hidden input
+                    playButton.disabled = true;
+                    clearButton.disabled = true;
+                    recordButton.disabled = false; // Enable recording again
+                    toggleDescriptionField(); // Re-enable description field
+                });
+
+                // Initial state update on page load (for 'create' page, `old` values)
+                toggleDescriptionField();
+                toggleAudioControls(); // This will disable recording buttons if description is already filled
+
+                // If old audio_data is present (e.g., after validation error)
+                if (audioDataInput.value) {
+                    // Re-create Blob from Base64 to allow playback
+                    const base64_audio = audioDataInput.value;
+                    const parts = base64_audio.split(';base64,');
+                    const mimeType = parts[0].split(':')[1];
+                    const decodedData = atob(parts[1]);
+                    const arrayBuffer = new ArrayBuffer(decodedData.length);
+                    const uint8Array = new Uint8Array(arrayBuffer);
+                    for (let i = 0; i < decodedData.length; i++) {
+                        uint8Array[i] = decodedData.charCodeAt(i);
+                    }
+                    recordedAudioBlob = new Blob([uint8Array], { type: mimeType });
+                    audioPlayback.src = URL.createObjectURL(recordedAudioBlob);
+                    audioPlayback.style.display = 'block';
+                    playButton.disabled = false;
+                    clearButton.disabled = false;
+                    recordButton.disabled = true; // Disable new recording
+                }
+            });
+        </script>
     </body>
 </x-app-layout>

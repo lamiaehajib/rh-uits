@@ -14,6 +14,7 @@ class Tache extends Model
 
     protected $fillable = [
         'description',
+        'audio_description_path', 
         'duree',
         'status',
         'date',

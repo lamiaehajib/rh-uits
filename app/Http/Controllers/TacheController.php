@@ -9,6 +9,7 @@ use App\Notifications\TacheUpdatedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage; // IMPORTANT : Ajoutez cette ligne pour utiliser la façade Storage
 use Carbon\Carbon;
 
 class TacheController extends Controller
@@ -38,7 +39,7 @@ class TacheController extends Controller
             $query->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
-            // Apply datedebut filter only if the user is NOT an admin for their general tasks list
+            // Appliquer le filtre datedebut uniquement si l'utilisateur n'est PAS un admin pour sa liste de tâches générale
             $query->where('datedebut', '<=', Carbon::now());
         }
 
@@ -68,8 +69,8 @@ class TacheController extends Controller
                     break;
                 case 'overdue':
                     $query->where('status', '!=', 'termine')
-                          ->whereNotNull('date_fin_prevue')
-                          ->where('date_fin_prevue', '<', Carbon::now());
+                            ->whereNotNull('date_fin_prevue')
+                            ->where('date_fin_prevue', '<', Carbon::now());
                     break;
                 case 'future':
                     if ($this->isAdmin($user)) {
@@ -110,7 +111,8 @@ class TacheController extends Controller
     {
         $request->validate([
             'titre' => 'required|string|max:255',
-            'description' => 'required|string|max:4000',
+            'description' => 'nullable|string|max:4000', // Laissez-le nullable juste pour la validation afin qu'il puisse être vide
+            'audio_data' => 'nullable|string', // Doit être une chaîne car c'est une chaîne Base64
             'duree' => 'required|string|max:255',
             'datedebut' => 'required|date|after_or_equal:today',
             'status' => 'required|in:nouveau,en cours,termine',
@@ -121,11 +123,44 @@ class TacheController extends Controller
             'retour' => 'nullable|string|max:5000',
         ]);
 
+        // Si l'administrateur remplit les deux (description textuelle et audio_data)
+        if ($request->filled('description') && $request->filled('audio_data')) {
+            return redirect()->back()
+                ->with('error', 'Vous ne pouvez pas saisir une description textuelle et un enregistrement audio en même temps. Choisissez-en un seul.')
+                ->withInput();
+        }
+
         try {
             DB::beginTransaction();
 
-            $data = $request->except('user_ids');
+            $data = $request->except('user_ids', 'audio_data'); // 'audio_data' sera traitée manuellement
             $data['created_by'] = auth()->id();
+
+            if ($request->filled('audio_data')) {
+                // S'il y a des données audio (Base64)
+                $data['description'] = '-'; // Le texte de la description sera "-" pour rester NOT NULL
+
+                // Décoder l'audio Base64 et le stocker
+                $base64_audio = $request->input('audio_data');
+                // Extrayez les données Base64 réelles (supprimez "data:audio/webm;base64,")
+                @list($type, $base64_audio) = explode(';', $base64_audio); // Utilisez @ pour supprimer l'avertissement si le format est inattendu
+                @list(, $base64_audio) = explode(',', $base64_audio);
+                $audio_decoded = base64_decode($base64_audio);
+
+                $filename = 'audio_' . uniqid() . '.webm'; // Nom de fichier unique et format webm
+                Storage::disk('public')->put('task_audios/' . $filename, $audio_decoded);
+                $data['audio_description_path'] = 'task_audios/' . $filename;
+            } else {
+                // S'il n'y a pas de données audio
+                $data['audio_description_path'] = null; // Le chemin du fichier audio sera NULL
+                if ($request->filled('description')) {
+                    // Si l'administrateur a rempli la description, laissez-la telle quelle
+                    $data['description'] = $request->description;
+                } else {
+                    // Si l'administrateur a laissé la description vide, remplissez-la avec "-"
+                    $data['description'] = '-';
+                }
+            }
 
             $startDate = Carbon::parse($request->input('datedebut'));
             $data['date_fin_prevue'] = $this->calculateExpectedEndDate($startDate, $request->input('duree'));
@@ -142,17 +177,17 @@ class TacheController extends Controller
             DB::commit();
 
             return redirect()->route('taches.index')
-                                ->with('success', 'Tâche créée avec succès.');
+                ->with('success', 'Tâche créée avec succès.');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error("Error creating tache: " . $e->getMessage());
+            \Log::error("Erreur lors de la création de la tâche : " . $e->getMessage());
             return redirect()->back()
-                                ->with('error', 'Erreur lors de la création de la tâche. Détails: ' . $e->getMessage())
-                                ->withInput();
+                ->with('error', 'Erreur lors de la création de la tâche. Détails : ' . $e->getMessage())
+                ->withInput();
         }
     }
 
-   public function show($id, Request $request) 
+    public function show($id, Request $request)
     {
         $user = auth()->user();
         $tache = Tache::with(['users', 'creator'])->findOrFail($id);
@@ -162,11 +197,11 @@ class TacheController extends Controller
                                 ->with('error', 'Accès refusé.');
         }
 
-        // Nakhdou ga3 les query parameters men l-URL li kanti fihom (page index)
-        // Hadchi ghay7tafed b: search, status, date_filter, user_filter, sort_by, sort_direction, page.
-        $filterParams = $request->query(); 
+        // Récupérer tous les paramètres de requête de l'URL d'où vous venez (page d'index)
+        // Cela conservera : search, status, date_filter, user_filter, sort_by, sort_direction, page.
+        $filterParams = $request->query();
 
-        return view('taches.show', compact('tache', 'filterParams')); // Passi filterParams l-view
+        return view('taches.show', compact('tache', 'filterParams')); // Passer filterParams à la vue
     }
 
     public function edit($id, Request $request)
@@ -180,9 +215,9 @@ class TacheController extends Controller
         }
 
         $users = User::all();
-        // Pass all filter parameters from the current URL query to the edit view.
-        // This is key: it captures the *original* filters (like user_filter, and potentially status if set).
-        $filterParams = $request->query(); 
+        // Passer tous les paramètres de filtre de la chaîne de requête URL actuelle à la vue d'édition.
+        // C'est la clé : cela capture les filtres *originaux* (comme user_filter, et potentiellement status si défini).
+        $filterParams = $request->query();
         return view('taches.edit', compact('tache', 'users', 'filterParams'));
     }
 
@@ -195,18 +230,77 @@ class TacheController extends Controller
         if ($this->isAdmin($user)) {
             $request->validate([
                 'titre' => 'required|string|max:255',
-                'description' => 'required|string|max:5000',
+                'description' => 'nullable|string|max:5000', // Laissez-le nullable juste pour la validation
+                'audio_data' => 'nullable|string', // Doit être une chaîne car c'est une chaîne Base64
+                'remove_existing_audio' => 'nullable|boolean', // Case à cocher qui viendra de la vue
                 'duree' => 'required|string|max:255',
                 'datedebut' => 'required|date',
-                'status' => 'required|in:nouveau,en cours,termine', // This is the task's own status field
+                'status' => 'required|in:nouveau,en cours,termine',
                 'date' => 'required|in:jour,semaine,mois',
                 'user_ids' => 'required|array',
                 'user_ids.*' => 'exists:users,id',
                 'priorite' => 'required|in:faible,moyen,élevé',
             ]);
 
-            $data = $request->except('retour', 'user_ids');
+            // Si l'administrateur remplit les deux (description textuelle et audio_data)
+            if ($request->filled('description') && $request->filled('audio_data')) {
+                return redirect()->back()
+                    ->with('error', 'Vous ne pouvez pas saisir une description textuelle et un enregistrement audio en même temps. Choisissez-en un seul.')
+                    ->withInput();
+            }
+
+            $data = $request->except('retour', 'user_ids', 'audio_data', 'remove_existing_audio');
             $data['updated_by'] = auth()->id();
+
+            // Cette logique détermine ce qui sera dans 'description' et 'audio_description_path'
+            // 1. Si l'administrateur a coché la case "Supprimer l'audio existant"
+            if ($request->boolean('remove_existing_audio')) {
+                if ($tache->audio_description_path) {
+                    Storage::disk('public')->delete($tache->audio_description_path);
+                }
+                $data['audio_description_path'] = null;
+                // Si l'audio a été supprimé, nous vérifions si une description textuelle a été fournie ou non
+                $data['description'] = $request->filled('description') ? $request->description : '-';
+            }
+            // 2. S'il y a de nouvelles données audio (provenant de l'enregistrement)
+            elseif ($request->filled('audio_data')) {
+                if ($tache->audio_description_path) {
+                    Storage::disk('public')->delete($tache->audio_description_path); // Supprimer l'ancien
+                }
+                $data['description'] = '-'; // Le texte de la description deviendra "-"
+
+                // Décoder l'audio Base64 et le stocker
+                $base64_audio = $request->input('audio_data');
+                @list($type, $base64_audio) = explode(';', $base64_audio);
+                @list(, $base64_audio) = explode(',', $base64_audio);
+                $audio_decoded = base64_decode($base64_audio);
+
+                $filename = 'audio_' . uniqid() . '.webm';
+                Storage::disk('public')->put('task_audios/' . $filename, $audio_decoded);
+                $data['audio_description_path'] = 'task_audios/' . $filename;
+            }
+            // 3. S'il y a une nouvelle description textuelle (et pas de nouvel audio ni de suppression de l'ancien)
+            elseif ($request->filled('description')) {
+                if ($tache->audio_description_path) {
+                    Storage::disk('public')->delete($tache->audio_description_path); // Supprimer l'ancien audio si présent
+                }
+                $data['audio_description_path'] = null; // Le chemin audio deviendra NULL
+                $data['description'] = $request->description; // Remplir la description avec ce que l'admin a tapé
+            }
+            // 4. Si aucune des conditions ci-dessus n'est remplie (pas de suppression, pas de nouvel audio, pas de nouvelle description)
+            else {
+                // Ici, nous allons conserver l'état précédent de la description et du chemin audio.
+                // Cela garantit que si rien n'est modifié, la tâche reste telle quelle.
+                $data['description'] = $tache->description;
+                $data['audio_description_path'] = $tache->audio_description_path;
+
+                // Dans le cas où rien n'est fourni, nous nous assurons que la description est "-"
+                // Cette vérification garantit que si l'ancienne description était nulle (par erreur ou un ancien cas)
+                // alors que notre nouvelle logique la rend toujours '-', cette ligne la sécurise.
+                if (empty($data['description']) && empty($data['audio_description_path'])) {
+                     $data['description'] = '-';
+                }
+            }
 
             $startDate = Carbon::parse($request->input('datedebut'));
             $data['date_fin_prevue'] = $this->calculateExpectedEndDate($startDate, $request->input('duree'));
@@ -217,7 +311,7 @@ class TacheController extends Controller
 
         } elseif ($user->hasAnyRole(['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH'])) {
             $request->validate([
-                'status' => 'required|in:nouveau,en cours,termine', // This is the task's own status field
+                'status' => 'required|in:nouveau,en cours,termine',
                 'retour' => 'nullable|string|max:5000',
             ]);
 
@@ -228,7 +322,7 @@ class TacheController extends Controller
             ]);
         } else {
             return redirect()->route('taches.index')
-                                ->with('error', 'Accès refusé.');
+                ->with('error', 'Accès refusé pour modifier cette tâche.');
         }
 
         if ($oldStatus !== $tache->status) {
@@ -237,64 +331,29 @@ class TacheController extends Controller
             }
         }
 
-        // --- THE FINAL KEY CHANGE IS HERE ---
-        // Start with the full set of filters that were passed from the index page via URL query string.
-        // These are guaranteed to be the *original* filters, not the task's modified status.
         $finalRedirectParams = $request->only([
             'search', 'date_filter', 'user_filter', 'sort_by', 'sort_direction', 'page'
         ]);
 
-        // Now, *explicitly re-add the 'status' filter ONLY if it was present in the original query parameters.*
-        // The `status` field from the form (`$request->input('status')`) should NOT become a filter unless
-        // there was already a `status` filter in the original URL query.
-        if ($request->has('status') && $request->input('status') !== 'all') { // Check if 'status' field exists and is not 'all' (meaning it was explicitly selected)
-            // Now, we need to know if the original filter was set. The best way is to pass the original query string
-            // as a separate parameter from the edit link, or use Session.
-            // Since we're passing all `filterParams` from edit to update via hidden fields,
-            // $request->input('status') from hidden field will reflect the original status filter if it was set.
-            // However, the problem is that 'status' is also the *task's status*.
-
-            // Let's assume `filterParams['status']` holds the original status filter from the URL.
-            // If `filterParams['status']` is present and not 'all', then we keep it.
-            // If it's not present or 'all', then we want no status filter.
-
-            // The 'status' field in the form (`<select name="status" id="status">`) is ALWAYS sent.
-            // So, `request()->input('status')` will always give the task's actual status.
-            // But we want the *filter's* status from the index page.
-            
-            // The `filterParams` array from the `edit` method is passed via hidden inputs in the form.
-            // So, to get the original 'status' filter, we should check `request()->input('status')` coming from the *hidden input*
-            // that represents the original filter, not the task's status select.
-            // To differentiate, we need to rename the hidden input for the *filter status*.
-
-            // Let's adjust `edit.blade.php` first, then come back here.
-            // Assuming `edit.blade.php` now passes `original_status_filter` if it exists.
-
-            // Daba l-code dyal `update` method khassou ykoun haka:
-            if ($request->filled('original_status_filter') && $request->input('original_status_filter') !== 'all') {
-                $finalRedirectParams['status'] = $request->input('original_status_filter');
-            } else {
-                // If there was no original status filter or it was 'all', ensure it's not in the final URL.
-                unset($finalRedirectParams['status']);
-            }
+        if ($request->filled('original_status_filter') && $request->input('original_status_filter') !== 'all') {
+            $finalRedirectParams['status'] = $request->input('original_status_filter');
         } else {
-             // If the user is a non-admin and can only change status/retour, we still want to respect initial filters.
-             if ($request->filled('original_status_filter') && $request->input('original_status_filter') !== 'all') {
-                $finalRedirectParams['status'] = $request->input('original_status_filter');
-            } else {
-                unset($finalRedirectParams['status']);
-            }
+            unset($finalRedirectParams['status']);
         }
 
-
         return redirect()->route('taches.index', $finalRedirectParams)
-                            ->with('success', 'Tâche mise à jour avec succès.');
+            ->with('success', 'Tâche mise à jour avec succès.');
     }
 
     public function destroy($id)
     {
         $user = auth()->user();
         $tache = Tache::findOrFail($id);
+
+        // Supprimer le fichier audio associé s'il existe
+        if ($tache->audio_description_path) {
+            Storage::disk('public')->delete($tache->audio_description_path);
+        }
 
         $tache->delete();
         return redirect()->route('taches.index')
@@ -314,7 +373,26 @@ class TacheController extends Controller
         $newTache = $originalTache->replicate();
         $newTache->status = 'nouveau';
         $newTache->created_by = auth()->id();
-        $newTache->description = $originalTache->description . ' (Copie)';
+        // Ici, nous devons gérer la logique audio/description de la tâche d'origine
+        if ($originalTache->audio_description_path) {
+            // Si la tâche originale a un audio, nous le copions vers la nouvelle tâche
+            // Cela nécessite de copier le fichier audio
+            try {
+                $originalAudioContent = Storage::disk('public')->get($originalTache->audio_description_path);
+                $newFilename = 'audio_' . uniqid() . '.webm';
+                Storage::disk('public')->put('task_audios/' . $newFilename, $originalAudioContent);
+                $newTache->audio_description_path = 'task_audios/' . $newFilename;
+                $newTache->description = '-'; // Si un audio est présent, la description devient '-'
+            } catch (\Exception $e) {
+                \Log::error("Erreur de duplication de l'audio pour la tâche " . $originalTache->id . ": " . $e->getMessage());
+                $newTache->audio_description_path = null;
+                $newTache->description = $originalTache->description; // Revenir au texte si la copie audio échoue
+            }
+        } else {
+            // S'il n'y a pas d'audio, conserver la description textuelle
+            $newTache->description = $originalTache->description . ' (Copie)';
+            $newTache->audio_description_path = null;
+        }
         $newTache->titre = $originalTache->titre . ' (Copie)';
         $newTache->priorite = $originalTache->priorite;
         $newTache->retour = null;
@@ -351,9 +429,9 @@ class TacheController extends Controller
     {
         $user = auth()->user();
         $stats = $this->getTaskStats($user);
-        
+
         $overdueTasks = $this->getOverdueTasks($user);
-        
+
         $recentTasks = $this->getRecentTasks($user);
 
         return view('taches.dashboard', compact('stats', 'overdueTasks', 'recentTasks'));
@@ -368,7 +446,7 @@ class TacheController extends Controller
     {
         return $this->isAdmin($user) || $tache->users->contains($user->id);
     }
-    
+
     private function calculateExpectedEndDate(Carbon $startDate, string $duree): ?Carbon
     {
         $duration = strtolower($duree);
@@ -381,7 +459,7 @@ class TacheController extends Controller
         } elseif (preg_match('/(\d+)\s*mois/i', $duration, $matches)) {
             $expectedEndDate = $startDate->copy()->addMonths($matches[1]);
         } else {
-            \Log::warning("Unknown duration format for tache: " . $duree);
+            \Log::warning("Format de durée inconnu pour la tâche : " . $duree);
         }
 
         return $expectedEndDate;
@@ -389,8 +467,8 @@ class TacheController extends Controller
 
     private function getTaskStats($user)
     {
-        $baseQuery = Tache::query(); 
-        
+        $baseQuery = Tache::query();
+
         if (!$this->isAdmin($user)) {
             $baseQuery->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
@@ -399,15 +477,15 @@ class TacheController extends Controller
         }
 
         $overdueQuery = (clone $baseQuery)->where('status', '!=', 'termine')
-                                           ->whereNotNull('date_fin_prevue')
-                                           ->where('date_fin_prevue', '<', Carbon::now());
+                                         ->whereNotNull('date_fin_prevue')
+                                         ->where('date_fin_prevue', '<', Carbon::now());
 
         $newTasks = (clone $baseQuery)->where('status', 'nouveau')->count();
         $inProgressTasks = (clone $baseQuery)->where('status', 'en cours')->count();
         $completedTasks = (clone $baseQuery)->where('status', 'termine')->count();
 
         return [
-            'total' => (clone $baseQuery)->count(), 
+            'total' => (clone $baseQuery)->count(),
             'nouveau' => $newTasks,
             'en_cours' => $inProgressTasks,
             'termine' => $completedTasks,
@@ -418,9 +496,9 @@ class TacheController extends Controller
     private function getOverdueTasks($user)
     {
         $query = Tache::with('users')
-                      ->where('status', '!=', 'termine')
-                      ->whereNotNull('date_fin_prevue')
-                      ->where('date_fin_prevue', '<', Carbon::now());
+                        ->where('status', '!=', 'termine')
+                        ->whereNotNull('date_fin_prevue')
+                        ->where('date_fin_prevue', '<', Carbon::now());
 
         if (!$this->isAdmin($user)) {
             $query->whereHas('users', function ($q) use ($user) {
@@ -439,7 +517,7 @@ class TacheController extends Controller
             $query->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
-            $query->where('datedebut', '<=', Carbon::now()); 
+            $query->where('datedebut', '<=', Carbon::now());
         }
 
         return $query->limit(5)->get();
@@ -451,7 +529,7 @@ class TacheController extends Controller
         $format = $request->get('format', 'csv');
 
         $query = Tache::with('users');
-        
+
         if (!$this->isAdmin($user)) {
             $query->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
@@ -471,7 +549,7 @@ class TacheController extends Controller
     private function exportToCsv($taches)
     {
         $filename = 'taches_' . date('Y-m-d_H-i-s') . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
@@ -483,10 +561,17 @@ class TacheController extends Controller
 
             foreach ($taches as $tache) {
                 $assignedUsers = $tache->users->pluck('name')->implode(', ');
+                $descriptionToExport = $tache->description;
+
+                // Ajuster la description pour l'export si elle est juste '-' et que l'audio existe
+                if ($tache->description === '-' && $tache->audio_description_path) {
+                    $descriptionToExport = 'Description audio disponible';
+                }
+
                 fputcsv($file, [
                     $tache->id,
                     $tache->titre,
-                    $tache->description,
+                    $descriptionToExport, // Utiliser la description ajustée pour l'export
                     $tache->duree,
                     $tache->datedebut,
                     $tache->date_fin_prevue ? Carbon::parse($tache->date_fin_prevue)->format('d/m/Y') : '',

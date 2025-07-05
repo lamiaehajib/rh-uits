@@ -385,21 +385,7 @@
                 @endforelse
             </div>
 
-            <div class="mt-8 flex justify-center">
-                <div class="glass-card rounded-2xl px-6 py-3">
-                    <div class="flex items-center space-x-2 text-gray-700">
-                        <button class="p-2 hover:bg-gray-100 rounded-lg transition-all">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <span class="px-3 py-1 bg-primary-red text-white rounded-lg">1</span>
-                        <button class="p-2 hover:bg-gray-100 rounded-lg transition-all">2</button>
-                        <button class="p-2 hover:bg-gray-100 rounded-lg transition-all">3</button>
-                        <button class="p-2 hover:bg-gray-100 rounded-lg transition-all">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
+           
         </div>
 
         @can('formation-create')
