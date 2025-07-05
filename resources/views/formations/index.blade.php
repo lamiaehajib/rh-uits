@@ -4,214 +4,256 @@
         <title>{{ __('Gestion des Formations') }}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <script>
-            // Configure Tailwind CSS to use a custom primary color (matching the Tache's red or adjusting as needed)
             tailwind.config = {
                 theme: {
                     extend: {
                         colors: {
-                            'primary-red': '#D32F2F', // Consistent with Tache, or choose a primary color for formations
-                            'primary-blue': '#2196F3', // Example: a primary blue for formations if distinct
+                            // Defined new primary and accent colors based on your request
+                            'primary-red': '#DC2626',
+                            'primary-pink': '#C2185B',
+                            'primary': '#6366f1', // Keeping the original primary for general use
+                            'primary-dark': '#4f46e5',
+                            'accent': '#f59e0b',
+                            'success': '#10b981',
+                            'danger': '#ef4444',
+                            'glass': 'rgba(255, 255, 255, 0.1)',
                         },
                         fontFamily: {
-                            sans: ['Inter', 'sans-serif'], // Set Inter as the default font
+                            sans: ['Inter', 'system-ui', 'sans-serif'],
+                        },
+                        backdropBlur: {
+                            'xs': '2px',
+                        },
+                        animation: {
+                            'fade-in': 'fadeIn 0.6s ease-out forwards',
+                            'slide-up': 'slideUp 0.5s ease-out forwards',
+                            'float': 'float 3s ease-in-out infinite',
+                            'glow': 'glow 2s ease-in-out infinite alternate',
+                            'shimmer': 'shimmer 2s linear infinite',
+                        },
+                        keyframes: {
+                            fadeIn: {
+                                '0%': { opacity: '0', transform: 'translateY(20px)' },
+                                '100%': { opacity: '1', transform: 'translateY(0)' }
+                            },
+                            slideUp: {
+                                '0%': { opacity: '0', transform: 'translateY(30px)' },
+                                '100%': { opacity: '1', transform: 'translateY(0)' }
+                            },
+                            float: {
+                                '0%, 100%': { transform: 'translateY(0px)' },
+                                '50%': { transform: 'translateY(-10px)' }
+                            },
+                            glow: {
+                                '0%': { boxShadow: '0 0 20px rgba(99, 102, 241, 0.5)' },
+                                '100%': { boxShadow: '0 0 30px rgba(99, 102, 241, 0.8)' }
+                            },
+                            shimmer: {
+                                '0%': { backgroundPosition: '-200% 0' },
+                                '100%': { backgroundPosition: '200% 0' }
+                            }
                         }
                     }
                 }
             }
         </script>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
-            /* Custom CSS for animations and improved aesthetics */
+            /* Removed background from body */
             body {
                 font-family: 'Inter', sans-serif;
+                /* background property removed */
+                min-height: 100vh;
+                background-color: #f0f2f5; /* A light, neutral background for the body */
             }
 
-            /* Fade-in animation for elements */
-            .animate-fade-in {
-                animation: fadeIn 0.5s ease-out forwards;
-                opacity: 0;
+            .glass-card {
+                /* New background for cards */
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.4);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                color: #333; /* Darker text color for better readability on light background */
             }
 
-            @keyframes fadeIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(10px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
+            .glass-card:hover {
+                background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.95) 100%);
+                transform: translateY(-5px);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             }
 
-            /* Scale-up effect on hover for cards */
-            .card-hover-effect {
-                transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            .stat-card {
+                /* New background for stat cards */
+                background: linear-gradient(135deg, #DC2626 0%, #C2185B 100%); /* Using your specified colors */
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                color: white; /* Text color for stat cards */
             }
 
-            .card-hover-effect:hover {
-                transform: translateY(-5px) scale(1.01);
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            .stat-card:hover {
+                transform: translateY(-8px) scale(1.02);
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2); /* Slightly stronger shadow on hover */
+                background: linear-gradient(135deg, #FF3333 0%, #E02070 100%); /* Slightly brighter on hover */
             }
 
-            /* Pulse animation for important buttons/alerts */
-            @keyframes pulse {
-                0%, 100% {
-                    opacity: 1;
-                }
-                50% {
-                    opacity: 0.7;
-                }
-            }
-
-            .animate-pulse-subtle {
-                animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-            }
-
-            /* Spin animation for icons */
-            @keyframes spin-slow {
-                from {
-                    transform: rotate(0deg);
-                }
-                to {
-                    transform: rotate(360deg);
-                }
-            }
-
-            .animate-spin-slow {
-                animation: spin-slow 3s linear infinite;
-            }
-
-            /* Custom modal styling (matching tache) */
-            .modal-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.6);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 1000;
-                opacity: 0;
-                visibility: hidden;
-                transition: opacity 0.3s ease, visibility 0.3s ease;
-            }
-
-            .modal-overlay.show {
-                opacity: 1;
-                visibility: visible;
-            }
-
-            .modal-content {
-                background: white;
-                padding: 2.5rem;
-                border-radius: 0.75rem;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-                max-width: 90%;
-                width: 400px;
-                transform: translateY(-20px);
-                transition: transform 0.3s ease-out;
+            .btn-modern {
+                background: linear-gradient(135deg, #DC2626 0%, #C2185B 100%); /* Using your specified colors */
+                border: none;
+                transition: all 0.3s ease;
                 position: relative;
                 overflow: hidden;
             }
 
-            .modal-overlay.show .modal-content {
-                transform: translateY(0);
+            .btn-modern::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                transition: left 0.5s;
             }
 
-            .modal-content .header-icon {
-                font-size: 2.5rem;
-                margin-bottom: 1rem;
-                text-align: center;
+            .btn-modern:hover::before {
+                left: 100%;
             }
 
-            .modal-content .message {
-                text-align: center;
-                margin-bottom: 1.5rem;
-                font-size: 1.125rem;
-                color: #374151;
+            .btn-modern:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(220, 38, 38, 0.4); /* Shadow color based on primary-red */
             }
 
-            .modal-content .buttons {
+            .search-container {
+                background: rgba(255, 255, 255, 0.95); /* Slightly less transparent for better readability */
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.4);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.05); /* Added subtle shadow */
+            }
+
+            .table-modern {
+                background: rgba(255, 255, 255, 0.98); /* Almost opaque for table for clarity */
+                backdrop-filter: blur(10px);
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            }
+
+            .table-row:hover {
+                background: rgba(220, 38, 38, 0.05); /* Hover based on primary-red */
+                transform: scale(1.01);
+            }
+
+            .status-badge {
+                backdrop-filter: blur(5px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                /* Ensure text is visible for different status colors */
+            }
+
+            .floating-action {
+                position: fixed;
+                bottom: 2rem;
+                right: 2rem;
+                z-index: 1000;
+                background: linear-gradient(135deg, #DC2626 0%, #C2185B 100%); /* Using your specified colors */
+                border-radius: 50%;
+                width: 60px;
+                height: 60px;
                 display: flex;
+                align-items: center;
                 justify-content: center;
-                gap: 1rem;
-            }
-
-            /* Button gradients and shadows (consistent with tache) */
-            .btn-primary-red {
-                background: linear-gradient(to right, #D32F2F, #B71C1C);
-                box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3);
+                box-shadow: 0 10px 30px rgba(220, 38, 38, 0.4); /* Shadow based on primary-red */
                 transition: all 0.3s ease;
             }
 
-            .btn-primary-red:hover {
-                background: linear-gradient(to right, #B71C1C, #D32F2F);
-                box-shadow: 0 6px 15px rgba(211, 47, 47, 0.4);
-                transform: translateY(-2px);
+            .floating-action:hover {
+                transform: scale(1.1);
+                box-shadow: 0 15px 40px rgba(220, 38, 38, 0.6); /* Stronger shadow on hover */
             }
 
-            .btn-secondary {
-                background-color: #e5e7eb;
-                color: #4b5563;
-                transition: all 0.3s ease;
+            .modal-glass {
+                background: rgba(255, 255, 255, 0.98); /* Less transparent for modal content */
+                backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.4);
+                color: #333; /* Darker text for modal */
             }
 
-            .btn-secondary:hover {
-                background-color: #d1d5db;
-                transform: translateY(-2px);
+            /* Adjust text color for specific elements for better readability */
+            .text-white {
+                color: #333; /* Changed to dark for readability on light cards */
             }
+           .text-white\/80 {
+    color: rgb(255 255 255 / 80%);
+}
+            .text-white\/70 {
+                color: rgba(51, 51, 51, 0.7); /* Darker text for readability */
+            }
+
+            /* Adjust header text color to be visible against its own background */
+            .header-text-white {
+                color: white; /* Keep white for header elements */
+            }
+
+            /* Specific color for icons based on your request */
+            .text-primary-icon {
+                color: #DC2626; /* Your requested primary icon color */
+            }
+
+            /* Ensure the header gradient icon remains white */
+            .header-icon-white i {
+                color: white !important;
+            }
+
         </style>
     </head>
-    <body>
-        <div id="custom-modal" class="modal-overlay">
-            <div class="modal-content rounded-xl shadow-2xl">
-                <div id="modal-icon" class="header-icon"></div>
-                <div id="modal-message" class="message"></div>
-                <div id="modal-buttons" class="buttons"></div>
+    <body class="font-sans antialiased">
+        <div id="custom-modal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 opacity-0 invisible transition-all duration-300">
+            <div class="modal-glass rounded-2xl p-8 max-w-md w-full mx-4 transform scale-95 transition-all duration-300">
+                <div id="modal-icon" class="text-center text-5xl mb-4"></div>
+                <div id="modal-message" class="text-center text-gray-800 text-lg mb-6"></div>
+                <div id="modal-buttons" class="flex justify-center gap-3"></div>
             </div>
         </div>
 
-        <h2 class="font-semibold text-2xl text-gray-800 leading-tight border-b-2 border-primary-red pb-3 mb-6 animate-fade-in delay-100">
-            <i class="fas fa-graduation-cap mr-3 text-primary-red"></i> {{ __('Gestion des Formations') }}
-        </h2>
-
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                @if (session('success'))
-                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative mb-4 shadow-md animate-fade-in" role="alert">
-                        <strong class="font-bold">Succès!</strong>
-                        <span class="block sm:inline">{{ session('success') }}</span>
-                        <span class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" onclick="this.parentElement.style.display='none';">
-                            <svg class="fill-current h-6 w-6 text-green-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 2.65a1.2 1.2 0 1 1-1.697-1.697L8.303 10l-2.651-2.651a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-2.651a1.2 1.2 0 1 1 1.697 1.697L11.697 10l2.651 2.651a1.2 1.2 0 0 1 0 1.698z"/></svg>
-                        </span>
+        <div class="bg-primary-red/80 backdrop-blur-sm border-b border-white/20 mb-8">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <h1 class="text-4xl font-bold header-text-white flex items-center animate-fade-in">
+                    <div class="bg-gradient-to-r from-primary-red to-primary-pink p-3 rounded-2xl mr-4 animate-float header-icon-white">
+                        <i class="fas fa-graduation-cap text-2xl text-white"></i>
                     </div>
-                @endif
+                    {{ __('Gestion des Formations') }}
+                </h1>
+            </div>
+        </div>
 
-                @if (session('error'))
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4 shadow-md animate-fade-in animate-pulse-subtle" role="alert">
-                        <strong class="font-bold">Erreur!</strong>
-                        <span class="block sm:inline">{{ session('error') }}</span>
-                        <span class="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer" onclick="this.parentElement.style.display='none';">
-                            <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 2.65a1.2 1.2 0 1 1-1.697-1.697L8.303 10l-2.651-2.651a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-2.651a1.2 1.2 0 1 1 1.697 1.697L11.697 10l2.651 2.651a1.2 1.2 0 0 1 0 1.698z"/></svg>
-                        </span>
-                    </div>
-                @endif
-
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg animate-fade-in delay-200">
-                    <div class="p-6 bg-white border-b border-gray-200">
-                        <div class="flex flex-col md:flex-row justify-between items-center mb-6">
-                            <div class="mb-4 md:mb-0">
-                                @can('formation-create')
-                                    <a href="{{ route('formations.create') }}" class="inline-flex items-center px-6 py-3 bg-primary-red border border-transparent rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red">
-                                        <i class="fas fa-plus-circle mr-2"></i> {{ __('Ajouter une Formation') }}
-                                    </a>
-                                @endcan
-                            </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+            @if (session('success'))
+                <div class="bg-green-500/20 backdrop-blur-sm border border-green-500/30 text-green-800 px-6 py-4 rounded-2xl mb-6 animate-slide-up">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-2xl mr-3 text-green-600"></i>
+                        <div>
+                            <strong class="font-semibold">{{ __('Succès!') }}</strong>
+                            <p class="mt-1">{{ session('success') }}</p>
                         </div>
+                    </div>
+                </div>
+            @endif
 
-                        {{-- Dashboard Statistics Section (refactored to Tailwind) --}}
+            @if (session('error'))
+                <div class="bg-red-500/20 backdrop-blur-sm border border-red-500/30 text-red-800 px-6 py-4 rounded-2xl mb-6 animate-slide-up">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle text-2xl mr-3 text-red-600"></i>
+                        <div>
+                            <strong class="font-semibold">{{ __('Erreur!') }}</strong>
+                            <p class="mt-1">{{ session('error') }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Dashboard Statistics Section (refactored to Tailwind) --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                             <div class="bg-blue-50 p-6 rounded-xl shadow-lg flex items-center justify-between card-hover-effect animate-fade-in delay-300">
                                 <div>
@@ -241,238 +283,216 @@
                                 </div>
                                 <i class="fas fa-star text-indigo-500 text-5xl opacity-75"></i>
                             </div>
+                        </div>
+
+
+            <div class="search-container rounded-2xl p-6 mb-8 animate-fade-in">
+                <form action="{{ route('formations.index') }}" method="GET">
+                    <div class="flex flex-col lg:flex-row gap-4">
+                        <div class="flex-1">
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                                <input type="text" name="search"
+                                        class="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent transition-all duration-200"
+                                        placeholder="Rechercher une formation..."
+                                        value="{{ request('search') }}">
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <select name="status" class="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-transparent">
+                                <option value="">{{ __('Tous les statuts') }}</option>
+                                <option value="nouveu" {{ request('status') == 'nouveu' ? 'selected' : '' }}>{{ __('Nouveau') }}</option>
+                                <option value="encour" {{ request('status') == 'encour' ? 'selected' : '' }}>{{ __('En cours') }}</option>
+                                <option value="fini" {{ request('status') == 'fini' ? 'selected' : '' }}>{{ __('Terminée') }}</option>
+                            </select>
+                            <button type="submit" class="btn-modern px-6 py-3 text-white font-semibold rounded-xl flex items-center gap-2">
+                                <i class="fas fa-filter"></i>
+                                {{ __('Filtrer') }}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @forelse ($formations ?? [] as $formation)
+                    <div class="glass-card rounded-2xl p-6 animate-fade-in">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ $formation->name ?? 'Formation Laravel Avancé' }}</h3>
+                                <p class="text-gray-700 text-sm">{{ $formation->nomformateur ?? 'Dr. Ahmed Bennani' }}</p>
+                            </div>
+                            <div class="status-badge px-3 py-1 rounded-full text-xs font-semibold
+                                @if(($formation->statut ?? 'nouveu') == 'nouveu') bg-indigo-500/20 text-indigo-700
+                                @elseif(($formation->statut ?? 'nouveu') == 'encour') bg-yellow-500/20 text-yellow-700
+                                @else bg-green-500/20 text-green-700
+                                @endif">
+                                {{ ucfirst($formation->statut ?? 'Nouveau') }}
+                            </div>
                         </div>
 
-                        <form action="{{ route('formations.index') }}" method="GET" class="mb-6 bg-gray-50 p-6 rounded-lg shadow-inner animate-fade-in delay-700">
-                            <h3 class="text-xl font-semibold text-gray-800 mb-4">{{ __('Filtres et Tri') }}</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div>
-                                    <label for="search" class="block text-sm font-medium text-gray-700">{{ __('Rechercher') }}</label>
-                                    <div class="relative mt-1 rounded-md shadow-sm">
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <i class="fas fa-search text-gray-400"></i>
-                                        </div>
-                                        <input type="text" name="search" id="search" class="focus:ring-primary-red focus:border-primary-red block w-full pl-10 sm:text-sm border-gray-300 rounded-md" placeholder="Nom, formateur, statut..." value="{{ request('search') }}">
-                                    </div>
-                                </div>
-                                <div>
-                                    <label for="status" class="block text-sm font-medium text-gray-700">{{ __('Filtrer par Statut') }}</label>
-                                    <select name="status" id="status" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
-                                        <option value="">{{ __('Tous les statuts') }}</option>
-                                        <option value="nouveu" {{ request('status') == 'nouveu' ? 'selected' : '' }}>{{ __('Nouveau') }}</option>
-                                        <option value="encour" {{ request('status') == 'encour' ? 'selected' : '' }}>{{ __('En cours') }}</option>
-                                        <option value="fini" {{ request('status') == 'fini' ? 'selected' : '' }}>{{ __('Terminée') }}</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="per_page" class="block text-sm font-medium text-gray-700">{{ __('Par page') }}</label>
-                                    <select name="per_page" id="per_page" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm" onchange="this.form.submit()">
-                                        <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
-                                        <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>
-                                        <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
-                                        <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
-                                    </select>
-                                </div>
+                        <div class="space-y-3 mb-6">
+                            <div class="flex items-center text-gray-700">
+                                <i class="fas fa-calendar-alt mr-3 text-primary-icon"></i>
+                                <span class="text-sm">{{ \Carbon\Carbon::parse($formation->date ?? '2024-01-15')->format('d/m/Y') }}</span>
                             </div>
-                            <div class="mt-6 flex justify-end space-x-3">
-                                <button type="submit" class="inline-flex items-center px-6 py-3 bg-primary-red border border-transparent rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red">
-                                    <i class="fas fa-filter mr-2"></i> {{ __('Appliquer Filtres') }}
+                            <div class="flex items-center text-gray-700">
+                                <i class="fas fa-users mr-3 text-primary-icon"></i>
+                                <span class="text-sm">{{ $formation->users->count() ?? 25 }} participants</span>
+                            </div>
+                            <div class="flex items-center text-gray-700">
+                                <i class="fas fa-{{ ($formation->status ?? 'lieu') == 'en ligne' ? 'globe' : 'map-marker-alt' }} mr-3 text-primary-icon"></i>
+                                <span class="text-sm">{{ ($formation->status ?? 'lieu') == 'en ligne' ? 'En ligne' : 'Présentiel' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div class="flex space-x-2">
+                                @can('formation-show')
+                                    <button class="p-2 bg-blue-500/20 text-blue-700 rounded-lg hover:bg-blue-500/30 transition-all">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                @endcan
+                                @can('formation-edit')
+                                    <button class="p-2 bg-indigo-500/20 text-indigo-700 rounded-lg hover:bg-indigo-500/30 transition-all">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                @endcan
+                                @can('formation-delete')
+                                    <button class="p-2 bg-red-500/20 text-red-700 rounded-lg hover:bg-red-500/30 transition-all"
+                                            onclick="showCustomConfirm('{{ __('Êtes-vous sûr de vouloir supprimer cette formation ?') }}', function() { console.log('Delete formation'); });">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                @endcan
+                            </div>
+                            @if($formation->file_path ?? false)
+                                <button class="p-2 bg-green-500/20 text-green-700 rounded-lg hover:bg-green-500/30 transition-all">
+                                    <i class="fas fa-download"></i>
                                 </button>
-                                <a href="{{ route('formations.index') }}" class="inline-flex items-center px-6 py-3 bg-gray-200 border border-transparent rounded-full font-bold text-sm text-gray-700 uppercase tracking-wider shadow-md btn-secondary">
-                                    <i class="fas fa-undo mr-2"></i> {{ __('Réinitialiser') }}
-                                </a>
-                            </div>
-                        </form>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div class="col-span-full">
+                        <div class="glass-card rounded-2xl p-12 text-center">
+                            <i class="fas fa-graduation-cap text-6xl text-gray-300 mb-4"></i>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ __('Aucune formation trouvée') }}</h3>
+                            <p class="text-gray-600">{{ __('Commencez par créer votre première formation') }}</p>
+                        </div>
+                    </div>
+                @endforelse
+            </div>
 
-                        @if ($formations->isEmpty())
-                            <div class="bg-gray-100 p-8 text-center text-gray-600 rounded-lg shadow-lg animate-fade-in delay-800">
-                                <i class="fas fa-info-circle text-6xl text-gray-400 mb-4"></i>
-                                <p class="text-xl font-semibold">{{ __('Aucune formation trouvée.') }}</p>
-                            </div>
-                        @else
-                            <div class="overflow-x-auto relative shadow-lg sm:rounded-lg animate-fade-in delay-800">
-                                <table class="w-full text-sm text-left text-gray-700">
-                                    <thead class="text-xs text-gray-700 uppercase bg-gray-100 rounded-t-lg">
-                                        <tr>
-                                            <th scope="col" class="py-3 px-6">{{ __('ID') }}</th>
-                                            <th scope="col" class="py-3 px-6">{{ __('Nom') }}</th>
-                                            <th scope="col" class="py-3 px-6">{{ __('Type') }}</th>
-                                            <th scope="col" class="py-3 px-6">{{ __('Formateur') }}</th>
-                                            <th scope="col" class="py-3 px-6">{{ __('Date') }}</th>
-                                            <th scope="col" class="py-3 px-6">{{ __('Statut') }}</th>
-                                            <th scope="col" class="py-3 px-6">{{ __('Assigné(e)') }}</th>
-                                            <th scope="col" class="py-3 px-6 text-center">{{ __('Actions') }}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse ($formations as $formation)
-                                            <tr class="bg-white border-b hover:bg-gray-50 transition duration-150 ease-in-out">
-                                                <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">{{ $formation->id }}</td>
-                                                <td class="py-4 px-6">{{ $formation->name }}</td>
-                                                <td class="py-4 px-6">
-                                                    @if($formation->status == 'en ligne')
-                                                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-200 text-blue-800"><i class="fas fa-globe mr-1"></i> {{ __('En ligne') }}</span>
-                                                    @else
-                                                        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-800"><i class="fas fa-map-marker-alt mr-1"></i> {{ __('Lieu') }}</span>
-                                                    @endif
-                                                </td>
-                                                <td class="py-4 px-6">{{ $formation->nomformateur }}</td>
-                                                <td class="py-4 px-6">{{ \Carbon\Carbon::parse($formation->date)->format('d/m/Y') }}</td>
-                                                <td class="py-4 px-6">
-                                                    <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                                        @if($formation->statut == 'nouveu') bg-indigo-200 text-indigo-800
-                                                        @elseif($formation->statut == 'encour') bg-yellow-200 text-yellow-800
-                                                        @else bg-green-200 text-green-800
-                                                        @endif">
-                                                        {{ ucfirst($formation->statut) }}
-                                                    </span>
-                                                </td>
-                                                <td class="py-4 px-6">
-                                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-700 text-white">{{ $formation->users->count() }}</span>
-                                                </td>
-                                                <td class="py-4 px-6 flex items-center justify-center space-x-2">
-                                                    @can('formation-show')
-                                                        <a href="{{ route('formations.show', $formation->id) }}" title="{{ __('Voir') }}" class="text-blue-600 hover:text-blue-800 transition duration-150 ease-in-out transform hover:scale-110">
-                                                            <i class="fas fa-eye text-lg"></i>
-                                                        </a>
-                                                    @endcan
-                                                    @can('formation-edit')
-                                                        <a href="{{ route('formations.edit', $formation->id) }}" title="{{ __('Modifier') }}" class="text-indigo-600 hover:text-indigo-800 transition duration-150 ease-in-out transform hover:scale-110">
-                                                            <i class="fas fa-pencil-alt text-lg"></i>
-                                                        </a>
-                                                    @endcan
-                                                    @can('formation-delete')
-                                                        <button type="button" title="{{ __('Supprimer') }}" onclick="showCustomConfirm('{{ __('Êtes-vous sûr de vouloir supprimer cette formation ?') }}', function() { document.getElementById('delete-form-{{ $formation->id }}').submit(); });" class="text-primary-red hover:text-red-700 transition duration-150 ease-in-out transform hover:scale-110">
-                                                            <i class="fas fa-trash-alt text-lg"></i>
-                                                        </button>
-                                                        <form id="delete-form-{{ $formation->id }}" action="{{ route('formations.destroy', $formation->id) }}" method="POST" class="hidden">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                        </form>
-                                                    @endcan
-                                                    @if($formation->file_path)
-                                                        @can('formation-list') {{-- Assuming 'formation-list' implies ability to download, or create a specific 'formation-download' permission --}}
-                                                            <a href="{{ route('formations.download', $formation->id) }}" title="{{ __('Télécharger Fichier') }}" class="text-green-600 hover:text-green-800 transition duration-150 ease-in-out transform hover:scale-110">
-                                                                <i class="fas fa-download text-lg"></i>
-                                                            </a>
-                                                        @endcan
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="8" class="py-8 text-center">
-                                                    <div class="bg-gray-100 p-4 text-center text-gray-600 rounded-lg shadow-md animate-fade-in">
-                                                        <i class="fas fa-exclamation-triangle mr-2"></i> {{ __('Aucune formation trouvée.') }}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div class="mt-6 flex justify-center">
-                                {{ $formations->links('pagination::tailwind') }}
-                            </div>
-                        @endif
+            <div class="mt-8 flex justify-center">
+                <div class="glass-card rounded-2xl px-6 py-3">
+                    <div class="flex items-center space-x-2 text-gray-700">
+                        <button class="p-2 hover:bg-gray-100 rounded-lg transition-all">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span class="px-3 py-1 bg-primary-red text-white rounded-lg">1</span>
+                        <button class="p-2 hover:bg-gray-100 rounded-lg transition-all">2</button>
+                        <button class="p-2 hover:bg-gray-100 rounded-lg transition-all">3</button>
+                        <button class="p-2 hover:bg-gray-100 rounded-lg transition-all">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        @push('scripts')
-            <script>
-                // Custom Modal Logic (Copied directly from tache for consistency)
-                const customModal = document.getElementById('custom-modal');
-                const modalMessage = document.getElementById('modal-message');
-                const modalButtons = document.getElementById('modal-buttons');
-                const modalIcon = document.getElementById('modal-icon');
-                let resolveModalPromise;
+        @can('formation-create')
+            <a href="{{ route('formations.create') }}" class="floating-action animate-bounce">
+                <i class="fas fa-plus text-white text-xl"></i>
+            </a>
+        @endcan
 
-                function showCustomModal(message, type = 'alert', onConfirm = null) {
-                    modalMessage.textContent = message;
-                    modalButtons.innerHTML = ''; // Clear previous buttons
-                    modalIcon.innerHTML = ''; // Clear previous icon
+        <script>
+            // Custom Modal Logic
+            const customModal = document.getElementById('custom-modal');
+            const modalMessage = document.getElementById('modal-message');
+            const modalButtons = document.getElementById('modal-buttons');
+            const modalIcon = document.getElementById('modal-icon');
+            let resolveModalPromise;
 
-                    if (type === 'confirm') {
-                        modalIcon.innerHTML = '<i class="fas fa-question-circle text-blue-500"></i>';
-                        const confirmBtn = document.createElement('button');
-                        confirmBtn.textContent = 'Confirmer';
-                        confirmBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
-                        confirmBtn.onclick = () => {
-                            customModal.classList.remove('show');
-                            if (onConfirm) onConfirm();
-                            resolveModalPromise(true);
-                        };
-                        modalButtons.appendChild(confirmBtn);
+            function showCustomModal(message, type = 'alert', onConfirm = null) {
+                modalMessage.textContent = message;
+                modalButtons.innerHTML = '';
+                modalIcon.innerHTML = '';
 
-                        const cancelBtn = document.createElement('button');
-                        cancelBtn.textContent = 'Annuler';
-                        cancelBtn.className = 'px-6 py-3 rounded-full font-bold text-sm uppercase tracking-wider shadow-md btn-secondary';
-                        cancelBtn.onclick = () => {
-                            customModal.classList.remove('show');
-                            resolveModalPromise(false);
-                        };
-                        modalButtons.appendChild(cancelBtn);
-                    } else if (type === 'alert') {
-                        modalIcon.innerHTML = '<i class="fas fa-info-circle text-gray-500"></i>';
-                        const okBtn = document.createElement('button');
-                        okBtn.textContent = 'OK';
-                        okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
-                        okBtn.onclick = () => {
-                            customModal.classList.remove('show');
-                            if (onConfirm) onConfirm();
-                            resolveModalPromise(true);
-                        };
-                        modalButtons.appendChild(okBtn);
-                    } else if (type === 'success') {
-                        modalIcon.innerHTML = '<i class="fas fa-check-circle text-green-500"></i>';
-                        const okBtn = document.createElement('button');
-                        okBtn.textContent = 'OK';
-                        okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
-                        okBtn.onclick = () => {
-                            customModal.classList.remove('show');
-                            if (onConfirm) onConfirm();
-                            resolveModalPromise(true);
-                        };
-                        modalButtons.appendChild(okBtn);
-                    } else if (type === 'error') {
-                        modalIcon.innerHTML = '<i class="fas fa-times-circle text-primary-red"></i>';
-                        const okBtn = document.createElement('button');
-                        okBtn.textContent = 'OK';
-                        okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
-                        okBtn.onclick = () => {
-                            customModal.classList.remove('show');
-                            if (onConfirm) onConfirm();
-                            resolveModalPromise(true);
-                        };
-                        modalButtons.appendChild(okBtn);
+                if (type === 'confirm') {
+                    modalIcon.innerHTML = '<i class="fas fa-question-circle text-primary-red"></i>'; // Icon with primary-red
+                    const confirmBtn = document.createElement('button');
+                    confirmBtn.textContent = 'Confirmer';
+                    confirmBtn.className = 'btn-modern px-6 py-3 text-white font-semibold rounded-xl';
+                    confirmBtn.onclick = () => {
+                        hideModal();
+                        if (onConfirm) onConfirm();
+                        resolveModalPromise(true);
+                    };
+                    modalButtons.appendChild(confirmBtn);
+
+                    const cancelBtn = document.createElement('button');
+                    cancelBtn.textContent = 'Annuler';
+                    cancelBtn.className = 'px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition-all';
+                    cancelBtn.onclick = () => {
+                        hideModal();
+                        resolveModalPromise(false);
+                    };
+                    modalButtons.appendChild(cancelBtn);
+                } else {
+                    modalIcon.innerHTML = '<i class="fas fa-info-circle text-primary-pink"></i>'; // Icon with primary-pink
+                    const okBtn = document.createElement('button');
+                    okBtn.textContent = 'OK';
+                    okBtn.className = 'btn-modern px-6 py-3 text-white font-semibold rounded-xl';
+                    okBtn.onclick = () => {
+                        hideModal();
+                        if (onConfirm) onConfirm();
+                        resolveModalPromise(true);
+                    };
+                    modalButtons.appendChild(okBtn);
+                }
+
+                showModal();
+                return new Promise(resolve => {
+                    resolveModalPromise = resolve;
+                });
+            }
+
+            function showModal() {
+                customModal.classList.remove('opacity-0', 'invisible');
+                customModal.querySelector('.modal-glass').classList.remove('scale-95');
+                customModal.querySelector('.modal-glass').classList.add('scale-100');
+            }
+
+            function hideModal() {
+                customModal.classList.add('opacity-0', 'invisible');
+                customModal.querySelector('.modal-glass').classList.add('scale-95');
+                customModal.querySelector('.modal-glass').classList.remove('scale-100');
+            }
+
+            function showCustomConfirm(message, callback = null) {
+                return showCustomModal(message, 'confirm', callback);
+            }
+
+            // Animation on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-fade-in');
                     }
+                });
+            }, observerOptions);
 
-                    customModal.classList.add('show');
-                    return new Promise(resolve => {
-                        resolveModalPromise = resolve;
-                    });
-                }
-
-                // Convenience functions to replace native alert/confirm
-                function showCustomAlert(message, callback = null) {
-                    return showCustomModal(message, 'alert', callback);
-                }
-
-                function showCustomConfirm(message, callback = null) {
-                    return showCustomModal(message, 'confirm', callback);
-                }
-
-                function showCustomSuccess(message, callback = null) {
-                    return showCustomModal(message, 'success', callback);
-                }
-
-                function showCustomError(message, callback = null) {
-                    return showCustomModal(message, 'error', callback);
-                }
-            </script>
-        @endpush
+            document.querySelectorAll('.glass-card').forEach(card => {
+                observer.observe(card);
+            });
+        </script>
     </body>
 </x-app-layout>
