@@ -85,6 +85,22 @@
             textarea:focus,
             select:focus {
                 transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+                border-color: #D32F2F; /* Primary red color for focus */
+                box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.2); /* Soft shadow on focus */
+            }
+
+            /* Styles specific to audio recording buttons */
+            #recordButton, #stopButton, #playButton, #clearButton {
+                @apply px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ease-in-out;
+            }
+            #recordButton { @apply bg-blue-500 hover:bg-blue-600 text-white; }
+            #stopButton { @apply bg-red-500 hover:bg-red-600 text-white; }
+            #playButton { @apply bg-green-500 hover:bg-green-600 text-white; }
+            #clearButton { @apply bg-yellow-500 hover:bg-yellow-600 text-white; }
+            
+            /* Styles for disabled buttons */
+            button:disabled {
+                @apply opacity-50 cursor-not-allowed;
             }
         </style>
     </head>
@@ -172,21 +188,53 @@
                                     @enderror
                                 </div>
 
+                                {{-- Description de la Tâche (Texte) --}}
                                 <div>
                                     <label for="description" class="block text-sm font-semibold text-gray-700 mb-1">
-                                        <i class="fas fa-file-alt mr-2 text-blue-500"></i> {{ __('Description de la Tâche') }} <span class="text-primary-red text-lg">*</span>
+                                        <i class="fas fa-file-alt mr-2 text-blue-500"></i> {{ __('Description de la Tâche (Texte)') }}
                                     </label>
                                     <textarea name="description" id="description" rows="4"
                                         class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
                                         focus:ring-primary-red focus:border-primary-red
                                         @error('description') border-primary-red ring-red-200 @enderror
                                         {{ !$isAdminOrAdmin1 ? 'bg-gray-100 cursor-not-allowed' : '' }}"
-                                        placeholder="{{ __('Décrivez la tâche en détail...') }}"
-                                        {{ !$isAdminOrAdmin1 ? 'readonly' : '' }} required>{{ old('description', $tache->description) }}</textarea>
+                                        placeholder="{{ __('Décrivez la tâche en détail ou utilisez l\'enregistrement audio...') }}"
+                                        {{ !$isAdminOrAdmin1 ? 'readonly' : '' }}
+                                    >{{ old('description', ($tache->description === '-' && $tache->audio_description_path) ? '' : $tache->description) }}</textarea>
                                     @error('description')
                                         <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
+
+                                {{-- Audio Recording Section --}}
+                                <div class="md:col-span-2"> <label for="audio_record_section" class="block text-sm font-semibold text-gray-700 mb-1">
+                                        <i class="fas fa-microphone mr-2 text-purple-500"></i> {{ __('Ou Enregistrer une Description Audio') }}
+                                    </label>
+                                    <div class="flex flex-wrap items-center space-x-2 mt-1">
+                                        <button type="button" id="recordButton" class="btn btn-primary-red"><i class="fas fa-microphone mr-1"></i> Démarrer Enregistrement</button>
+                                        <button type="button" id="stopButton" class="btn bg-red-500 text-white hover:bg-red-600"><i class="fas fa-stop mr-1"></i> Arrêter</button>
+                                        <button type="button" id="playButton" class="btn bg-green-500 text-white hover:bg-green-600"><i class="fas fa-play mr-1"></i> Écouter</button>
+                                        <button type="button" id="clearButton" class="btn bg-yellow-500 text-white hover:bg-yellow-600"><i class="fas fa-trash-alt mr-1"></i> Effacer</button>
+                                    </div>
+                                    <audio id="audioPlayback" controls class="w-full mt-4" style="display: none;"></audio>
+                                    {{-- The hidden input will store new recorded audio or signal old audio to be kept --}}
+                                    <input type="hidden" name="audio_data" id="audioDataInput" value="{{ old('audio_data') }}">
+                                    @error('audio_data')
+                                        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+
+                                    {{-- Display existing audio if available --}}
+                                    @if($tache->audio_description_path)
+                                        <p class="mt-4 text-gray-700">Fichier audio actuel:</p>
+                                        {{-- IMPORTANT: Use Storage::disk('public')->url() here --}}
+                                        <audio src="{{ Storage::disk('public')->url($tache->audio_description_path) }}" controls class="w-full mt-2"></audio>
+                                        <div class="flex items-center mt-2 text-gray-600">
+                                            <input type="checkbox" id="remove_existing_audio" name="remove_existing_audio" value="1" class="rounded border-gray-300 text-primary-red shadow-sm focus:border-primary-red focus:ring focus:ring-primary-red focus:ring-opacity-50">
+                                            <label for="remove_existing_audio" class="ml-2 text-sm">{{ __('Supprimer l\'audio actuel') }}</label>
+                                        </div>
+                                    @endif
+                                </div>
+
 
                                 <div>
                                     <label for="duree" class="block text-sm font-semibold text-gray-700 mb-1">
@@ -263,14 +311,14 @@
                                 <div class="form-group mb-4">
                                     <label class="form-label" for="user_ids">Assigné(e) <span class="text-danger">*</span></label>
                                     <div class="border rounded p-3">
-                                        @foreach ($users as $user)
+                                        @foreach ($users as $userItem) {{-- Corrected variable name from $user to $userItem --}}
                                             <div class="form-check mb-2">
-                                                <input class="form-check-input" type="checkbox" name="user_ids[]" value="{{ $user->id }}" id="user_{{ $user->id }}"
+                                                <input class="form-check-input" type="checkbox" name="user_ids[]" value="{{ $userItem->id }}" id="user_{{ $userItem->id }}"
                                                     {{-- Logique de pré-sélection: coche si l'ID est dans les old() values ou dans les utilisateurs assignés à la tâche --}}
-                                                    {{ in_array($user->id, old('user_ids', $tache->users->pluck('id')->toArray())) ? 'checked' : '' }}
+                                                    {{ in_array($userItem->id, old('user_ids', $tache->users->pluck('id')->toArray())) ? 'checked' : '' }}
                                                     {{ !$isAdminOrAdmin1 ? 'disabled' : '' }}>
-                                                <label class="form-check-label" for="user_{{ $user->id }}">
-                                                    {{ $user->name }} ({{ $user->email }})
+                                                <label class="form-check-label" for="user_{{ $userItem->id }}">
+                                                    {{ $userItem->name }} ({{ $userItem->email }})
                                                 </label>
                                             </div>
                                         @endforeach
@@ -341,5 +389,235 @@
                 </div>
             </div>
         </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const descriptionField = document.getElementById('description');
+                const recordButton = document.getElementById('recordButton');
+                const stopButton = document.getElementById('stopButton');
+                const playButton = document.getElementById('playButton');
+                const clearButton = document.getElementById('clearButton');
+                const audioPlayback = document.getElementById('audioPlayback');
+                const audioDataInput = document.getElementById('audioDataInput'); // Hidden input for Base64 audio
+                const removeExistingAudioCheckbox = document.getElementById('remove_existing_audio'); // Checkbox for existing audio
+
+                let mediaRecorder;
+                let audioChunks = [];
+                let recordedAudioBlob = null;
+
+                // Variable to track if page loaded with existing audio to influence initial state
+                const hasInitialAudio = {{ $tache->audio_description_path ? 'true' : 'false' }};
+                const hasInitialDescription = {{ ($tache->description && $tache->description !== '-') ? 'true' : 'false' }};
+                const isAdmin = {{ $isAdminOrAdmin1 ? 'true' : 'false' }};
+
+                // Function to enable/disable description field based on audio input/state
+                function toggleDescriptionField() {
+                    // Disable description field if there's recorded audio or if the 'remove existing audio' checkbox is checked (meaning old audio is involved)
+                    // Or if there was initial audio and the checkbox is NOT checked (meaning we are keeping it)
+                    if (audioDataInput.value || (removeExistingAudioCheckbox && removeExistingAudioCheckbox.checked) || (hasInitialAudio && !(removeExistingAudioCheckbox && removeExistingAudioCheckbox.checked))) {
+                        descriptionField.disabled = true;
+                        descriptionField.value = ''; // Clear text description if audio is present
+                    } else {
+                        descriptionField.disabled = false;
+                        // Restore old description if available and no audio being used
+                        if (hasInitialDescription && !audioDataInput.value && !(removeExistingAudioCheckbox && removeExistingAudioCheckbox.checked)) {
+                            descriptionField.value = "{{ old('description', ($tache->description === '-' && $tache->audio_description_path) ? '' : $tache->description) }}";
+                        } else if (!hasInitialDescription && !audioDataInput.value && !hasInitialAudio) {
+                            descriptionField.value = "{{ old('description', '') }}"; // Fallback for new creation/clear
+                        }
+                    }
+                    if (!isAdmin) {
+                        descriptionField.disabled = true; // Admins always modify all, others only status/retour
+                    }
+                }
+
+                // Function to enable/disable audio controls based on description field
+                function toggleAudioControls() {
+                    if (!isAdmin) { // Non-admins cannot record/modify audio
+                        recordButton.disabled = true;
+                        stopButton.disabled = true;
+                        playButton.disabled = true;
+                        clearButton.disabled = true;
+                        if (removeExistingAudioCheckbox) removeExistingAudioCheckbox.disabled = true;
+                        return; // Exit early for non-admins
+                    }
+
+                    // For admins:
+                    if (descriptionField.value.trim() !== '' && descriptionField.value.trim() !== '-') { // If there's actual text description
+                        recordButton.disabled = true;
+                        stopButton.disabled = true;
+                        playButton.disabled = true;
+                        clearButton.disabled = true;
+                        if (removeExistingAudioCheckbox) removeExistingAudioCheckbox.disabled = true;
+                        
+                        // Clear any recorded audio if description is typed
+                        audioChunks = [];
+                        recordedAudioBlob = null;
+                        audioPlayback.src = '';
+                        audioPlayback.style.display = 'none';
+                        audioDataInput.value = '';
+
+                    } else { // If description is empty or '-', allow audio input
+                        recordButton.disabled = false;
+                        if (removeExistingAudioCheckbox) removeExistingAudioCheckbox.disabled = false; // Enable checkbox if description is empty
+                        
+                        // Set play/clear based on whether there's recorded audio (new or old)
+                        if (!recordedAudioBlob && !audioDataInput.value && !hasInitialAudio) {
+                            playButton.disabled = true;
+                            clearButton.disabled = true;
+                        } else { // Either new recorded audio or existing one
+                            playButton.disabled = false;
+                            clearButton.disabled = false;
+                        }
+                    }
+                }
+
+                descriptionField.addEventListener('input', toggleAudioControls);
+
+                if (removeExistingAudioCheckbox) {
+                    removeExistingAudioCheckbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            // When 'remove old audio' is checked
+                            descriptionField.disabled = true;
+                            descriptionField.value = '';
+                            recordButton.disabled = true; // Cannot record new if removing old
+                            audioChunks = []; // Clear any new recording in progress
+                            recordedAudioBlob = null;
+                            audioPlayback.src = '';
+                            audioPlayback.style.display = 'none';
+                            audioDataInput.value = '';
+                            playButton.disabled = true;
+                            clearButton.disabled = true; // Clear current player actions
+                        } else {
+                            // When 'remove old audio' is unchecked
+                            toggleDescriptionField(); // Re-evaluate description field
+                            toggleAudioControls(); // Re-evaluate audio buttons (record button should be enabled if description is empty)
+                        }
+                    });
+                }
+
+                // Handle record button click
+                recordButton.addEventListener('click', async () => {
+                    recordedAudioBlob = null; // Reset any previous recording
+                    audioChunks = []; // Clear old chunks
+                    audioPlayback.style.display = 'none'; // Hide player
+                    audioPlayback.src = ''; // Clear audio source
+                    audioDataInput.value = ''; // Clear hidden input
+                    playButton.disabled = true;
+                    clearButton.disabled = true;
+                    stopButton.disabled = true; // Initially disable stop until recording starts
+                    if (removeExistingAudioCheckbox) removeExistingAudioCheckbox.disabled = true; // Disable if recording new
+
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        const options = { mimeType: 'audio/webm;codecs=opus' }; 
+                        mediaRecorder = new MediaRecorder(stream, options);
+                        
+                        mediaRecorder.ondataavailable = event => {
+                            if (event.data.size > 0) {
+                                audioChunks.push(event.data);
+                            }
+                        };
+
+                        mediaRecorder.onstop = () => {
+                            recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                            const audioUrl = URL.createObjectURL(recordedAudioBlob);
+                            audioPlayback.src = audioUrl;
+                            audioPlayback.style.display = 'block';
+                            playButton.disabled = false;
+                            clearButton.disabled = false;
+
+                            const reader = new FileReader();
+                            reader.readAsDataURL(recordedAudioBlob);
+                            reader.onloadend = () => {
+                                audioDataInput.value = reader.result;
+                                toggleDescriptionField(); // Update field states after recording
+                            };
+
+                            stream.getTracks().forEach(track => track.stop());
+                        };
+
+                        mediaRecorder.start();
+                        recordButton.disabled = true;
+                        stopButton.disabled = false;
+                        toggleDescriptionField(); // Disable description as we are recording
+                    } catch (err) {
+                        console.error('Error accessing microphone:', err);
+                        alert('Impossible d\'accéder au microphone. Assurez-vous que les permissions sont accordées.');
+                        recordButton.disabled = false;
+                        stopButton.disabled = true;
+                        playButton.disabled = true;
+                        clearButton.disabled = true;
+                        if (removeExistingAudioCheckbox) removeExistingAudioCheckbox.disabled = false; // Re-enable checkbox
+                        toggleDescriptionField(); // Re-enable description if recording failed
+                    }
+                });
+
+                // Handle stop button click
+                stopButton.addEventListener('click', () => {
+                    if (mediaRecorder && mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                        recordButton.disabled = false;
+                        stopButton.disabled = true;
+                    }
+                });
+
+                // Handle play button click
+                playButton.addEventListener('click', () => {
+                    if (audioPlayback.src) {
+                        audioPlayback.play();
+                    }
+                });
+
+                // Handle clear button click
+                clearButton.addEventListener('click', () => {
+                    audioChunks = [];
+                    recordedAudioBlob = null;
+                    audioPlayback.src = '';
+                    audioPlayback.style.display = 'none';
+                    audioDataInput.value = ''; // Clear hidden input
+                    playButton.disabled = true;
+                    clearButton.disabled = true;
+                    recordButton.disabled = false; // Enable recording again
+                    if (removeExistingAudioCheckbox) removeExistingAudioCheckbox.disabled = false; // Enable checkbox
+                    toggleDescriptionField(); // Re-enable description field
+                });
+
+                // Initial state setup on page load
+                // (Important for edit page where data already exists)
+                if (hasInitialAudio) {
+                    audioPlayback.src = "{{ Storage::disk('public')->url($tache->audio_description_path) }}";
+                    audioPlayback.style.display = 'block';
+                    playButton.disabled = false;
+                    clearButton.disabled = false; // Allow clearing existing audio
+                    recordButton.disabled = true; // Cannot record new while existing audio is active
+                    descriptionField.disabled = true; // Disable description field
+                } else if (hasInitialDescription) {
+                    // Description is already populated, so disable audio controls initially
+                    recordButton.disabled = true;
+                    stopButton.disabled = true;
+                    playButton.disabled = true;
+                    clearButton.disabled = true;
+                } else {
+                    // No initial audio or description, so allow recording or typing description
+                    recordButton.disabled = false;
+                    descriptionField.disabled = false;
+                }
+
+                // Final check for admin permissions to enable/disable everything
+                if (!isAdmin) {
+                    descriptionField.disabled = true; // Non-admins cannot change desc or audio
+                    recordButton.disabled = true;
+                    stopButton.disabled = true;
+                    playButton.disabled = true;
+                    clearButton.disabled = true;
+                    if (removeExistingAudioCheckbox) removeExistingAudioCheckbox.disabled = true; // And cannot remove existing audio
+                } else {
+                    // Admins manage the toggle between text and audio
+                    toggleDescriptionField(); // Ensure correct state for description field
+                    toggleAudioControls(); // Ensure correct state for audio buttons
+                }
+            });
+        </script>
     </body>
 </x-app-layout>
