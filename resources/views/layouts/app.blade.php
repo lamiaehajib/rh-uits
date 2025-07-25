@@ -48,7 +48,7 @@
             line-height: 1.6;
         }
 
-        /* Modern Scrollbar */
+        
         ::-webkit-scrollbar {
             width: 8px;
         }
