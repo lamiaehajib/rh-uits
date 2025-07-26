@@ -356,6 +356,18 @@
                                 </select>
                             </div>
 
+                             <div class="form-group">
+        <label for="user_id">Filtrer par Utilisateur</label>
+        <select name="user_id" id="user_id" class="form-control">
+            <option value="all">Tous les utilisateurs</option> {{-- Option for all users --}}
+            @foreach($users as $user)
+                <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
+                    {{ $user->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
                             <div class="flex items-end space-x-3">
                                 <button type="submit"
                                     class="btn-primary-red flex-1 flex items-center justify-center px-5 py-2 rounded-md shadow-sm text-white font-medium">

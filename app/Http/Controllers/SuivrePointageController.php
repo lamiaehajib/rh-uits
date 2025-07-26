@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SuivrePointage;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -34,7 +35,7 @@ class SuivrePointageController extends Controller
     /**
      * Afficher la liste des pointages.
      */
-    public function index()
+    public function index(Request $request) // Inject Request
     {
         $utilisateur = auth()->user();
 
@@ -48,22 +49,32 @@ class SuivrePointageController extends Controller
 
         $requete = SuivrePointage::with('user');
 
-        if ($recherche = request('search')) {
+        // Get all users for the filter dropdown
+        $users = User::orderBy('name')->get(); // Assuming 'name' is the user's name field
+
+        if ($recherche = $request->input('search')) { // Use $request->input()
             $requete->whereHas('user', function ($query) use ($recherche) {
                 $query->where('name', 'like', "%{$recherche}%");
             })
             ->orWhereDate('date_pointage', 'like', "%{$recherche}%");
         }
 
-        if ($dateDebut = request('date_debut')) {
+        if ($dateDebut = $request->input('date_debut')) { // Use $request->input()
             $requete->whereDate('date_pointage', '>=', $dateDebut);
         }
 
-        if ($statut = request('statut')) {
+        if ($statut = $request->input('statut')) { // Use $request->input()
             if ($statut === 'en_cours') {
                 $requete->whereNull('heure_depart');
             } elseif ($statut === 'termine') {
                 $requete->whereNotNull('heure_depart');
+            }
+        }
+
+        // Add filter by user
+        if ($userId = $request->input('user_id')) { // Assuming the select field name is 'user_id'
+            if ($userId !== 'all') { // Check if 'Tous les utilisateurs' is not selected
+                $requete->where('iduser', $userId);
             }
         }
 
@@ -72,10 +83,12 @@ class SuivrePointageController extends Controller
         if ($utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin')) {
             $pointages = $requete->paginate(10);
         } else {
+            // If the user is not an Admin, they should only see their own pointages,
+            // regardless of the user filter selected in the UI.
             $pointages = $requete->where('iduser', $utilisateur->id)->paginate(10);
         }
 
-        return view('suivre_pointage.index', compact('pointages', 'pointageEnCours'));
+        return view('suivre_pointage.index', compact('pointages', 'pointageEnCours', 'users'));
     }
 
     /**
