@@ -35,7 +35,7 @@ class SuivrePointageController extends Controller
     /**
      * Afficher la liste des pointages.
      */
-    public function index(Request $request) // Inject Request
+    public function index(Request $request)
     {
         $utilisateur = auth()->user();
 
@@ -50,20 +50,23 @@ class SuivrePointageController extends Controller
         $requete = SuivrePointage::with('user');
 
         // Get all users for the filter dropdown
-        $users = User::orderBy('name')->get(); // Assuming 'name' is the user's name field
+        $users = User::orderBy('name')->get();
 
-        if ($recherche = $request->input('search')) { // Use $request->input()
+        // Store all request parameters to append them to pagination links
+        $queryParams = $request->except('page'); // Exclude 'page' as paginator handles it
+
+        if ($recherche = $request->input('search')) {
             $requete->whereHas('user', function ($query) use ($recherche) {
                 $query->where('name', 'like', "%{$recherche}%");
             })
             ->orWhereDate('date_pointage', 'like', "%{$recherche}%");
         }
 
-        if ($dateDebut = $request->input('date_debut')) { // Use $request->input()
+        if ($dateDebut = $request->input('date_debut')) {
             $requete->whereDate('date_pointage', '>=', $dateDebut);
         }
 
-        if ($statut = $request->input('statut')) { // Use $request->input()
+        if ($statut = $request->input('statut')) {
             if ($statut === 'en_cours') {
                 $requete->whereNull('heure_depart');
             } elseif ($statut === 'termine') {
@@ -71,9 +74,8 @@ class SuivrePointageController extends Controller
             }
         }
 
-        // Add filter by user
-        if ($userId = $request->input('user_id')) { // Assuming the select field name is 'user_id'
-            if ($userId !== 'all') { // Check if 'Tous les utilisateurs' is not selected
+        if ($userId = $request->input('user_id')) {
+            if ($userId !== 'all') {
                 $requete->where('iduser', $userId);
             }
         }
@@ -81,14 +83,23 @@ class SuivrePointageController extends Controller
         $requete->orderBy('date_pointage', 'DESC')->orderBy('heure_arrivee', 'DESC');
 
         if ($utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin')) {
-            $pointages = $requete->paginate(10);
+            // Apply appends() here
+            $pointages = $requete->paginate(10)->appends($queryParams);
         } else {
-            // If the user is not an Admin, they should only see their own pointages,
-            // regardless of the user filter selected in the UI.
-            $pointages = $requete->where('iduser', $utilisateur->id)->paginate(10);
+            // Apply appends() here
+            $pointages = $requete->where('iduser', $utilisateur->id)->paginate(10)->appends($queryParams);
         }
 
-        return view('suivre_pointage.index', compact('pointages', 'pointageEnCours', 'users'));
+        // Also pass the current filter values back to the view to pre-fill the form
+        $currentSearch = $request->input('search');
+        $currentDateDebut = $request->input('date_debut');
+        $currentStatut = $request->input('statut');
+        $currentUserId = $request->input('user_id');
+
+
+        return view('suivre_pointage.index', compact('pointages', 'pointageEnCours', 'users',
+            'currentSearch', 'currentDateDebut', 'currentStatut', 'currentUserId'
+        ));
     }
 
     /**
