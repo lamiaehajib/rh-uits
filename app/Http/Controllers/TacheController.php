@@ -9,7 +9,7 @@ use App\Notifications\TacheUpdatedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage; // IMPORTANT : Ajoutez cette ligne pour utiliser la façade Storage
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class TacheController extends Controller
@@ -227,12 +227,24 @@ class TacheController extends Controller
         $tache = Tache::with('users')->findOrFail($id);
         $oldStatus = $tache->status;
 
-        if ($this->isAdmin($user)) {
+        // Determine if the current user has "admin" level permissions for full task modification.
+        // This includes 'Sup_Admin' and 'Custom_Admin'.
+        $isAdminForFullEdit = $this->isAdmin($user);
+
+        // Define roles that can modify only status and retour, assuming they are NOT full admins.
+        // The Custom_Admin role is now covered by $isAdminForFullEdit.
+        $canModifyStatusAndRetourOnlyRoles = ['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH'];
+
+        // Flag to check if the user belongs to the specific roles that can only update status and retour.
+        $canModifyStatusAndRetour = !$isAdminForFullEdit && $user->hasAnyRole($canModifyStatusAndRetourOnlyRoles);
+
+
+        if ($isAdminForFullEdit) { // This block handles Sup_Admin and Custom_Admin
             $request->validate([
                 'titre' => 'required|string|max:255',
-                'description' => 'nullable|string|max:5000', // Laissez-le nullable juste pour la validation
-                'audio_data' => 'nullable|string', // Doit être une chaîne car c'est une chaîne Base64
-                'remove_existing_audio' => 'nullable|boolean', // Case à cocher qui viendra de la vue
+                'description' => 'nullable|string|max:5000',
+                'audio_data' => 'nullable|string',
+                'remove_existing_audio' => 'nullable|boolean',
                 'duree' => 'required|string|max:255',
                 'datedebut' => 'required|date',
                 'status' => 'required|in:nouveau,en cours,termine',
@@ -240,36 +252,31 @@ class TacheController extends Controller
                 'user_ids' => 'required|array',
                 'user_ids.*' => 'exists:users,id',
                 'priorite' => 'required|in:faible,moyen,élevé',
+                'retour' => 'nullable|string|max:5000', // ADDED: Validate 'retour' for admins
             ]);
 
-            // Si l'administrateur remplit les deux (description textuelle et audio_data)
             if ($request->filled('description') && $request->filled('audio_data')) {
                 return redirect()->back()
                     ->with('error', 'Vous ne pouvez pas saisir une description textuelle et un enregistrement audio en même temps. Choisissez-en un seul.')
                     ->withInput();
             }
 
-            $data = $request->except('retour', 'user_ids', 'audio_data', 'remove_existing_audio');
+            // CHANGED: Do NOT exclude 'retour' from $data here.
+            $data = $request->except('user_ids', 'audio_data', 'remove_existing_audio');
             $data['updated_by'] = auth()->id();
 
-            // Cette logique détermine ce qui sera dans 'description' et 'audio_description_path'
-            // 1. Si l'administrateur a coché la case "Supprimer l'audio existant"
             if ($request->boolean('remove_existing_audio')) {
                 if ($tache->audio_description_path) {
                     Storage::disk('public')->delete($tache->audio_description_path);
                 }
                 $data['audio_description_path'] = null;
-                // Si l'audio a été supprimé, nous vérifions si une description textuelle a été fournie ou non
                 $data['description'] = $request->filled('description') ? $request->description : '-';
-            }
-            // 2. S'il y a de nouvelles données audio (provenant de l'enregistrement)
-            elseif ($request->filled('audio_data')) {
+            } elseif ($request->filled('audio_data')) {
                 if ($tache->audio_description_path) {
-                    Storage::disk('public')->delete($tache->audio_description_path); // Supprimer l'ancien
+                    Storage::disk('public')->delete($tache->audio_description_path);
                 }
-                $data['description'] = '-'; // Le texte de la description deviendra "-"
+                $data['description'] = '-';
 
-                // Décoder l'audio Base64 et le stocker
                 $base64_audio = $request->input('audio_data');
                 @list($type, $base64_audio) = explode(';', $base64_audio);
                 @list(, $base64_audio) = explode(',', $base64_audio);
@@ -278,38 +285,29 @@ class TacheController extends Controller
                 $filename = 'audio_' . uniqid() . '.webm';
                 Storage::disk('public')->put('task_audios/' . $filename, $audio_decoded);
                 $data['audio_description_path'] = 'task_audios/' . $filename;
-            }
-            // 3. S'il y a une nouvelle description textuelle (et pas de nouvel audio ni de suppression de l'ancien)
-            elseif ($request->filled('description')) {
+            } elseif ($request->filled('description')) {
                 if ($tache->audio_description_path) {
-                    Storage::disk('public')->delete($tache->audio_description_path); // Supprimer l'ancien audio si présent
+                    Storage::disk('public')->delete($tache->audio_description_path);
                 }
-                $data['audio_description_path'] = null; // Le chemin audio deviendra NULL
-                $data['description'] = $request->description; // Remplir la description avec ce que l'admin a tapé
-            }
-            // 4. Si aucune des conditions ci-dessus n'est remplie (pas de suppression, pas de nouvel audio, pas de nouvelle description)
-            else {
-                // Ici, nous allons conserver l'état précédent de la description et du chemin audio.
-                // Cela garantit que si rien n'est modifié, la tâche reste telle quelle.
+                $data['audio_description_path'] = null;
+                $data['description'] = $request->description;
+            } else {
                 $data['description'] = $tache->description;
                 $data['audio_description_path'] = $tache->audio_description_path;
 
-                // Dans le cas où rien n'est fourni, nous nous assurons que la description est "-"
-                // Cette vérification garantit que si l'ancienne description était nulle (par erreur ou un ancien cas)
-                // alors que notre nouvelle logique la rend toujours '-', cette ligne la sécurise.
                 if (empty($data['description']) && empty($data['audio_description_path'])) {
-                     $data['description'] = '-';
+                    $data['description'] = '-';
                 }
             }
 
             $startDate = Carbon::parse($request->input('datedebut'));
             $data['date_fin_prevue'] = $this->calculateExpectedEndDate($startDate, $request->input('duree'));
 
-            $tache->update($data);
+            $tache->update($data); // This will now include 'retour' if it was in $request->all()
 
             $tache->users()->sync($request->input('user_ids'));
 
-        } elseif ($user->hasAnyRole(['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH'])) {
+        } elseif ($canModifyStatusAndRetour) { // This block handles USER_MULTIMEDIA, USER_TRAINING, Sales_Admin, USER_TECH
             $request->validate([
                 'status' => 'required|in:nouveau,en cours,termine',
                 'retour' => 'nullable|string|max:5000',
@@ -320,6 +318,7 @@ class TacheController extends Controller
                 'retour' => $request->retour,
                 'updated_by' => auth()->id(),
             ]);
+            \Log::info('Retour value after update for specific roles: ' . $tache->retour);
         } else {
             return redirect()->route('taches.index')
                 ->with('error', 'Accès refusé pour modifier cette tâche.');
@@ -477,8 +476,8 @@ class TacheController extends Controller
         }
 
         $overdueQuery = (clone $baseQuery)->where('status', '!=', 'termine')
-                                         ->whereNotNull('date_fin_prevue')
-                                         ->where('date_fin_prevue', '<', Carbon::now());
+                                            ->whereNotNull('date_fin_prevue')
+                                            ->where('date_fin_prevue', '<', Carbon::now());
 
         $newTasks = (clone $baseQuery)->where('status', 'nouveau')->count();
         $inProgressTasks = (clone $baseQuery)->where('status', 'en cours')->count();

@@ -164,12 +164,12 @@
                                 @endif
                             @endforeach
 
-                            @php
-                                $user = auth()->user();
-                                $isAdminOrAdmin1 = $user->hasAnyRole(['Sup_Admin', 'Custom_Admin']);
-                                $canModifyRetourRoles = ['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH'];
-                                $canEditRetour = $user->hasAnyRole($canModifyRetourRoles);
-                            @endphp
+                           @php
+                         $user = auth()->user();
+                          $isAdminOrAdmin1 = $user->hasAnyRole(['Sup_Admin', 'Custom_Admin']);
+                       $canModifyRetourRoles = ['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH','Custom_Admin'];
+                       $canEditRetour = $user->hasAnyRole($canModifyRetourRoles);
+                          @endphp
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 <div>
@@ -370,9 +370,9 @@
                                         class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
                                         focus:ring-primary-red focus:border-primary-red
                                         @error('retour') border-primary-red ring-red-200 @enderror
-                                        {{ !$isAdminOrAdmin1 && !$canEditRetour ? 'bg-gray-100 cursor-not-allowed' : '' }}"
-                                        placeholder="{{ __('Ajoutez des notes ou un retour sur la tâche...') }}"
-                                        {{ !$isAdminOrAdmin1 && !$canEditRetour ? 'readonly' : '' }}>{{ old('retour', $tache->retour) }}</textarea>
+                                       {{ !$isAdminOrAdmin1 && !$canEditRetour ? 'bg-gray-100 cursor-not-allowed' : '' }}"
+placeholder="{{ __('Ajoutez des notes ou un retour sur la tâche...') }}"
+{{ !$isAdminOrAdmin1 && !$canEditRetour ? 'readonly' : '' }}>{{ old('retour', $tache->retour) }}</textarea>
                                     @error('retour')
                                         <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
                                     @enderror

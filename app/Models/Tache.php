@@ -10,7 +10,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class Tache extends Model
 {
-    use HasFactory, Notifiable; // أزل HasRoles إذا لم يكن Tache هو الذي يحمل الصلاحيات
+    use HasFactory, Notifiable,HasRoles; 
 
     protected $fillable = [
         'description',
@@ -33,9 +33,7 @@ class Tache extends Model
      */
     public function users()
     {
-        // العلاقة Many-to-Many عبر الجدول الوسيط 'tache_users'
-        // 'tache_id' هو المفتاح الخارجي في الجدول الوسيط الذي يشير إلى Tache
-        // 'user_id' هو المفتاح الخارجي في الجدول الوسيط الذي يشير إلى User
+        
         return $this->belongsToMany(User::class, 'tache_users', 'tache_id', 'user_id');
     }
 
