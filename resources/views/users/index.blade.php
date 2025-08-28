@@ -4,7 +4,7 @@
         <div class="row">
             <div class="col-12">
                        <h2 class="font-semibold text-2xl text-gray-800 leading-tight border-b-2 border-primary-red pb-3 mb-6 animate-fade-in delay-100">
-    <i class="fas fa-user mr-3 text-primary-red"></i> {{ __('Gestion des utilisateures') }}
+    <i class="fas fa-user mr-3 text-primary-red"></i> {{ __('Gestion des utilisateurs') }}
 </h2>
             </div>
         </div>
@@ -72,11 +72,21 @@
         <div class="card shadow-md mb-4 rounded-lg animate-slide-up">
             <div class="card-header bg-gray-100 d-flex flex-wrap justify-content-between align-items-center py-3 px-4 border-b border-gray-200">
                 <h5 class="mb-2 mb-md-0 text-lg font-semibold">Actions et Filtres</h5>
-                @can('user-create')
-                    <a class="btn d-inline-flex align-items-center text-white custom-btn-primary transition duration-300 hover:opacity-90" style="background-color: #D32F2F; border-color: #D32F2F;" href="{{ route('users.create') }}">
-                        <i class="fas fa-plus me-2"></i> Nouveau Utilisateur
-                    </a>
-                @endcan
+                <div class="d-flex flex-wrap gap-2">
+                    @can('user-create')
+                        <a class="btn d-inline-flex align-items-center text-white custom-btn-primary transition duration-300 hover:opacity-90" style="background-color: #D32F2F; border-color: #D32F2F;" href="{{ route('users.create') }}">
+                            <i class="fas fa-plus me-2"></i> Nouveau Utilisateur
+                        </a>
+                    @endcan
+
+                    {{-- BOUTON AJOUTER CLIENT --}}
+                    <button type="button" class="btn d-inline-flex align-items-center text-white custom-btn-primary transition duration-300 hover:opacity-90"
+                            style="background-color: #D32F2F; border-color: #D32F2F;"
+                            data-bs-toggle="modal" data-bs-target="#addClientModal">
+                        <i class="fas fa-user-plus me-2"></i> Ajouter Client
+                    </button>
+                    {{-- FIN BOUTON AJOUTER CLIENT --}}
+                </div>
             </div>
             <div class="card-body p-4">
                 <div class="row g-3 align-items-center">
@@ -98,7 +108,7 @@
                         <form method="GET" action="{{ route('users.index') }}" class="row g-2 justify-content-lg-end">
                             <div class="col-md-5 col-lg-4">
                                 <input type="text" class="form-control focus:ring-2 focus:ring-primary-red focus:border-transparent transition duration-200" name="search"
-                                         placeholder="Rechercher..." value="{{ request('search') }}">
+                                           placeholder="Rechercher..." value="{{ request('search') }}">
                             </div>
                             <div class="col-md-4 col-lg-3">
                                 <select name="role" class="form-select focus:ring-2 focus:ring-primary-red focus:border-transparent transition duration-200">
@@ -140,7 +150,7 @@
                                 <th scope="col">
                                     <input type="checkbox" id="selectAll" class="form-check-input accent-primary-red">
                                 </th>
-                               
+                                
                                 <th scope="col">
                                     <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'name', 'sort_direction' => request('sort_direction') == 'ASC' ? 'DESC' : 'ASC']) }}"
                                        class="text-white text-decoration-none d-flex align-items-center hover:text-gray-300 transition duration-200">
@@ -167,7 +177,7 @@
                                     <td>
                                         <input type="checkbox" class="form-check-input user-checkbox accent-primary-red" value="{{ $user->id }}">
                                     </td>
-                                   
+                                    
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="avatar-circle-sm text-white me-2 shadow-sm" style="background-color: #D32F2F;">
@@ -192,8 +202,8 @@
                                         <div class="form-check form-switch d-flex align-items-center">
                                             {{-- Le toggle de statut aura toujours besoin de JS pour fonctionner en temps réel --}}
                                             <input class="form-check-input status-toggle me-2 cursor-pointer" type="checkbox" role="switch"
-                                                     data-user-id="{{ $user->id }}"
-                                                     {{ $user->is_active ? 'checked' : '' }}>
+                                                            data-user-id="{{ $user->id }}"
+                                                            {{ $user->is_active ? 'checked' : '' }}>
                                             <span class="badge text-white px-2 py-1 rounded-md transition duration-200 {{ $user->is_active ? 'bg-success' : 'bg-danger' }}">
                                                 {{ $user->is_active ? 'Actif' : 'Inactif' }}
                                             </span>
@@ -283,6 +293,76 @@
             </div>
         </div>
     </div>
+
+    {{-- NOUVEAU MODAL POUR AJOUTER UN CLIENT --}}
+    <div class="modal fade" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content rounded-lg shadow-xl animate-scale-in">
+                <form action="{{ route('clients.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-header text-white rounded-t-lg" style="background-color: #D32F2F;">
+                        <h5 class="modal-title font-bold" id="addClientModalLabel">Ajouter un nouveau client</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            {{-- Nom Complet --}}
+                            <div class="col-md-6">
+                                <label for="nom_complet" class="form-label">Nom Complet <span class="text-danger">*</span></label>
+                                <input type="text" name="nom_complet" id="nom_complet" class="form-control" required>
+                            </div>
+                            {{-- Email --}}
+                            <div class="col-md-6">
+                                <label for="email_client" class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" name="email" id="email_client" class="form-control" required>
+                            </div>
+                            {{-- Téléphone --}}
+                            <div class="col-md-6">
+                                <label for="tele_client" class="form-label">Téléphone <span class="text-danger">*</span></label>
+                                <input type="tel" name="tele" id="tele_client" class="form-control" required>
+                            </div>
+                            {{-- Adresse --}}
+                            <div class="col-md-6">
+                                <label for="adresse_client" class="form-label">Adresse <span class="text-danger">*</span></label>
+                                <input type="text" name="adresse" id="adresse_client" class="form-control" required>
+                            </div>
+
+                            {{-- Type de Client --}}
+                            <div class="col-12 mt-4">
+                                <label class="form-label">Type de Client <span class="text-danger">*</span></label>
+                                <div class="d-flex gap-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input client-type" type="radio" name="type_client" id="type_particulier" value="particulier" checked>
+                                        <label class="form-check-label" for="type_particulier">
+                                            Particulier
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input client-type" type="radio" name="type_client" id="type_entreprise" value="entreprise">
+                                        <label class="form-check-label" for="type_entreprise">
+                                            Entreprise
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {{-- Nom de la Société (caché par défaut) --}}
+                            <div class="col-12 mt-3" id="societe_name_container" style="display: none;">
+                                <label for="societe_name" class="form-label">Nom de la Société <span class="text-danger">*</span></label>
+                                <input type="text" name="societe_name" id="societe_name" class="form-control" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-t border-gray-200 p-3 flex justify-end">
+                        <button type="button" class="btn btn-secondary me-2 transition duration-200 hover:bg-gray-200" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn text-white custom-btn-primary transition duration-300 hover:opacity-90" style="background-color: #D32F2F;">Enregistrer le client</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {{-- END NOUVEAU MODAL --}}
 
     @section('scripts')
     {{-- On garde juste ce qui est absolument nécessaire, comme le JavaScript pour Bootstrap Modal (pour l'import) et le toggle de statut, et toastr. --}}
@@ -394,10 +474,26 @@
                     }
                 });
             });
+
+
+            // NOUVEAU LOGIC JS POUR LE FORMULAIRE DU CLIENT
+            const $clientTypeRadios = $('.client-type');
+            const $societeNameContainer = $('#societe_name_container');
+            const $societeNameInput = $('#societe_name');
+
+            // Gérer le changement de radio button
+            $clientTypeRadios.on('change', function() {
+                if ($(this).val() === 'entreprise') {
+                    $societeNameContainer.show();
+                    $societeNameInput.prop('required', true).prop('disabled', false);
+                } else {
+                    $societeNameContainer.hide();
+                    $societeNameInput.prop('required', false).prop('disabled', true).val('');
+                }
+            });
+
         });
 
-        // Les fonctions deleteUser, resetPassword, duplicateUser ne sont plus nécessaires car elles sont gérées par les formulaires HTML
-        // Si tu as encore des appels à ces fonctions ailleurs, il faudra les remplacer par des formulaires
     </script>
     @endsection
 </x-app-layout>

@@ -27,7 +27,7 @@ return new class extends Migration
              $table->boolean('is_active')->default(true);
              
             $table->rememberToken();
-             $table->timestamp('last_login_at')->nullable();// Or after any other column
+             $table->timestamp('last_login_at')->nullable();
             $table->integer('login_count')->default(0);
             $table->timestamps();
         });

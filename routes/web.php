@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
@@ -179,6 +180,8 @@ Route::patch('/users/{id}/toggle-status', [UserController::class, 'toggleStatus'
 Route::delete('/users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulk-delete');
 Route::post('/users/{id}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
 Route::post('/users/{id}/duplicate', [UserController::class, 'duplicate'])->name('users.duplicate');
+Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
+
 
 Route::resource('roles', RoleController::class);
 Route::post('/suivre-pointage/pointer', [SuivrePointageController::class, 'pointer'])->name('suivre_pointage.pointer');
