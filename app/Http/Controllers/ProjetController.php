@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Avancement;
 use App\Models\Projet;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role; // N'oublie pas d'importer le modèle de rôle
+use Illuminate\Support\Facades\Auth;
+
 
 class ProjetController extends Controller
 {
@@ -166,4 +169,35 @@ class ProjetController extends Controller
 
         return view('admin.dashboard', compact('stats', 'projets_recents'));
     }
+
+
+    public function showAvancement(Avancement $avancement)
+    {
+        // Ta'aked belli l'client 3ando l7a9 ychouf had l'avancement
+        if ($avancement->projet->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        return view('client.avancements.show', compact('avancement'));
+    }
+
+
+
+
+  public function downloadFile(Projet $projet)
+{
+    // Ta'aked men l-woujoud dyal l-fichier
+    if (!$projet->fichier || !Storage::disk('public')->exists($projet->fichier)) {
+        abort(404, 'Fichier non trouvé.');
+    }
+
+    // Njebdou l'ism l'asli dyal l'fichier
+    $originalFileName = basename($projet->fichier);
+
+    // N'ssamiw l'fichier b'smya l'projet + l'ism l'asli dyalou
+    $fileName = 'Projet_' . $projet->titre . '_' . $originalFileName;
+
+    // Télécharger l-fichier b'smiya jdida
+    return Storage::disk('public')->download($projet->fichier, $fileName);
+}
 }

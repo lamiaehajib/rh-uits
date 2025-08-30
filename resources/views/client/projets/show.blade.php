@@ -221,9 +221,9 @@
                             @endif
                             @if($projet->fichier)
                                 <hr>
-                                <a href="{{ Storage::disk('public')->url($projet->fichier) }}" target="_blank" class="custom-btn">
-                                    <i class="fas fa-download me-2"></i>Télécharger le fichier du projet
-                                </a>
+                               <a href="{{ route('admin.projets.download', $projet) }}" class="btn custom-btn">
+    <i class="fas fa-download me-2"></i> Télécharger le fichier du projet
+</a>
                             @endif
                         </div>
                     </div>
@@ -248,20 +248,28 @@
                                 </div>
                             </div>
 
-                            <h6><i class="fas fa-tasks me-2 icon-accent"></i>Détails des avancements:</h6>
+                             <h6><i class="fas fa-tasks me-2 icon-accent"></i>Détails des avancements:</h6>
                             <div class="list-group">
                                 @forelse($projet->avancements as $avancement)
-                                    <div class="list-group-item list-group-item-custom">
-                                        <h6 class="mb-1">
-                                            <i class="fas fa-step-forward me-2 icon-accent"></i>{{ $avancement->etape }} 
-                                            <span class="badge status-badge-custom status-en-cours float-end">
-                                                <i class="fas fa-percentage me-1"></i>{{ $avancement->pourcentage }}%
-                                            </span>
-                                        </h6>
-                                        <p class="mb-1 text-muted small"><i class="fas fa-comment-dots me-1"></i>{{ $avancement->description }}</p>
-                                        <small class="text-muted">
-                                            <i class="fas fa-clock me-1"></i>Mise à jour le {{ $avancement->updated_at->format('d/m/Y à H:i') }}
-                                        </small>
+                                    <div class="list-group-item list-group-item-custom d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-step-forward me-2 icon-accent"></i>{{ $avancement->etape }} 
+                                                <span class="badge status-badge-custom status-en-cours float-end">
+                                                    <i class="fas fa-percentage me-1"></i>{{ $avancement->pourcentage }}%
+                                                </span>
+                                            </h6>
+                                            <p class="mb-1 text-muted small"><i class="fas fa-comment-dots me-1"></i>{{ Str::limit($avancement->description, 50) }}</p>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>Mise à jour le {{ $avancement->updated_at->format('d/m/Y à H:i') }}
+                                            </small>
+                                        </div>
+                                        <div>
+                                            {{-- Bouton "Voir" --}}
+                                            <a href="{{ route('client.avancements.show', $avancement) }}" class="btn custom-btn-secondary btn-sm">
+                                                <i class="fas fa-eye me-1"></i> Voir
+                                            </a>
+                                        </div>
                                     </div>
                                 @empty
                                     <div class="text-center py-4">

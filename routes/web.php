@@ -6,6 +6,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjetController;
 use App\Http\Controllers\RendezVousController;
+use App\Models\Avancement;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -216,7 +217,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     
     // Projets
     Route::resource('projets', ProjetController::class);
-    
+    Route::get('projets/{projet}/download', [ProjetController::class, 'downloadFile'])
+    ->name('projets.download');
     // Rendez-vous
     Route::resource('rendez-vous', RendezVousController::class);
     Route::get('rendez-vous-aujourdhui', [RendezVousController::class, 'aujourdhui'])->name('rendez-vous.aujourdhui');
@@ -228,6 +230,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('avancements/{avancement}/pourcentage', [AvancementController::class, 'updatePourcentage'])
             ->name('avancements.update-pourcentage');
     });
+
+    
 });
 
 // Routes pour les clients (optionnel)
@@ -278,6 +282,23 @@ Route::prefix('client')->name('client.')->middleware('auth')->group(function () 
         $pourcentageGlobal = $projet->avancements->avg('pourcentage') ?? 0;
         return view('client.projets.show', compact('projet', 'pourcentageGlobal'));
     })->name('projets.show');
+
+
+    Route::get('avancement/{avancement}', function (Avancement $avancement) {
+        if ($avancement->projet->user_id !== auth()->id()) {
+            abort(403);
+        }
+        return view('client.avancements.show', compact('avancement'));
+    })->name('avancements.show');
+
+
+
+
+    // Route pour télécharger le fichier d'un avancement
+Route::get('avancement/{avancement}/download', [AvancementController::class, 'downloadFile'])
+    ->name('avancements.download');
+
+
 
     // Liste des rendez-vous
     Route::get('rendez-vous', function () {

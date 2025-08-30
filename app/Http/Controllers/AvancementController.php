@@ -6,7 +6,7 @@ use App\Models\Avancement;
 use App\Models\Projet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Support\Facades\Auth;
 class AvancementController extends Controller
 {
     public function index(Projet $projet)
@@ -116,4 +116,24 @@ class AvancementController extends Controller
             'message' => 'Pourcentage mis à jour'
         ]);
     }
+
+    // F-l-akhir dyal l-class AvancementController
+public function downloadFile(Avancement $avancement)
+{
+    // Awal 7aja, nta2aked beli l-client li m-connecté howa s-saheb dyal l-projet
+    if ($avancement->projet->user_id !== Auth::id()) {
+        abort(403, 'Accès non autorisé.');
+    }
+
+    // Ta2aked men l-woujoud dyal l-fichier
+    $filePath = $avancement->fichiers; // The path should not contain the disk name
+    $disk = 'public';
+
+    if (!Storage::disk($disk)->exists($filePath)) {
+        abort(404, 'Fichier non trouvé.');
+    }
+
+    // Télécharger l-fichier
+    return Storage::disk($disk)->download($filePath);
+}
 }

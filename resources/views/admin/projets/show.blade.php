@@ -89,9 +89,12 @@
                         <div class="row mb-3">
                             <div class="col-sm-3"><strong>Fichier joint:</strong></div>
                             <div class="col-sm-9">
-                                <a href="{{ Storage::disk('public')->url($projet->fichier) }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                           <i class="fas fa-download"></i> Télécharger le fichier
-                              </a>
+      @if($projet->fichier)
+                               
+                               <a href="{{ route('admin.projets.download', $projet) }}" class="btn custom-btn">
+    <i class="fas fa-download me-2"></i> Télécharger le fichier du projet
+</a>
+                            @endif
                             </div>
                         </div>
                     @endif
