@@ -532,8 +532,8 @@
                         </a>
                     </li>
                     <li class="nav-item me-3">
-                        <a class="nav-link text-decoration-none text-gray-700 hover:text-primary-red transition" href="{{ route('client.rendez-vous.index') }}">
-                            <i class="fas fa-calendar-check me-2"></i>Rendez-vous
+                        <a class="nav-link text-decoration-none text-gray-700 hover:text-primary-red transition" href="{{ route('client.client.planning') }}">
+                            <i class="fas fa-calendar-check me-2"></i>La maintenance sur site 
                         </a>
                     </li>
                     <li class="nav-item">

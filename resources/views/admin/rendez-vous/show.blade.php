@@ -1,4 +1,3 @@
-{{-- resources/views/admin/rendez-vous/show.blade.php --}}
 <x-app-layout>
 <div class="container-fluid">
     <div class="row">
@@ -10,7 +9,7 @@
                         <h3 class="card-title mb-1">{{ $rendezVous->titre }}</h3>
                         @if($rendezVous->date_heure)
                         <small class="text-muted">
-                            Rendez-vous du {{ $rendezVous->date_heure->format('d/m/Y à H:i') }}
+                            La maintenance sur site  du {{ $rendezVous->date_heure->format('d/m/Y à H:i') }}
                         </small>
                         @endif
                     </div>
@@ -46,7 +45,7 @@
                     <div class="card">
                         <div class="card-header">
                             <h5 class="card-title mb-0">
-                                <i class="fas fa-info-circle"></i> Informations du Rendez-vous
+                                <i class="fas fa-info-circle"></i> Informations du La maintenance sur site 
                             </h5>
                         </div>
                         <div class="card-body">
@@ -187,7 +186,7 @@
                                         <input type="hidden" name="statut" value="terminé">
                                         <input type="hidden" name="notes" value="{{ $rendezVous->notes }}">
                                         <button type="submit" class="btn btn-success" 
-                                                onclick="return confirm('Marquer ce rendez-vous comme terminé ?')">
+                                                onclick="return confirm('Marquer ce La maintenance sur site  comme terminé ?')">
                                             <i class="fas fa-check"></i> Marquer terminé
                                         </button>
                                     </form>
@@ -196,7 +195,7 @@
                                     @csrf --}}
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger" 
-                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')">
+                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce La maintenance sur site  ?')">
                                         <i class="fas fa-trash"></i> Supprimer
                                     </button>
                                 </form>

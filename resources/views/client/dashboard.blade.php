@@ -259,7 +259,7 @@
                 <div class="card card-custom shadow">
                     <div class="card-header-custom">
                         <h6 class="m-0 font-weight-bold">
-                            <i class="fas fa-calendar-alt mr-2"></i>Rendez-vous à venir
+                            <i class="fas fa-calendar-alt mr-2"></i>La maintenance sur site  à venir
                         </h6>
                     </div>
                     <div class="card-body">
@@ -284,7 +284,7 @@
                         @else
                             <div class="text-center py-5">
                                 <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-                                <p class="text-muted fst-italic">Aucun rendez-vous de prévu.</p>
+                                <p class="text-muted fst-italic">Aucun La maintenance sur site  de prévu.</p>
                             </div>
                         @endif
                     </div>

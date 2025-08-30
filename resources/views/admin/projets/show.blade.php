@@ -146,11 +146,11 @@
                 </div>
             @endif
 
-            <!-- Rendez-vous -->
+            <!-- La maintenance sur site  -->
             @if($projet->rendezVous->count() > 0)
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="mb-0">Rendez-vous programmés</h5>
+                        <h5 class="mb-0">La maintenance sur site programmés</h5>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -224,7 +224,7 @@
                         <div class="col-6">
                             <div class="border-end">
                                 <h4 class="text-primary">{{ $projet->rendezVous->count() }}</h4>
-                                <small class="text-muted">Rendez-vous</small>
+                                <small class="text-muted">La maintenance sur site </small>
                             </div>
                         </div>
                         <div class="col-6">

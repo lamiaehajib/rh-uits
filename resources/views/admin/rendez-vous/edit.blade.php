@@ -1,11 +1,10 @@
-{{-- resources/views/admin/rendez-vous/edit.blade.php --}}
 <x-app-layout>
 <div class="container-fluid">
     <div class="row">
         <div class="col-12 col-lg-8">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title mb-0">Modifier le Rendez-vous</h3>
+                    <h3 class="card-title mb-0">Modifier le La maintenance sur site </h3>
                     <small class="text-muted">{{ $rendezVous->titre }}</small>
                 </div>
 
@@ -96,7 +95,7 @@
                                           id="description" 
                                           class="form-control @error('description') is-invalid @enderror" 
                                           rows="4"
-                                          placeholder="Détails du rendez-vous, points à aborder...">{{ old('description', $rendezVous->description) }}</textarea>
+                                          placeholder="Détails du La maintenance sur site , points à aborder...">{{ old('description', $rendezVous->description) }}</textarea>
                                 @error('description')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

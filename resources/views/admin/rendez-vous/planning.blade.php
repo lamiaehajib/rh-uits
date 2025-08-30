@@ -1,4 +1,3 @@
-{{-- resources/views/admin/rendez-vous/planning.blade.php --}}
 <x-app-layout>
 <div class="container-fluid">
     <div class="row">
@@ -167,7 +166,7 @@
                                         @if($dayRdv->count() > 0)
                                             <div class="card-footer p-2">
                                                 <small class="text-muted">
-                                                    {{ $dayRdv->count() }} rendez-vous
+                                                    {{ $dayRdv->count() }} La maintenance sur site 
                                                     @if($dayRdv->where('statut', 'confirmé')->count() > 0)
                                                         | {{ $dayRdv->where('statut', 'confirmé')->count() }} confirmé(s)
                                                     @endif
@@ -212,7 +211,7 @@
                                             </div>
                                         </div>
 
-                                        <!-- Prochains rendez-vous -->
+                                        <!-- Prochains La maintenance sur site  -->
                                         @php
                                             $prochains = $rendezVous->where('date_heure', '>', now())
                                                                    ->where('statut', '!=', 'annulé')
@@ -223,7 +222,7 @@
                                         @if($prochains->count() > 0)
                                             <hr>
                                             <h6 class="mt-3 mb-2">
-                                                <i class="fas fa-clock me-2"></i>Prochains rendez-vous
+                                                <i class="fas fa-clock me-2"></i>Prochains La maintenance sur site 
                                             </h6>
                                             <div class="row">
                                                 @foreach($prochains as $rdv)
@@ -256,10 +255,10 @@
                     @else
                         <div class="text-center py-5">
                             <i class="fas fa-calendar-week fa-4x text-muted mb-3"></i>
-                            <h5 class="text-muted">Aucun rendez-vous cette semaine</h5>
-                            <p class="text-muted">Planifiez vos rendez-vous pour organiser votre semaine.</p>
+                            <h5 class="text-muted">Aucun La maintenance sur site  cette semaine</h5>
+                            <p class="text-muted">Planifiez vos La maintenance sur site  pour organiser votre semaine.</p>
                             <a href="{{ route('admin.rendez-vous.create') }}" class="btn btn-primary mt-2">
-                                <i class="fas fa-plus"></i> Planifier un rendez-vous
+                                <i class="fas fa-plus"></i> Planifier un La maintenance sur site 
                             </a>
                         </div>
                     @endif

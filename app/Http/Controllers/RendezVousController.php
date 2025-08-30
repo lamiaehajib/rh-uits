@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\RendezVous;
 use App\Models\Projet;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 class RendezVousController extends Controller
 {
     public function index()
@@ -78,6 +79,29 @@ class RendezVousController extends Controller
             ->with('success', 'Rendez-vous mis à jour avec succès!');
     }
 
+
+     public function cancelRendezVous(RendezVous $rendezVous)
+    {
+        // Check if the authenticated user is the owner of the rendezvous
+        if (Auth::id() !== $rendezVous->projet->user_id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        // T'a99ed ila l'rendez-vous deja fâtte wa9tou, ila kân, ma y9derch y'annulih
+        if ($rendezVous->date_heure->isPast()) {
+            return back()->with('error', 'Impossible d\'annuler un rendez-vous passé.');
+        }
+
+        // Update le statut à 'annulé'
+        $rendezVous->update(['statut' => 'annulé']);
+
+        return back()->with('success', 'Rendez-vous annulé avec succès.');
+    }
+
+
+
+    
+
     public function destroy(RendezVous $rendezVous)
     {
         $rendezVous->delete();
@@ -106,5 +130,38 @@ class RendezVousController extends Controller
             ->get();
         
         return view('admin.rendez-vous.planning', compact('rendezVous'));
+    }
+
+
+  public function clientPlanning($periode = 'current_week')
+    {
+        $userId = Auth::id();
+
+        if (!$userId) {
+            return redirect()->route('login');
+        }
+
+        $now = Carbon::now();
+
+        if ($periode === 'previous_week') {
+            $startOfWeek = $now->copy()->subWeek()->startOfWeek(Carbon::MONDAY);
+            $endOfWeek = $now->copy()->subWeek()->endOfWeek(Carbon::SUNDAY);
+        } elseif ($periode === 'next_week') {
+            $startOfWeek = $now->copy()->addWeek()->startOfWeek(Carbon::MONDAY);
+            $endOfWeek = $now->copy()->addWeek()->endOfWeek(Carbon::SUNDAY);
+        } else { // 'current_week'
+            $startOfWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
+            $endOfWeek = $now->copy()->endOfWeek(Carbon::SUNDAY);
+        }
+
+        $rendezVous = RendezVous::with(['projet', 'projet.client'])
+            ->whereHas('projet', function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            })
+            ->whereBetween('date_heure', [$startOfWeek, $endOfWeek])
+            ->orderBy('date_heure')
+            ->get();
+
+        return view('client.planning.index', compact('rendezVous', 'periode'));
     }
 }

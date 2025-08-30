@@ -4,10 +4,10 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title mb-0">Liste des Rendez-vous</h3>
+                    <h3 class="card-title mb-0">Liste des La maintenance sur site </h3>
                     <div>
                         <a href="{{ route('admin.rendez-vous.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Nouveau Rendez-vous
+                            <i class="fas fa-plus"></i> Nouveau La maintenance sur site 
                         </a>
                         <a href="{{ route('admin.rendez-vous.planning') }}" class="btn btn-info">
                             <i class="fas fa-calendar-week"></i> Planning
@@ -115,9 +115,9 @@
                     @else
                         <div class="text-center py-5">
                             <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
-                            <h5 class="text-muted">Aucun rendez-vous trouvé</h5>
+                            <h5 class="text-muted">Aucun La maintenance sur site  trouvé</h5>
                             <a href="{{ route('admin.rendez-vous.create') }}" class="btn btn-primary mt-2">
-                                Créer le premier rendez-vous
+                                Créer le premier La maintenance sur site 
                             </a>
                         </div>
                     @endif

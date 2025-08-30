@@ -296,6 +296,11 @@ Route::prefix('client')->name('client.')->middleware('auth')->group(function () 
             ->paginate(10);
         return view('reclamations.index', compact('reclamations'));
     })->name('reclamations.index');
+
+    Route::get('/client/planning/{periode?}', [RendezVousController::class, 'clientPlanning'])
+    ->name('client.planning');
+    Route::put('/rendez-vous/{rendezVous}/cancel', [RendezVousController::class, 'cancelRendezVous'])
+    ->name('client.rendez-vous.cancel');
 });
 });
 
