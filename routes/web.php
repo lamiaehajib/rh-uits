@@ -1,8 +1,11 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\AvancementController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProjetController;
+use App\Http\Controllers\RendezVousController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -22,6 +25,11 @@ use App\Http\Controllers\SuivrePointageController;
 use App\Http\Controllers\TacheController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VenteObjectifController;
+
+use App\Models\Projet;
+use App\Models\RendezVous;
+use App\Models\Reclamation;
+use App\Models\User;
 
 Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
@@ -203,6 +211,92 @@ Route::get('/test-404', function () {
     abort(404);
 });
 Route::get('/login-history', [AuthenticatedSessionController::class, 'showLoginHistory'])->name('login.history');
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    
+    // Projets
+    Route::resource('projets', ProjetController::class);
+    
+    // Rendez-vous
+    Route::resource('rendez-vous', RendezVousController::class);
+    Route::get('rendez-vous-aujourdhui', [RendezVousController::class, 'aujourdhui'])->name('rendez-vous.aujourdhui');
+    Route::get('planning-semaine', [RendezVousController::class, 'planning'])->name('rendez-vous.planning');
+    
+    // Avancements (imbriqué dans les projets)
+    Route::prefix('projets/{projet}')->group(function () {
+        Route::resource('avancements', AvancementController::class);
+        Route::patch('avancements/{avancement}/pourcentage', [AvancementController::class, 'updatePourcentage'])
+            ->name('avancements.update-pourcentage');
+    });
+});
+
+// Routes pour les clients (optionnel)
+Route::prefix('client')->name('client.')->middleware('auth')->group(function () {
+    // Dashboard du client
+    Route::get('dashboard', function () {
+        $user = auth()->user();
+        
+        $totalProjets = $user->projets()->count();
+        $projetsEnCours = $user->projets()->where('statut_projet', 'en cours')->count();
+        $projetsTermines = $user->projets()->where('statut_projet', 'terminé')->count();
+        $projetsEnAttente = $user->projets()->where('statut_projet', 'en attente')->count();
+        $projetsAnnules = $user->projets()->where('statut_projet', 'annulé')->count();
+
+        // Create the $chartData array with the project counts
+        $chartData = [
+            'labels' => ['En cours', 'Terminés', 'En attente', 'Annulés'],
+            'data' => [$projetsEnCours, $projetsTermines, $projetsEnAttente, $projetsAnnules]
+        ];
+
+        $projetsRecents = $user->projets()->orderBy('created_at', 'desc')->take(5)->get();
+        $rendezVous = RendezVous::where('user_id', $user->id)
+                                ->where('date_heure', '>', now())
+                                ->orderBy('date_heure', 'asc')
+                                ->take(5)->get();
+        
+        $reclamations = Reclamation::where('iduser', $user->id)
+                                   ->where('status', '!=', 'resolved')
+                                   ->latest()
+                                   ->take(5)->get();
+
+        // Pass the new $chartData variable to the view
+        return view('client.dashboard', compact('user', 'totalProjets', 'projetsEnCours', 'projetsTermines', 'projetsRecents', 'rendezVous', 'reclamations', 'projetsEnAttente', 'projetsAnnules', 'chartData'));
+    })->name('dashboard');
+
+    // Liste des projets
+    Route::get('mes-projets', function () {
+        $projets = auth()->user()->projets()->with('avancements')->get();
+        return view('client.projets.index', compact('projets'));
+    })->name('projets.index');
+    
+    // Détails d'un projet
+    Route::get('projet/{projet}', function (Projet $projet) {
+        if ($projet->user_id !== auth()->id()) {
+            abort(403);
+        }
+        $projet->load(['avancements', 'rendezVous']);
+        $pourcentageGlobal = $projet->avancements->avg('pourcentage') ?? 0;
+        return view('client.projets.show', compact('projet', 'pourcentageGlobal'));
+    })->name('projets.show');
+
+    // Liste des rendez-vous
+    Route::get('rendez-vous', function () {
+        $rendezVous = RendezVous::where('user_id', auth()->id())
+            ->with('projet')
+            ->orderBy('date_heure', 'asc')
+            ->paginate(10);
+        return view('admin.rendez-vous.index', compact('rendezVous'));
+    })->name('rendez-vous.index');
+
+    // Liste des réclamations
+    Route::get('reclamations', function () {
+        // Fixe: Utilisation de 'iduser' au lieu de 'user_id'
+        $reclamations = Reclamation::where('iduser', auth()->id())
+            ->latest()
+            ->paginate(10);
+        return view('reclamations.index', compact('reclamations'));
+    })->name('reclamations.index');
+});
 });
 
 // Handle registration

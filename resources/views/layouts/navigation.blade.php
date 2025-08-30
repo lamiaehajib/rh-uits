@@ -401,8 +401,15 @@
 
                 @can("project-list")
                 <button type="button">
-                    <a href="{{ route('projects.index') }}"><i class='bx bx-briefcase'></i></a>
-                    <span><a class="a" href="{{ route('projects.index') }}">projects</a></span>
+                    <a href="{{ route('admin.projets.index') }}"><i class='bx bx-briefcase'></i></a>
+                    <span><a class="a" href="{{ route('admin.projets.index') }}">projects</a></span>
+                </button>
+                @endcan
+
+                 @can("project-list")
+                <button type="button">
+                    <a href="{{ route('admin.rendez-vous.index') }}"><i class='bx bx-briefcase'></i></a>
+                    <span><a class="a" href="{{ route('admin.rendez-vous.index') }}">rendez vous</a></span>
                 </button>
                 @endcan
 

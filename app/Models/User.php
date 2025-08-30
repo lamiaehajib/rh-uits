@@ -38,6 +38,11 @@ class User extends Authenticatable
     return $this->belongsToMany(Project::class, 'project_user');
 }
 
+  public function projets()
+    {
+        return $this->hasMany(Projet::class);
+    }
+
     public function taches()
     {
         return $this->hasMany(Tache::class, 'iduser');
@@ -76,6 +81,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(LoginLog::class);
     }
+    
+
     
 
     

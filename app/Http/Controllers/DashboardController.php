@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dashboard;
+use App\Models\RendezVous;
 use App\Models\User;
 use App\Models\Tache;
 use App\Models\Project;
@@ -25,7 +26,8 @@ class DashboardController extends Controller
      */
     function __construct()
     {
-        $this->middleware('check.clocked.in');
+        $this->middleware('check.clocked.in')->except('clientDashboard');
+        
         $this->middleware('permission:project-list|tache-list|formation-list|formation-delete', ['only' => ['index']]);
     }
 
@@ -1007,5 +1009,47 @@ class DashboardController extends Controller
         }
 
         return $query->take(5)->get(); // Limit to 5 for dashboard overview
+    }
+
+
+   // Final correct version for the clientDashboard method
+ public function clientDashboard()
+    {
+        $user = auth()->user();
+        $totalProjets = $user->projets()->count();
+        $projetsEnCours = $user->projets()->where('statut_projet', 'en cours')->count();
+        $projetsTermines = $user->projets()->where('statut_projet', 'terminé')->count();
+        $projetsEnAttente = $user->projets()->where('statut_projet', 'en attente')->count();
+        $projetsAnnules = $user->projets()->where('statut_projet', 'annulé')->count();
+
+        $chartData = [
+            'labels' => ['En cours', 'Terminés', 'En attente', 'Annulés'],
+            'data' => [$projetsEnCours, $projetsTermines, $projetsEnAttente, $projetsAnnules]
+        ];
+        
+        $projetsRecents = $user->projets()->orderBy('created_at', 'desc')->take(5)->get();
+        
+        $rendezVous = RendezVous::where('user_id', $user->id)
+                                ->where('date_heure', '>', now())
+                                ->orderBy('date_heure', 'asc')
+                                ->take(5)->get();
+
+        $reclamations = Reclamation::where('user_id', $user->id)
+                                   ->where('status', '!=', 'resolved')
+                                   ->latest()
+                                   ->take(5)->get();
+
+        return view('client.dashboard', compact(
+            'user',
+            'totalProjets',
+            'projetsEnCours',
+            'projetsTermines',
+            'projetsEnAttente',
+            'projetsAnnules',
+            'projetsRecents',
+            'rendezVous',
+            'reclamations',
+            'chartData'
+        ));
     }
 }
