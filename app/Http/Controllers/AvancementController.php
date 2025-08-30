@@ -34,7 +34,7 @@ class AvancementController extends Controller
             'statut' => 'required|in:en cours,terminé,bloqué',
             'date_prevue' => 'nullable|date',
             'date_realisee' => 'nullable|date',
-            'commentaires' => 'nullable|string',
+            // 'commentaires' => 'nullable|string',
             'fichiers' => 'nullable|file|mimes:pdf,doc,docx,jpg,png,zip|max:10240'
         ]);
 
@@ -70,7 +70,7 @@ class AvancementController extends Controller
             'statut' => 'required|in:en cours,terminé,bloqué',
             'date_prevue' => 'nullable|date',
             'date_realisee' => 'nullable|date',
-            'commentaires' => 'nullable|string',
+            // 'commentaires' => 'nullable|string',
             'fichiers' => 'nullable|file|mimes:pdf,doc,docx,jpg,png,zip|max:10240'
         ]);
 
@@ -120,20 +120,40 @@ class AvancementController extends Controller
     // F-l-akhir dyal l-class AvancementController
 public function downloadFile(Avancement $avancement)
 {
-    // Awal 7aja, nta2aked beli l-client li m-connecté howa s-saheb dyal l-projet
-    if ($avancement->projet->user_id !== Auth::id()) {
-        abort(403, 'Accès non autorisé.');
-    }
-
-    // Ta2aked men l-woujoud dyal l-fichier
-    $filePath = $avancement->fichiers; // The path should not contain the disk name
-    $disk = 'public';
-
-    if (!Storage::disk($disk)->exists($filePath)) {
+    // Awal 7aja, kan-verifiw si le chemin du fichier existe
+    if (empty($avancement->fichiers)) {
         abort(404, 'Fichier non trouvé.');
     }
 
-    // Télécharger l-fichier
-    return Storage::disk($disk)->download($filePath);
+    // Ensuite, kan-verifiw si le fichier existe vraiment sur le disque 'public'
+    if (!Storage::disk('public')->exists($avancement->fichiers)) {
+        abort(404, 'Fichier non trouvé.');
+    }
+
+    // Ila kano kolchi s7i7, kan-telechargiw l-fichier
+    return Storage::disk('public')->download($avancement->fichiers);
 }
+ public function addCommentByClient(Request $request, Avancement $avancement)
+    {
+        // 1. Validate the input
+        $validated = $request->validate([
+            'commentaires' => 'required|string|max:1000',
+        ]);
+
+        // 2. Authorization: Ensure the client owns the project
+        if ($avancement->projet->user_id !== Auth::id()) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        // 3. Update the comments field
+        // We'll append the new comment to the existing ones to keep a history
+        $currentComment = $avancement->commentaires;
+        $newComment = $validated['commentaires'];
+        $commentWithTimestamp = "[" . now()->format('Y-m-d H:i') . "]: " . $newComment;
+        
+        $avancement->commentaires = $currentComment ? $currentComment . "\n\n" . $commentWithTimestamp : $commentWithTimestamp;
+        $avancement->save();
+
+        return redirect()->back()->with('success', 'Votre commentaire a été ajouté avec succès!');
+    }
 }

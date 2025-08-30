@@ -101,14 +101,15 @@
                     </div>
 
                     <!-- Commentaires -->
-                    @if($avancement->commentaires)
-                        <div class="mb-4">
-                            <h6 class="fw-bold">Commentaires</h6>
-                            <div class="bg-light p-3 rounded">
-                                <p class="mb-0">{{ $avancement->commentaires }}</p>
-                            </div>
-                        </div>
-                    @endif
+                    <h5><i class="fas fa-comment-dots me-2 text-primary"></i>Commentaires du client</h5>
+                   @if($avancement->commentaires)
+        <div class="alert alert-info" role="alert">
+            {{-- Display comments with line breaks --}}
+            <p class="mb-0">{!! nl2br(e($avancement->commentaires)) !!}</p>
+        </div>
+    @else
+        <p class="text-muted">Aucun commentaire n'a été laissé pour le moment.</p>
+    @endif
 
                     <!-- Fichier joint -->
                     @if($avancement->fichiers)
@@ -118,11 +119,16 @@
                                 <i class="fas fa-file fa-2x text-primary me-3"></i>
                                 <div>
                                     <p class="mb-0">
-                                        <a href="{{ Storage::disk('public')->url($avancement->fichiers) }}" 
-                                           target="_blank" 
-                                           class="text-decoration-none">
-                                            {{ basename($avancement->fichiers) }}
-                                        </a>
+                                        @if($avancement->fichiers)
+                                <hr>
+                                <p class="card-text mb-2">
+                                    <strong><i class="fas fa-paperclip me-2"></i>Fichier associé:</strong>
+                                </p>
+                               <a href="{{ route('client.avancements.download', $avancement) }}" target="_blank" class="btn custom-btn">
+    <i class="fas fa-download me-2"></i> Télécharger le fichier
+</a>
+                            @endif
+
                                     </p>
                                     <small class="text-muted">Cliquez pour télécharger</small>
                                 </div>

@@ -91,11 +91,8 @@
                                 </p>
                             @endif
                             
-                            @if($avancement->fichiers)
-                                <hr>
-                                <p class="card-text mb-2">
-                                    <strong><i class="fas fa-paperclip me-2"></i>Fichier associé:</strong>
-                                </p>
+                            
+                               
                                 
        
  @if($avancement->fichiers)
@@ -108,8 +105,31 @@
 </a>
                             @endif
 
-                           @endif
+                       
                         </div>
+
+                        <div class="mt-4 pt-4 border-top">
+    <h5><i class="fas fa-comment-dots me-2 text-primary"></i>Commentaires du client</h5>
+    @if($avancement->commentaires)
+        <div class="alert alert-info" role="alert">
+            {{-- Display comments with line breaks --}}
+            <p class="mb-0">{!! nl2br(e($avancement->commentaires)) !!}</p>
+        </div>
+    @else
+        <p class="text-muted">Aucun commentaire n'a été laissé pour le moment.</p>
+    @endif
+
+    <form action="{{ route('client.client.avancements.addComment', $avancement) }}" method="POST" class="mt-3">
+        @csrf
+        <div class="mb-3">
+            <label for="commentaires" class="form-label">Ajouter un nouveau commentaire</label>
+            <textarea class="form-control" id="commentaires" name="commentaires" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary custom-btn">
+            <i class="fas fa-paper-plane me-2"></i>Envoyer le commentaire
+        </button>
+    </form>
+</div>
                     </div>
                 </div>
             </div>

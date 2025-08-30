@@ -232,6 +232,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 
     
+
+    
 });
 
 // Routes pour les clients (optionnel)
@@ -292,7 +294,10 @@ Route::prefix('client')->name('client.')->middleware('auth')->group(function () 
     })->name('avancements.show');
 
 
+ Route::post('/avancements/{avancement}/comment', [AvancementController::class, 'addCommentByClient'])
+        ->name('client.avancements.addComment');
 
+        
 
     // Route pour télécharger le fichier d'un avancement
 Route::get('avancement/{avancement}/download', [AvancementController::class, 'downloadFile'])
