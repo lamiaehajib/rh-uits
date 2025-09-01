@@ -59,6 +59,8 @@ class RendezVousController extends Controller
 
     public function update(Request $request, RendezVous $rendezVous)
     {
+
+        
         $validated = $request->validate([
             'projet_id' => 'required|exists:projets,id',
             'titre' => 'required|string|max:255',

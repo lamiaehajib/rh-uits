@@ -213,13 +213,49 @@
                                     <td>{{ $user->created_at->format('d/m/Y') }}</td>
                                     <td>
                                         <div class="d-flex flex-nowrap gap-2">
-                                            <a class="btn btn-info btn-sm text-white rounded-md transition duration-200 hover:scale-110" href="{{ route('users.show', $user->id) }}" title="Voir">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
+                                            @if ($user->hasRole('Client'))
+    {{-- Bouton pour afficher le modal d'affichage (pour les clients) --}}
+    <button type="button" class="btn btn-info btn-sm text-white rounded-md transition duration-200 hover:scale-110"
+            data-bs-toggle="modal"
+            data-bs-target="#showClientModal"
+            data-nom="{{ $user->name }}"
+            data-email="{{ $user->email }}"
+            data-tele="{{ $user->tele }}"
+            data-adresse="{{ $user->adresse }}"
+            data-type="{{ $user->type_client }}"
+            data-societe="{{ $user->societe_name }}"
+            title="Voir les détails du client">
+        <i class="fas fa-eye"></i>
+    </button>
+@else
+    {{-- Bouton pour rediriger vers la page d'affichage classique (pour les autres rôles) --}}
+    <a class="btn btn-info btn-sm text-white rounded-md transition duration-200 hover:scale-110" href="{{ route('users.show', $user->id) }}" title="Voir">
+        <i class="fas fa-eye"></i>
+    </a>
+@endif
                                             @can('user-edit')
-                                                <a class="btn btn-sm text-white rounded-md transition duration-200 hover:scale-110" style="background-color: #D32F2F;" href="{{ route('users.edit', $user->id) }}" title="Modifier">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
+                                               @if ($user->hasRole('Client'))
+    {{-- Bouton pour afficher le modal d'édition (pour les clients) --}}
+    <button type="button" class="btn btn-sm text-white rounded-md transition duration-200 hover:scale-110"
+            style="background-color: #D32F2F;"
+            data-bs-toggle="modal"
+            data-bs-target="#editClientModal"
+            data-id="{{ $user->id }}"
+            data-nom="{{ $user->name }}"
+            data-email="{{ $user->email }}"
+            data-tele="{{ $user->tele }}"
+            data-adresse="{{ $user->adresse }}"
+            data-type="{{ $user->type_client }}"
+            data-societe="{{ $user->societe_name }}"
+            title="Modifier le client">
+        <i class="fas fa-edit"></i>
+    </button>
+@else
+    {{-- Bouton pour rediriger vers la page d'édition classique (pour les autres rôles) --}}
+    <a class="btn btn-sm text-white rounded-md transition duration-200 hover:scale-110" style="background-color: #D32F2F;" href="{{ route('users.edit', $user->id) }}" title="Modifier">
+        <i class="fas fa-edit"></i>
+    </a>
+@endif
 
                                                 {{-- FORMULAIRE DE DUPLICATION --}}
                                                 <form action="{{ route('users.duplicate', $user->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir dupliquer cet utilisateur ? Une nouvelle entrée sera créée avec les mêmes informations, mais un email et un code différents.');">
@@ -364,6 +400,129 @@
 
     {{-- END NOUVEAU MODAL --}}
 
+
+    {{-- MODAL POUR ÉDITER UN CLIENT --}}
+<div class="modal fade" id="editClientModal" tabindex="-1" aria-labelledby="editClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content rounded-lg shadow-xl animate-scale-in">
+            <form id="editClientForm" method="POST">
+                @csrf
+                @method('PUT') {{-- Khassk tkhdem b method PUT bach dir l'update --}}
+                <div class="modal-header text-white rounded-t-lg" style="background-color: #D32F2F;">
+                    <h5 class="modal-title font-bold" id="editClientModalLabel">Modifier le client</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        {{-- Nom Complet --}}
+                        <div class="col-md-6">
+                            <label for="edit_nom_complet" class="form-label">Nom Complet <span class="text-danger">*</span></label>
+                            <input type="text" name="nom_complet" id="edit_nom_complet" class="form-control" required>
+                        </div>
+                        {{-- Email --}}
+                        <div class="col-md-6">
+                            <label for="edit_email_client" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" name="email" id="edit_email_client" class="form-control" required>
+                        </div>
+                        {{-- Téléphone --}}
+                        <div class="col-md-6">
+                            <label for="edit_tele_client" class="form-label">Téléphone <span class="text-danger">*</span></label>
+                            <input type="tel" name="tele" id="edit_tele_client" class="form-control" required>
+                        </div>
+                        {{-- Adresse --}}
+                        <div class="col-md-6">
+                            <label for="edit_adresse_client" class="form-label">Adresse <span class="text-danger">*</span></label>
+                            <input type="text" name="adresse" id="edit_adresse_client" class="form-control" required>
+                        </div>
+
+                        {{-- Type de Client --}}
+                        <div class="col-12 mt-4">
+                            <label class="form-label">Type de Client <span class="text-danger">*</span></label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input edit-client-type" type="radio" name="type_client" id="edit_type_particulier" value="particulier">
+                                    <label class="form-check-label" for="edit_type_particulier">
+                                        Particulier
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input edit-client-type" type="radio" name="type_client" id="edit_type_entreprise" value="entreprise">
+                                    <label class="form-check-label" for="edit_type_entreprise">
+                                        Entreprise
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Nom de la Société (kaché par défaut) --}}
+                        <div class="col-12 mt-3" id="edit_societe_name_container" style="display: none;">
+                            <label for="edit_societe_name" class="form-label">Nom de la Société <span class="text-danger">*</span></label>
+                            <input type="text" name="societe_name" id="edit_societe_name" class="form-control" disabled>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-t border-gray-200 p-3 flex justify-end">
+                    <button type="button" class="btn btn-secondary me-2 transition duration-200 hover:bg-gray-200" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn text-white custom-btn-primary transition duration-300 hover:opacity-90" style="background-color: #D32F2F;">Enregistrer les modifications</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{-- FIN MODAL POUR ÉDITER UN CLIENT --}}
+
+
+{{-- MODAL POUR AFFICHER LES DÉTAILS D'UN CLIENT --}}
+<div class="modal fade" id="showClientModal" tabindex="-1" aria-labelledby="showClientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content rounded-lg shadow-xl animate-scale-in">
+            <div class="modal-header text-white rounded-t-lg" style="background-color: #D32F2F;">
+                <h5 class="modal-title font-bold" id="showClientModalLabel">Détails du client</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    {{-- Nom Complet --}}
+                    <div class="col-12">
+                        <label class="form-label text-sm text-gray-500">Nom Complet:</label>
+                        <p id="show_nom_complet" class="font-semibold text-gray-800"></p>
+                    </div>
+                    {{-- Email --}}
+                    <div class="col-12">
+                        <label class="form-label text-sm text-gray-500">Email:</label>
+                        <p id="show_email_client" class="font-semibold text-gray-800"></p>
+                    </div>
+                    {{-- Téléphone --}}
+                    <div class="col-12">
+                        <label class="form-label text-sm text-gray-500">Téléphone:</label>
+                        <p id="show_tele_client" class="font-semibold text-gray-800"></p>
+                    </div>
+                    {{-- Adresse --}}
+                    <div class="col-12">
+                        <label class="form-label text-sm text-gray-500">Adresse:</label>
+                        <p id="show_adresse_client" class="font-semibold text-gray-800"></p>
+                    </div>
+                    {{-- Type de Client --}}
+                    <div class="col-12" id="show_type_client_container">
+                        <label class="form-label text-sm text-gray-500">Type de Client:</label>
+                        <p id="show_type_client" class="font-semibold text-gray-800"></p>
+                    </div>
+                    {{-- Nom de la Société (kaché par défaut) --}}
+                    <div class="col-12" id="show_societe_name_container" style="display: none;">
+                        <label class="form-label text-sm text-gray-500">Nom de la Société:</label>
+                        <p id="show_societe_name" class="font-semibold text-gray-800"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-t border-gray-200 p-3 flex justify-end">
+                <button type="button" class="btn btn-secondary me-2 transition duration-200 hover:bg-gray-200" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{{-- FIN MODAL POUR AFFICHER LES DÉTAILS D'UN CLIENT --}}
+
+
     @section('scripts')
     {{-- On garde juste ce qui est absolument nécessaire, comme le JavaScript pour Bootstrap Modal (pour l'import) et le toggle de statut, et toastr. --}}
     {{-- Si vous voulez vraiment 0 JS, il faudrait supprimer toastr et le modal d'import aussi. --}}
@@ -492,7 +651,92 @@
                 }
             });
 
+            // NOUVEAU LOGIC JS POUR LE MODAL D'ÉDITION DU CLIENT
+$('#editClientModal').on('show.bs.modal', function (event) {
+    const button = $(event.relatedTarget); // Bouton qui a déclenché le modal
+    const id = button.data('id');
+    const nom = button.data('nom');
+    const email = button.data('email');
+    const tele = button.data('tele');
+    const adresse = button.data('adresse');
+    const type = button.data('type');
+    const societe = button.data('societe');
+
+    const modal = $(this);
+    const form = modal.find('#editClientForm');
+
+    // Mettre à jour l'action du formulaire avec l'ID du client
+    form.attr('action', `/clients/${id}`); // T'as l'url dyal l'update f Route
+
+    // Remplir les champs du formulaire avec les données du client
+    modal.find('#edit_nom_complet').val(nom);
+    modal.find('#edit_email_client').val(email);
+    modal.find('#edit_tele_client').val(tele);
+    modal.find('#edit_adresse_client').val(adresse);
+
+    // Gérer les radios de type de client
+    modal.find(`.edit-client-type[value="${type}"]`).prop('checked', true);
+
+    const societeNameContainer = modal.find('#edit_societe_name_container');
+    const societeNameInput = modal.find('#edit_societe_name');
+
+    if (type === 'entreprise') {
+        societeNameContainer.show();
+        societeNameInput.prop('required', true).prop('disabled', false).val(societe);
+    } else {
+        societeNameContainer.hide();
+        societeNameInput.prop('required', false).prop('disabled', true).val('');
+    }
+});
+
+// Écouter le changement de radio dans le modal d'édition
+$('.edit-client-type').on('change', function() {
+    const societeNameContainer = $('#edit_societe_name_container');
+    const societeNameInput = $('#edit_societe_name');
+
+    if ($(this).val() === 'entreprise') {
+        societeNameContainer.show();
+        societeNameInput.prop('required', true).prop('disabled', false);
+    } else {
+        societeNameContainer.hide();
+        societeNameInput.prop('required', false).prop('disabled', true).val('');
+    }
+});
+
+
+// NOUVEAU LOGIC JS POUR LE MODAL DE DÉTAILS DU CLIENT
+$('#showClientModal').on('show.bs.modal', function (event) {
+    const button = $(event.relatedTarget);
+    const nom = button.data('nom');
+    const email = button.data('email');
+    const tele = button.data('tele');
+    const adresse = button.data('adresse');
+    const type = button.data('type');
+    const societe = button.data('societe');
+
+    const modal = $(this);
+
+    // Remplir les champs du modal avec les données du client
+    modal.find('#show_nom_complet').text(nom);
+    modal.find('#show_email_client').text(email);
+    modal.find('#show_tele_client').text(tele);
+    modal.find('#show_adresse_client').text(adresse);
+    modal.find('#show_type_client').text(type.charAt(0).toUpperCase() + type.slice(1)); // Capitalize the first letter
+
+    const societeNameContainer = modal.find('#show_societe_name_container');
+    const societeNameP = modal.find('#show_societe_name');
+
+    if (type === 'entreprise') {
+        societeNameContainer.show();
+        societeNameP.text(societe);
+    } else {
+        societeNameContainer.hide();
+        societeNameP.text('');
+    }
+});
+
         });
+
 
     </script>
     @endsection

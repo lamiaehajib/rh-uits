@@ -31,6 +31,8 @@ class User extends Authenticatable
         'is_active',
         'last_login_at',
         'login_count',
+        'societe_name',
+        'type_client',
     ];
 
     public function projects()

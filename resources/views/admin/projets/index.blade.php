@@ -12,7 +12,7 @@
             </div>
             <a href="{{ route('admin.projets.create') }}" class="mt-4 sm:mt-0 bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl flex items-center">
                 <i class="fas fa-plus mr-3 text-xl"></i>
-                <span class="text-lg">Nouveau Projet</span>
+                <span class="text-lg">Nouvea Projet</span>
             </a>
         </div>
 
