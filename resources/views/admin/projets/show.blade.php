@@ -980,7 +980,7 @@ body {
                     <div class="stats-grid">
                         <div class="stat-item">
                             <span class="stat-number">{{ $projet->rendezVous->count() }}</span>
-                            <span class="stat-label">Rendez-vous</span>
+                            <span class="stat-label">La maintenance sur site</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-number">{{ $projet->avancements->count() }}</span>

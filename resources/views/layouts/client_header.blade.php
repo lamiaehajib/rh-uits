@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
+        /* Your existing CSS code here */
         :root {
             --primary-pink: #C2185B;
             --primary-red: #D32F2F;
@@ -15,11 +16,9 @@
         }
 
         body {
-    /* Hada bach ykoun spacing ta7t l-header */
-    padding-top: 30px; /* <--- Remplacez 100px par 60px */
-}
+            padding-top: 30px;
+        }
 
-        /* Enhanced header styles with animations */
         .client-header {
             position: fixed;
             top: 0;
@@ -36,7 +35,6 @@
                 0 10px 30px rgba(194, 24, 91, 0.4),
                 0 0 0 1px rgba(255, 255, 255, 0.1);
             animation: slideDown 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            /* overflow: hidden; تم حذف هذا السطر ليعمل الدروب داون بشكل صحيح */
         }
 
         .client-header::before {
@@ -69,7 +67,6 @@
             100% { left: 100%; }
         }
 
-        /* Animated gradient text */
         .text-3xl {
             background: linear-gradient(45deg,
                 #ffffff 0%,
@@ -92,7 +89,6 @@
             50% { background-position: 100% 50%; }
         }
 
-        /* Logo animations */
         .flex.items-center.space-x-2 {
             transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
             position: relative;
@@ -142,7 +138,6 @@
             filter: drop-shadow(0 8px 16px rgba(194, 24, 91, 0.5));
         }
 
-        /* Enhanced navigation styles */
         .nav-link {
             color: rgba(255, 255, 255, 0.9) !important;
             font-weight: 500;
@@ -201,7 +196,6 @@
             filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
         }
 
-        /* Bouncing animation for icons on hover */
         @keyframes iconBounce {
             0%, 20%, 50%, 80%, 100% { transform: translateY(0) scale(1.3); }
             40% { transform: translateY(-5px) scale(1.4); }
@@ -212,7 +206,6 @@
             animation: iconBounce 0.8s ease infinite;
         }
 
-        /* Enhanced theme toggle button */
         #theme-toggle {
             background: linear-gradient(135deg,
                 rgba(255, 255, 255, 0.2),
@@ -337,7 +330,18 @@
             border-radius: 15px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
             animation: dropIn 0.3s ease;
-            overflow: hidden;
+            /* La solution est ici: bach l-menu yban*/
+            display: none; 
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.125rem;
+            z-index: 1050;
+        }
+
+        /* Had l-class 3andha d'orore fiha l-jawb */
+        .dropdown-menu.show {
+            display: block;
         }
 
         @keyframes dropIn {
@@ -386,7 +390,6 @@
             margin: 8px 0;
         }
 
-        /* Floating particles animation */
         .client-header::after {
             content: '';
             position: absolute;
@@ -410,7 +413,6 @@
             100% { transform: translateX(100vw); }
         }
 
-        /* Responsive design */
         @media (max-width: 768px) {
             .client-header .d-flex {
                 flex-wrap: wrap;
@@ -447,7 +449,6 @@
             }
         }
 
-        /* Glowing effect on hover */
         .nav-item {
             position: relative;
         }
@@ -473,7 +474,6 @@
             opacity: 0.3;
         }
 
-        /* Bouncing animation for icons */
         @keyframes bounce {
             0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
             40% { transform: translateY(-5px); }
@@ -484,7 +484,6 @@
             animation: bounce 0.6s ease;
         }
 
-        /* Theme toggle special effects */
         .theme-toggle-dark {
             background: linear-gradient(135deg, #1a1a3a, var(--dark-bg));
             box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
@@ -495,12 +494,20 @@
             box-shadow: 0 0 20px rgba(194, 24, 91, 0.5);
         }
 
-        /* Smooth transitions for all interactive elements */
         * {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        
+        span.d-none.d-lg-block.text-sm.text-gray-800 {
+    color: white;
+    font-weight: 700;
+    font-size: 19px;
+}
+
+span.d-none.d-lg-block.text-xs.text-gray-500 {
+    color: #fffdf0;
+    font-size: 16px;
+}
     </style>
 </head>
 <body>
@@ -533,7 +540,7 @@
                     </li>
                     <li class="nav-item me-3">
                         <a class="nav-link text-decoration-none text-gray-700 hover:text-primary-red transition" href="{{ route('client.client.planning') }}">
-                            <i class="fas fa-calendar-check me-2"></i>La maintenance sur site 
+                            <i class="fas fa-calendar-check me-2"></i>La maintenance sur site
                         </a>
                     </li>
                     <li class="nav-item">
@@ -544,42 +551,44 @@
                 </ul>
             </nav>
             <div class="dropdown">
-            <a class="dropdown-toggle d-flex align-items-center text-decoration-none" href="#" role="button" id="dropdownMenuLink"
-               data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <div class="h-10 w-10 bg-red-600 rounded-full d-flex align-items-center justify-content-center text-white font-bold me-2">
-                    {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
-                </div>
-                <div>
-                    <span class="d-none d-lg-block text-sm text-gray-800">{{ Auth::user()->name }}</span>
-                    <span class="d-none d-lg-block text-xs text-gray-500">{{ Auth::user()->email }}</span>
-                </div>
-            </a>
-            <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="dropdownMenuLink">
-                <h6 class="dropdown-header">Mon Compte</h6>
-                <a class="dropdown-item" href="#">
-                    <i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i>
-                    Profile
+                <a class="dropdown-toggle d-flex align-items-center text-decoration-none" href="#" role="button" onclick="toggleDropdown()">
+                    <div class="h-10 w-10 bg-red-600 rounded-full d-flex align-items-center justify-content-center text-white font-bold me-2">
+                        {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+                    </div>
+                    <div>
+                        <span class="d-none d-lg-block text-sm text-gray-800">{{ Auth::user()->name }}</span>
+                        <span class="d-none d-lg-block text-xs text-gray-500">{{ Auth::user()->email }}</span>
+                    </div>
                 </a>
-                <div class="dropdown-divider"></div>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="dropdown-item">
-                        <i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i>
-                        Déconnexion
-                    </button>
-                </form>
+                <div class="dropdown-menu dropdown-menu-end shadow" id="profileDropdown">
+                    <h6 class="dropdown-header">Mon Compte</h6>
+                    <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                        <i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i>
+                        Profile
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="dropdown-item">
+                            <i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i>
+                            Déconnexion
+                        </button>
+                    </form>
+                </div>
             </div>
-        </div>
-        </div>
+            </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
+        function toggleDropdown() {
+            const dropdownMenu = document.getElementById('profileDropdown');
+            dropdownMenu.classList.toggle('show');
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const themeToggleBtn = document.getElementById('theme-toggle');
             const body = document.body;
             const clientHeader = document.querySelector('.client-header');
-
             let isDarkTheme = localStorage.getItem('theme') === 'dark';
 
             function applyTheme(isDark) {
@@ -597,21 +606,20 @@
                 localStorage.setItem('theme', isDark ? 'dark' : 'light');
             }
 
-            applyTheme(isDarkTheme);
-
-            themeToggleBtn.addEventListener('click', function() {
-                isDarkTheme = !isDarkTheme;
+            if (themeToggleBtn) {
                 applyTheme(isDarkTheme);
-
-                this.style.transform = 'rotate(360deg) scale(0.9)';
-                setTimeout(() => {
-                    this.style.transform = '';
-                }, 300);
-            });
+                themeToggleBtn.addEventListener('click', function() {
+                    isDarkTheme = !isDarkTheme;
+                    applyTheme(isDarkTheme);
+                    this.style.transform = 'rotate(360deg) scale(0.9)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 300);
+                });
+            }
 
             const currentPath = window.location.pathname;
             const navLinks = document.querySelectorAll('.nav-link');
-
             navLinks.forEach(link => {
                 link.classList.remove('active');
                 if (link.getAttribute('href') === currentPath ||
@@ -634,7 +642,6 @@
                     this.style.transform = 'translateY(-2px) scale(1.02)';
                     this.style.boxShadow = '0 8px 25px rgba(194, 24, 91, 0.3)';
                 });
-
                 dropdownToggle.addEventListener('mouseleave', function() {
                     this.style.transform = '';
                     this.style.boxShadow = '';
@@ -642,7 +649,6 @@
             }
         });
 
-        // Add CSS animations via JavaScript
         const style = document.createElement('style');
         style.textContent = `
             @keyframes avatarFloat {
@@ -664,7 +670,5 @@
         `;
         document.head.appendChild(style);
     </script>
-  
-
 </body>
 </html>
