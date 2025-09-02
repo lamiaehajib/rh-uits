@@ -5,7 +5,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div>
-                        <h3 class="card-title mb-1">La maintenance sur site  d'aujourd'hui</h3>
+                        <h3 class="card-title mb-1">intervention d'aujourd'hui</h3>
                         <small class="text-muted">{{ now()->format('l d F Y') }}</small>
                     </div>
                     <div>
@@ -144,7 +144,7 @@
                                                 @if($isUpcoming)
                                                     <div class="alert alert-warning py-2 mb-2">
                                                         <i class="fas fa-exclamation-triangle me-1"></i>
-                                                        <strong>Attention:</strong> La maintenance sur site  dans {{ $rdv->date_heure->diffForHumans() }}
+                                                        <strong>Attention:</strong> intervention  dans {{ $rdv->date_heure->diffForHumans() }}
                                                     </div>
                                                 @endif
 
@@ -189,10 +189,10 @@
                     @else
                         <div class="text-center py-5">
                             <i class="fas fa-calendar-check fa-4x text-success mb-3"></i>
-                            <h5 class="text-success">Aucun La maintenance sur site  aujourd'hui !</h5>
-                            <p class="text-muted">Profitez de cette journée libre ou planifiez de nouveaux La maintenance sur site .</p>
+                            <h5 class="text-success">Aucun intervention  aujourd'hui !</h5>
+                            <p class="text-muted">Profitez de cette journée libre ou planifiez de nouveaux intervention .</p>
                             <a href="{{ route('admin.rendez-vous.create') }}" class="btn btn-primary mt-2">
-                                <i class="fas fa-plus"></i> Planifier un La maintenance sur site 
+                                <i class="fas fa-plus"></i> Planifier un intervention
                             </a>
                         </div>
                     @endif

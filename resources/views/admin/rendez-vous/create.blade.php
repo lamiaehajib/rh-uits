@@ -4,7 +4,7 @@
         <div class="col-12 col-lg-8">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title mb-0">Nouveau La maintenance sur site </h3>
+                    <h3 class="card-title mb-0">Nouveau intervention </h3>
                 </div>
 
                 <div class="card-body">
@@ -96,7 +96,7 @@
                                           id="description" 
                                           class="form-control @error('description') is-invalid @enderror" 
                                           rows="4"
-                                          placeholder="Détails du La maintenance sur site , points à aborder...">{{ old('description') }}</textarea>
+                                          placeholder="Détails de l'intervention , points à aborder...">{{ old('description') }}</textarea>
                                 @error('description')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -109,7 +109,7 @@
                                 <i class="fas fa-arrow-left"></i> Retour
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Créer le La maintenance sur site 
+                                <i class="fas fa-save"></i> Création d'une intervention
                             </button>
                         </div>
                     </form>

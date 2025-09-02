@@ -409,7 +409,7 @@
                  @can("project-list")
                 <button type="button">
                     <a href="{{ route('admin.rendez-vous.index') }}"><i class='bx bx-briefcase'></i></a>
-                    <span><a class="a" href="{{ route('admin.rendez-vous.index') }}">La maintenance sur site</a></span>
+                    <span><a class="a" href="{{ route('admin.rendez-vous.index') }}">l'intervention</a></span>
                 </button>
                 @endcan
 

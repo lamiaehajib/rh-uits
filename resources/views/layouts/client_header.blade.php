@@ -540,7 +540,7 @@ span.d-none.d-lg-block.text-xs.text-gray-500 {
                     </li>
                     <li class="nav-item me-3">
                         <a class="nav-link text-decoration-none text-gray-700 hover:text-primary-red transition" href="{{ route('client.client.planning') }}">
-                            <i class="fas fa-calendar-check me-2"></i>La maintenance sur site
+                            <i class="fas fa-calendar-check me-2"></i> intervention sur site
                         </a>
                     </li>
                     <li class="nav-item">

@@ -920,7 +920,7 @@
                 @if($projet->rendezVous->count() > 0)
                     <div class="glass-card">
                         <div class="card-header-custom" style="padding: 2rem;">
-                            <h5 data-icon="\f073">La maintenance sur site programmés</h5>
+                            <h5 data-icon="\f073"> intervention programmés</h5>
                         </div>
                         <div class="card-body" style="padding: 2.5rem;">
                             <div class="table-responsive">
@@ -1000,7 +1000,7 @@
                         <div class="stats-grid">
                             <div class="stat-item">
                                 <span class="stat-number">{{ $projet->rendezVous->count() }}</span>
-                                <span class="stat-label">La maintenance sur site</span>
+                                <span class="stat-label">intervention</span>
                             </div>
                             <div class="stat-item">
                                 <span class="stat-number">{{ $projet->avancements->count() }}</span>

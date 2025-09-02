@@ -283,7 +283,7 @@
 
                     <div class="card custom-card shadow-lg mb-4">
                         <div class="card-header card-header-custom">
-                            <h5 class="mb-0"><i class="fas fa-calendar-alt me-2 icon-accent"></i>La maintenance sur site  programmés</h5>
+                            <h5 class="mb-0"><i class="fas fa-calendar-alt me-2 icon-accent"></i>l'intervention  programmés</h5>
                         </div>
                         <div class="card-body p-4">
                             <div class="list-group">
@@ -303,7 +303,7 @@
                                 @empty
                                     <div class="text-center py-4">
                                         <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
-                                        <p class="text-muted fst-italic">Aucun La maintenance sur site  programmé pour ce projet.</p>
+                                        <p class="text-muted fst-italic">Aucun intervention  programmé pour ce projet.</p>
                                     </div>
                                 @endforelse
                             </div>

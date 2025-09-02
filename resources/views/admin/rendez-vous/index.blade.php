@@ -352,11 +352,13 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title mb-0">
                         <i class="fas fa-tools me-3"></i>
-                        Liste des La maintenance sur site
+                        Liste des interventions
+
+
                     </h3>
                     <div>
                         <a href="{{ route('admin.rendez-vous.create') }}" class="btn btn-primary me-2">
-                            <i class="fas fa-plus me-2"></i> Nouveau La maintenance sur site 
+                            <i class="fas fa-plus me-2"></i> Nouveau l'intervention 
                         </a>
                         <a href="{{ route('admin.rendez-vous.planning') }}" class="btn btn-info me-2">
                             <i class="fas fa-calendar-week me-2"></i> Planning
@@ -503,10 +505,10 @@
                     @else
                         <div class="empty-state">
                             <i class="fas fa-calendar-times"></i>
-                            <h5 class="text-muted mb-3">Aucun La maintenance sur site trouvé</h5>
+                            <h5 class="text-muted mb-3">Aucun intervention trouvé</h5>
                             <a href="{{ route('admin.rendez-vous.create') }}" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>
-                                Créer le premier La maintenance sur site
+                                Créer le premier intervention
                             </a>
                         </div>
                     @endif
