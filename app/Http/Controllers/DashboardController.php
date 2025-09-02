@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -1013,43 +1014,56 @@ class DashboardController extends Controller
 
 
    // Final correct version for the clientDashboard method
- public function clientDashboard()
-    {
-        $user = auth()->user();
-        $totalProjets = $user->projets()->count();
-        $projetsEnCours = $user->projets()->where('statut_projet', 'en cours')->count();
-        $projetsTermines = $user->projets()->where('statut_projet', 'terminé')->count();
-        $projetsEnAttente = $user->projets()->where('statut_projet', 'en attente')->count();
-        $projetsAnnules = $user->projets()->where('statut_projet', 'annulé')->count();
+public function clientDashboard()
+{
+    $user = Auth::user();
 
-        $chartData = [
-            'labels' => ['En cours', 'Terminés', 'En attente', 'Annulés'],
-            'data' => [$projetsEnCours, $projetsTermines, $projetsEnAttente, $projetsAnnules]
-        ];
-        
-        $projetsRecents = $user->projets()->orderBy('created_at', 'desc')->take(5)->get();
-        
-        $rendezVous = RendezVous::where('user_id', $user->id)
-                                ->where('date_heure', '>', now())
-                                ->orderBy('date_heure', 'asc')
-                                ->take(5)->get();
+    // 1. Récupérer l'ID de tous les projets de l'utilisateur en une seule requête.
+    // Cette ligne fonctionnera seulement si la relation 'projets' dans le modèle User est de type 'belongsToMany'.
+    $projets = $user->projets()->get();
+    $projetIds = $projets->pluck('id'); // Crée une collection des IDs de projets
 
-        $reclamations = Reclamation::where('user_id', $user->id)
-                                   ->where('status', '!=', 'resolved')
-                                   ->latest()
-                                   ->take(5)->get();
+    // 2. Utiliser les collections pour compter et filtrer les projets en mémoire.
+    $totalProjets = $projets->count();
+    $projetsEnCours = $projets->where('statut_projet', 'en cours')->count();
+    $projetsTermines = $projets->where('statut_projet', 'terminé')->count();
+    $projetsEnAttente = $projets->where('statut_projet', 'en attente')->count();
+    $projetsAnnules = $projets->where('statut_projet', 'annulé')->count();
 
-        return view('client.dashboard', compact(
-            'user',
-            'totalProjets',
-            'projetsEnCours',
-            'projetsTermines',
-            'projetsEnAttente',
-            'projetsAnnules',
-            'projetsRecents',
-            'rendezVous',
-            'reclamations',
-            'chartData'
-        ));
-    }
+    // 3. Préparer les données pour le graphique.
+    $chartData = [
+        'labels' => ['En cours', 'Terminés', 'En attente', 'Annulés'],
+        'data' => [$projetsEnCours, $projetsTermines, $projetsEnAttente, $projetsAnnules]
+    ];
+
+    // 4. Récupérer les 5 projets les plus récents de la collection.
+    $projetsRecents = $projets->sortByDesc('created_at')->take(5);
+
+    // 5. Récupérer les 5 prochains rendez-vous en se basant sur les IDs des projets.
+    // On utilise `whereIn` pour vérifier si le `projet_id` est dans la liste des IDs de projets de l'utilisateur.
+    $rendezVous = RendezVous::whereIn('projet_id', $projetIds)
+                            ->where('date_heure', '>', now())
+                            ->orderBy('date_heure', 'asc')
+                            ->take(5)->get();
+
+    // 6. Récupérer les 5 réclamations non résolues les plus récentes.
+    $reclamations = Reclamation::where('iduser', $user->id) // Assurez-vous que cette colonne est correcte
+                               ->where('status', '!=', 'resolved')
+                               ->latest()
+                               ->take(5)->get();
+
+    // 7. Passer toutes les données à la vue.
+    return view('client.dashboard', compact(
+        'user',
+        'totalProjets',
+        'projetsEnCours',
+        'projetsTermines',
+        'projetsEnAttente',
+        'projetsAnnules',
+        'projetsRecents',
+        'rendezVous',
+        'reclamations',
+        'chartData'
+    ));
+}
 }

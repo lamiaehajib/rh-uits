@@ -107,7 +107,11 @@
                                                                 {{ $rdv->projet->titre}}
                                                                 <br>
                                                                 <i class="fas fa-user me-1"></i>
-                                                                 {{ $rdv->client->name }}
+                                                                  @forelse($rdv->projet->users as $client)
+                                                    <span class="badge bg-info text-dark mb-1 d-block">{{ $client->name }}</span>
+                                                @empty
+                                                    <span class="text-muted fst-italic">N/A</span>
+                                                @endforelse
                                                                 @if($rdv->lieu)
                                                                     <br>
                                                                     <i class="fas fa-map-marker-alt me-1"></i>
@@ -239,7 +243,11 @@
                                                             <div class="flex-grow-1">
                                                                 <div class="fw-bold small">{{ $rdv->titre }}</div>
                                                                 <div class="text-muted small">
-                                                                    {{ $rdv->client->prenom }} {{ $rdv->client->nom }}
+                                                                     @forelse($rdv->projet->users as $client)
+                                                    <span class="badge bg-info text-dark mb-1 d-block">{{ $client->name }}</span>
+                                                @empty
+                                                    <span class="text-muted fst-italic">N/A</span>
+                                                @endforelse
                                                                 </div>
                                                             </div>
                                                         </div>

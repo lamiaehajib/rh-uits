@@ -125,7 +125,7 @@
                                                 <div class="text-sm text-gray-600 space-y-1">
                                                     <p class="flex items-center">
                                                         <i class="fas fa-project-diagram text-pink-500 mr-2"></i> 
-                                                        <span class="font-medium">{{ $rdv->projet->nom }}</span>
+                                                        <span class="font-medium">{{ $rdv->projet->titre }}</span>
                                                     </p>
                                                     @if($rdv->lieu)
                                                         <p class="flex items-center">

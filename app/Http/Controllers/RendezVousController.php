@@ -9,17 +9,18 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 class RendezVousController extends Controller
 {
-    public function index()
-    {
-        $rendezVous = RendezVous::with(['projet.users'])
-            ->orderBy('date_heure', 'desc')
-            ->paginate(10);
-        
-        return view('admin.rendez-vous.index', compact('rendezVous'));
-    }
+   public function index()
+{
+    $rendezVous = RendezVous::with(['projet.users', 'annulePar'])
+        ->orderBy('date_heure', 'desc')
+        ->paginate(10);
+
+    return view('admin.rendez-vous.index', compact('rendezVous'));
+}
 
     public function create()
     {
+        // Eager load les utilisateurs pour le sélecteur de projets
         $projets = Projet::with('users')->get();
         return view('admin.rendez-vous.create', compact('projets'));
     }
@@ -34,15 +35,9 @@ class RendezVousController extends Controller
             'lieu' => 'nullable|string|max:255',
             'statut' => 'required|in:programmé,confirmé,terminé,annulé'
         ]);
-
-        $projet = Projet::findOrFail($validated['projet_id']);
         
-        // Comme un projet peut avoir plusieurs clients, on ne peut pas assigner un seul user_id
-        // On doit décider quel user_id on va stocker pour le rendez-vous.
-        // Une solution serait de prendre le premier client, ou de laisser le champ null.
-        // Pour l'instant, on va le laisser null, car le lien est via le projet.
-        $validated['user_id'] = null; // Il n'y a plus de client unique pour le projet
-
+        // La colonne user_id a été supprimée, donc on ne l'assigne plus.
+        // Le rendez-vous est maintenant lié uniquement au projet.
         RendezVous::create($validated);
 
         return redirect()->route('admin.rendez-vous.index')
@@ -51,7 +46,8 @@ class RendezVousController extends Controller
 
     public function show(RendezVous $rendezVous)
     {
-        $rendezVous->load(['projet.users']);
+        // Eager load les utilisateurs via le projet
+        $rendezVous->load('projet.users');
         return view('admin.rendez-vous.show', compact('rendezVous'));
     }
 
@@ -72,10 +68,8 @@ class RendezVousController extends Controller
             'statut' => 'required|in:programmé,confirmé,terminé,annulé',
             'notes' => 'nullable|string'
         ]);
-
-        $projet = Projet::findOrFail($validated['projet_id']);
-        $validated['user_id'] = null; // On ne peut plus lier à un seul client
-
+        
+        // La colonne user_id a été supprimée, donc on ne l'assigne plus.
         $rendezVous->update($validated);
 
         return redirect()->route('admin.rendez-vous.show', $rendezVous)
@@ -83,27 +77,27 @@ class RendezVousController extends Controller
     }
 
 
-    public function cancelRendezVous(RendezVous $rendezVous)
-    {
-        // Check if the authenticated user is the owner of the rendezvous
-        // La logique ici est maintenant incorrecte car un projet peut avoir plusieurs clients.
-        // Il faudrait vérifier si l'utilisateur est un des clients associés au projet.
-        if (!Auth::user()->projets()->where('projets.id', $rendezVous->projet_id)->exists()) {
-            abort(403, 'Unauthorized action.');
-        }
-
-        if ($rendezVous->date_heure->isPast()) {
-            return back()->with('error', 'Impossible d\'annuler un rendez-vous passé.');
-        }
-
-        $rendezVous->update(['statut' => 'annulé']);
-
-        return back()->with('success', 'Rendez-vous annulé avec succès.');
+   public function cancelRendezVous(RendezVous $rendezVous)
+{
+    // Vérifier que l'utilisateur est associé au projet du rendez-vous
+    if (!Auth::user()->projets()->where('projets.id', $rendezVous->projet_id)->exists()) {
+        abort(403, 'Unauthorized action.');
     }
 
+    if ($rendezVous->date_heure->isPast()) {
+        return back()->with('error', 'Impossible d\'annuler un rendez-vous passé.');
+    }
+
+    // Mise à jour du statut et de l'utilisateur qui a annulé
+    $rendezVous->update([
+        'statut' => 'annulé',
+        'annule_par_user_id' => Auth::id() // Enregistre l'ID de l'utilisateur authentifié
+    ]);
+
+    return back()->with('success', 'Rendez-vous annulé avec succès.');
+}
 
 
-    
 
     public function destroy(RendezVous $rendezVous)
     {
@@ -116,7 +110,7 @@ class RendezVousController extends Controller
     // Rendez-vous d'aujourd'hui
     public function aujourdhui()
     {
-        $rendezVous = RendezVous::with(['projet', 'users'])
+        $rendezVous = RendezVous::with('projet.users')
             ->aujourdhui()
             ->orderBy('date_heure')
             ->get();
@@ -127,7 +121,7 @@ class RendezVousController extends Controller
     // Planning de la semaine
     public function planning()
     {
-        $rendezVous = RendezVous::with(['projet', 'users'])
+        $rendezVous = RendezVous::with('projet.users')
             ->whereBetween('date_heure', [now()->startOfWeek(), now()->endOfWeek()])
             ->orderBy('date_heure')
             ->get();
@@ -157,7 +151,7 @@ class RendezVousController extends Controller
             $endOfWeek = $now->copy()->endOfWeek(Carbon::SUNDAY);
         }
 
-        $rendezVous = RendezVous::with(['projet.users'])
+        $rendezVous = RendezVous::with('projet.users')
             ->whereHas('projet', function ($query) use ($userId) {
                 $query->whereHas('users', function ($q) use ($userId) {
                     $q->where('users.id', $userId);

@@ -110,13 +110,21 @@
                                                     <div class="col-md-4">
                                                         <small class="text-muted">
                                                             <i class="fas fa-project-diagram me-1"></i>
-                                                            <strong>Projet:</strong> {{ $rdv->projet->nom }}
+                                                            <strong>Projet:</strong> {{ $rdv->projet->titre }}
                                                         </small>
                                                     </div>
                                                     <div class="col-md-4">
                                                         <small class="text-muted">
                                                             <i class="fas fa-user me-1"></i>
-                                                            <strong>Client:</strong> {{ $rdv->client->prenom }} {{ $rdv->client->nom }}
+                                                            <strong>Client:</strong>   @forelse($rdv->projet->users as $client)
+                                                    <span class="badge bg-info text-dark mb-1 d-block">  @forelse($rdv->projet->users as $client)
+                                                    <span class="badge bg-info text-dark mb-1 d-block">{{ $client->name }}</span>
+                                                @empty
+                                                    <span class="text-muted fst-italic">N/A</span>
+                                                @endforelse</span>
+                                                @empty
+                                                    <span class="text-muted fst-italic">N/A</span>
+                                                @endforelse
                                                         </small>
                                                     </div>
                                                     <div class="col-md-4">

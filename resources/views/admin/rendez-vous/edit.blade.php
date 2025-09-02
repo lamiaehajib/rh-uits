@@ -22,7 +22,7 @@
                                     @foreach($projets as $projet)
                                         <option value="{{ $projet->id }}" 
                                                 {{ (old('projet_id', $rendezVous->projet_id) == $projet->id) ? 'selected' : '' }}>
-                                            {{ $projet->nom }} - {{ $projet->client->prenom }} {{ $projet->client->nom }}
+                                            {{ $projet->titre }} - {{ $projet->client->prenom }} {{ $projet->client->name }}
                                         </option>
                                     @endforeach
                                 </select>

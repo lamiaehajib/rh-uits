@@ -332,14 +332,25 @@
                             <h6><i class="fas fa-user-circle me-2 icon-accent"></i>Informations client</h6>
                             <div class="mt-3">
                                 <p class="mb-2">
-                                    <i class="fas fa-user me-2 icon-accent"></i><strong>Nom:</strong> {{ $projet->client->name }}
+                                    <i class="fas fa-user me-2 icon-accent"></i><strong>Nom:</strong>
+        @foreach($projet->users as $user)
+            <div class="flex items-center mb-2">
+                <div class="bg-gradient-to-br from-pink-500 to-red-600 w-12 h-12 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                    <i class="fas fa-user text-white text-lg"></i>
+                </div>
+                <div>
+                    <div class="font-bold text-gray-800 text-base">{{ $user->name }}</div>
+                    <div class="text-sm text-gray-500 flex items-center">
+                        <i class="fas fa-envelope mr-1 text-pink-400"></i>
+                        {{ $user->email }}
+                    </div>
+                </div>
+            </div>
+       
+    
                                 </p>
-                                <p class="mb-2">
-                                    <i class="fas fa-envelope me-2 icon-accent"></i><strong>Email:</strong> {{ $projet->client->email }}
-                                </p>
-                                <p class="mb-0">
-                                    <i class="fas fa-phone me-2 icon-accent"></i><strong>Téléphone:</strong> {{ $projet->client->tele ?? 'N/A' }}
-                                </p>
+                               
+                                 @endforeach
                             </div>
                         </div>
                     </div>

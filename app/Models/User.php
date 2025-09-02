@@ -35,15 +35,14 @@ class User extends Authenticatable
         'type_client',
     ];
 
-    public function projects()
+  public function projets()
 {
-    return $this->belongsToMany(Project::class, 'projet_user');
+    // This defines the many-to-many relationship with the Projet model.
+    // It tells Laravel to use the 'projet_user' pivot table to link users and projects.
+    return $this->belongsToMany(Projet::class, 'projet_user', 'user_id', 'projet_id');
 }
 
-  public function projets()
-    {
-        return $this->hasMany(Projet::class);
-    }
+  
 
     public function taches()
     {

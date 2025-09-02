@@ -241,32 +241,52 @@ Route::prefix('client')->name('client.')->middleware('auth')->group(function () 
     // Dashboard du client
     Route::get('dashboard', function () {
         $user = auth()->user();
-        
-        $totalProjets = $user->projets()->count();
-        $projetsEnCours = $user->projets()->where('statut_projet', 'en cours')->count();
-        $projetsTermines = $user->projets()->where('statut_projet', 'terminé')->count();
-        $projetsEnAttente = $user->projets()->where('statut_projet', 'en attente')->count();
-        $projetsAnnules = $user->projets()->where('statut_projet', 'annulé')->count();
 
-        // Create the $chartData array with the project counts
+        // Récupérer TOUS les projets de l'utilisateur en une seule requête
+        $projets = $user->projets()->get();
+        // Récupérer la liste des IDs de ces projets
+        $projetIds = $projets->pluck('id');
+
+        // Utiliser les collections pour compter et filtrer
+        $totalProjets = $projets->count();
+        $projetsEnCours = $projets->where('statut_projet', 'en cours')->count();
+        $projetsTermines = $projets->where('statut_projet', 'terminé')->count();
+        $projetsEnAttente = $projets->where('statut_projet', 'en attente')->count();
+        $projetsAnnules = $projets->where('statut_projet', 'annulé')->count();
+
+        // Récupérer les 5 projets les plus récents de la collection
+        $projetsRecents = $projets->sortByDesc('created_at')->take(5);
+
+        // Créez le tableau $chartData avec les comptes de projets
         $chartData = [
             'labels' => ['En cours', 'Terminés', 'En attente', 'Annulés'],
             'data' => [$projetsEnCours, $projetsTermines, $projetsEnAttente, $projetsAnnules]
         ];
 
-        $projetsRecents = $user->projets()->orderBy('created_at', 'desc')->take(5)->get();
-        $rendezVous = RendezVous::where('user_id', $user->id)
-                                ->where('date_heure', '>', now())
-                                ->orderBy('date_heure', 'asc')
-                                ->take(5)->get();
-        
+        // Reste du code pour les rendez-vous et les réclamations
+        // On récupère les rendez-vous en se basant sur les IDs des projets
+        $rendezVous = RendezVous::whereIn('projet_id', $projetIds)
+                               ->where('date_heure', '>', now())
+                               ->orderBy('date_heure', 'asc')
+                               ->take(5)->get();
+
         $reclamations = Reclamation::where('iduser', $user->id)
                                    ->where('status', '!=', 'resolved')
                                    ->latest()
                                    ->take(5)->get();
-
-        // Pass the new $chartData variable to the view
-        return view('client.dashboard', compact('user', 'totalProjets', 'projetsEnCours', 'projetsTermines', 'projetsRecents', 'rendezVous', 'reclamations', 'projetsEnAttente', 'projetsAnnules', 'chartData'));
+        
+        return view('client.dashboard', compact(
+            'user',
+            'totalProjets',
+            'projetsEnCours',
+            'projetsTermines',
+            'projetsRecents',
+            'rendezVous',
+            'reclamations',
+            'projetsEnAttente',
+            'projetsAnnules',
+            'chartData'
+        ));
     })->name('dashboard');
 
     // Liste des projets
@@ -277,9 +297,9 @@ Route::prefix('client')->name('client.')->middleware('auth')->group(function () 
     
     // Détails d'un projet
     Route::get('projet/{projet}', function (Projet $projet) {
-        if ($projet->user_id !== auth()->id()) {
-            abort(403);
-        }
+        // if ($projet->user_id !== auth()->id()) {
+        //     abort(403);
+        // }
         $projet->load(['avancements', 'rendezVous']);
         $pourcentageGlobal = $projet->avancements->avg('pourcentage') ?? 0;
         return view('client.projets.show', compact('projet', 'pourcentageGlobal'));

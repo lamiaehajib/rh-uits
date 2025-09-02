@@ -20,7 +20,8 @@ class RendezVous extends Model
         'date_heure',
         'lieu',
         'statut',
-        'notes'
+        'notes',
+        'annule_par_user_id',
     ];
 
     protected $casts = [
@@ -33,7 +34,10 @@ class RendezVous extends Model
         return $this->belongsTo(Projet::class);
     }
 
-    
+     public function annulePar()
+    {
+        return $this->belongsTo(User::class, 'annule_par_user_id');
+    }
     
 
     // Scope pour les rendez-vous à venir

@@ -404,7 +404,7 @@
         <div class="header-content">
             <div class="header-text">
                 <h2>Avancements du projet</h2>
-                <p>{{ $projet->nom }}</p>
+                <p>{{ $projet->titre }}</p>
             </div>
             <a href="{{ route('admin.avancements.create', $projet) }}" class="btn-primary">
                 <i class="fas fa-plus"></i> Nouvelle étape
