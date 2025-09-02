@@ -12,7 +12,7 @@
             </div>
             <a href="{{ route('admin.projets.create') }}" class="mt-4 sm:mt-0 bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 text-white font-bold py-4 px-8 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-2xl flex items-center">
                 <i class="fas fa-plus mr-3 text-xl"></i>
-                <span class="text-lg">Nouvea Projet</span>
+                <span class="text-lg">Nouveau Projet</span>
             </a>
         </div>
 
@@ -129,27 +129,29 @@
                                         @endif
                                     </div>
                                 </td>
-                                <td class="py-6 px-6">
-                                    @if($projet->client)
-                                        <div class="flex items-center">
-                                            <div class="bg-gradient-to-br from-pink-500 to-red-600 w-12 h-12 rounded-xl flex items-center justify-center mr-4 shadow-lg">
-                                                <i class="fas fa-user text-white text-lg"></i>
-                                            </div>
-                                            <div>
-                                                <div class="font-bold text-gray-800 text-base">{{ $projet->client->name }}</div>
-                                                <div class="text-sm text-gray-500 flex items-center">
-                                                    <i class="fas fa-envelope mr-1 text-pink-400"></i>
-                                                    {{ $projet->client->email }}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @else
-                                        <span class="text-gray-400 italic flex items-center">
-                                            <i class="fas fa-user-slash mr-2"></i>
-                                            Client non assigné
-                                        </span>
-                                    @endif
-                                </td>
+                             <td class="py-6 px-6">
+    @if($projet->users->isNotEmpty())
+        @foreach($projet->users as $user)
+            <div class="flex items-center mb-2">
+                <div class="bg-gradient-to-br from-pink-500 to-red-600 w-12 h-12 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                    <i class="fas fa-user text-white text-lg"></i>
+                </div>
+                <div>
+                    <div class="font-bold text-gray-800 text-base">{{ $user->name }}</div>
+                    <div class="text-sm text-gray-500 flex items-center">
+                        <i class="fas fa-envelope mr-1 text-pink-400"></i>
+                        {{ $user->email }}
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    @else
+        <span class="text-gray-400 italic flex items-center">
+            <i class="fas fa-user-slash mr-2"></i>
+            Client non assigné
+        </span>
+    @endif
+</td>
                                 <td class="py-6 px-6">
                                     <span class="bg-blue-100 text-blue-800 px-3 py-2 rounded-lg font-medium flex items-center">
                                         <i class="fas fa-calendar mr-2"></i>

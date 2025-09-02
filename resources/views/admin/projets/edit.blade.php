@@ -204,10 +204,78 @@ body {
 }
 
 .form-select {
-  
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     background-size: 16px 12px;
+}
+
+/* Styles pour les checkboxes clients */
+.clients-checkbox-container {
+    background: #f8fafc;
+    border: 2px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    transition: all 0.3s ease;
+}
+
+.clients-checkbox-container:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(194, 24, 91, 0.1);
+}
+
+.clients-checkbox-container.is-invalid {
+    border-color: var(--accent-color);
+    animation: shake 0.5s ease-in-out;
+}
+
+.client-checkbox-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.client-checkbox-item:hover {
+    background: rgba(194, 24, 91, 0.05);
+    border-color: var(--primary-color);
+    transform: translateX(4px);
+}
+
+.client-checkbox-item:last-child {
+    margin-bottom: 0;
+}
+
+.client-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
+.client-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.client-name {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.95rem;
+}
+
+.client-email {
+    font-size: 0.85rem;
+    color: #6b7280;
 }
 
 .btn-gradient {
@@ -620,23 +688,27 @@ body {
                             </div>
 
                             <!-- Client -->
-                            <div class="col-md-6 mb-3">
-                                <label for="user_id" class="form-label">
-                                    <i class="fas fa-user"></i> Client <span class="text-danger">*</span>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-users"></i> Clients <span class="text-danger">*</span>
                                 </label>
-                                <select class="form-select @error('user_id') is-invalid @enderror" 
-                                        id="user_id" 
-                                        name="user_id" 
-                                        required>
-                                    <option value="">Sélectionner un client</option>
+                                <div class="clients-checkbox-container @error('client_ids') is-invalid @enderror">
                                     @foreach($clients as $client)
-                                        <option value="{{ $client->id }}" 
-                                                {{ old('user_id', $projet->user_id) == $client->id ? 'selected' : '' }}>
-                                            {{ $client->name }} ({{ $client->email }})
-                                        </option>
+                                        <div class="client-checkbox-item">
+                                            <input type="checkbox" 
+                                                   class="client-checkbox" 
+                                                   id="client_{{ $client->id }}" 
+                                                   name="client_ids[]" 
+                                                   value="{{ $client->id }}"
+                                                   {{ in_array($client->id, old('client_ids', $projet->users->pluck('id')->toArray())) ? 'checked' : '' }}>
+                                            <label for="client_{{ $client->id }}" class="client-info">
+                                                <div class="client-name">{{ $client->name }}</div>
+                                                <div class="client-email">{{ $client->email }}</div>
+                                            </label>
+                                        </div>
                                     @endforeach
-                                </select>
-                                @error('user_id')
+                                </div>
+                                @error('client_ids')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>

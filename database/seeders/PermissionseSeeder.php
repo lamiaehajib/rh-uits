@@ -107,7 +107,9 @@ class PermissionseSeeder extends Seeder
             'image_preuve-edit',
  
             'image_preuve-delete',
-            'image_preuve-show'
+            'image_preuve-show',
+            
+            'Dashboard',
  
          ];
  

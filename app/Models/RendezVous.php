@@ -14,7 +14,7 @@ class RendezVous extends Model
 
     protected $fillable = [
         'projet_id',
-        'user_id',
+        
         'titre',
         'description',
         'date_heure',
@@ -33,11 +33,8 @@ class RendezVous extends Model
         return $this->belongsTo(Projet::class);
     }
 
-    // Relation avec le client
-    public function client()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
+    
+    
 
     // Scope pour les rendez-vous à venir
     public function scopeAvenir($query)

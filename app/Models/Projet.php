@@ -12,7 +12,7 @@ class Projet extends Model
     protected $fillable = [
         'titre',
         'description',
-        'user_id',
+        
         'date_debut',
         'date_fin',
         'fichier',
@@ -24,11 +24,13 @@ class Projet extends Model
         'date_fin' => 'date',
     ];
 
-    // Relation avec User (Client)
-    public function client()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
+    
+    
+
+      public function users()
+{
+    return $this->belongsToMany(User::class, 'projet_user');
+}
 
     // Relation avec les rendez-vous
     public function rendezVous()

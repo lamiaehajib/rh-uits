@@ -19,12 +19,17 @@
         p {
             font-size: 24px;
         }
-        
     </style>
 </head>
 <body>
     <h1>@yield('code')</h1>
     <p>@yield('message')</p>
-    <a href="{{ url('/dashboard') }}" style="text-decoration: none; color: #ff0000;">Retourner à l'accueil</a>
+    
+    @if(auth()->check() && auth()->user()->hasRole('Client'))
+        <a href="{{ route('client.dashboard') }}" style="text-decoration: none; color: #ff0000;">Retourner à l'accueil</a>
+    @else
+        <a href="{{ url('/dashboard') }}" style="text-decoration: none; color: #ff0000;">Retourner à l'accueil</a>
+    @endif
+    
 </body>
 </html>

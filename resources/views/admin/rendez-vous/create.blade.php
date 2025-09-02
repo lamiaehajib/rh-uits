@@ -19,8 +19,11 @@
                                     <option value="">Sélectionnez un projet</option>
                                     @foreach($projets as $projet)
                                         <option value="{{ $projet->id }}" {{ old('projet_id') == $projet->id ? 'selected' : '' }}>
-                                            {{ $projet->titre }} - {{ $projet->client->name }} 
-                                        </option>
+                                                                                        {{ $projet->titre }}
+                                                                                        @if($projet->users->isNotEmpty())
+                                                                                                - Clients: {{ $projet->users->pluck('name')->implode(', ') }}
+                                                                                        @endif
+                                                                                    </option>
                                     @endforeach
                                 </select>
                                 @error('projet_id')

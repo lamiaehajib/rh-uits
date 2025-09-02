@@ -28,7 +28,7 @@ class DashboardController extends Controller
     {
         $this->middleware('check.clocked.in')->except('clientDashboard');
         
-        $this->middleware('permission:project-list|tache-list|formation-list|formation-delete', ['only' => ['index']]);
+        $this->middleware('permission:Dashboard|project-list|tache-list|formation-list|formation-delete', ['only' => ['index']]);
     }
 
     public function index(Request $request)

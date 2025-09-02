@@ -20,7 +20,7 @@ class ProjetController extends Controller
      */
     public function index()
     {
-        $projets = Projet::with('client')
+        $projets = Projet::with('users')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         
@@ -50,19 +50,20 @@ class ProjetController extends Controller
         $validated = $request->validate([
             'titre' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'user_id' => 'required|exists:users,id',
+            'client_ids' => 'required|array', // Le champ est maintenant un tableau
+            'client_ids.*' => 'exists:users,id', // Chaque élément du tableau doit exister
             'date_debut' => 'required|date',
             'date_fin' => 'nullable|date|after:date_debut',
             'fichier' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:5120',
             'statut_projet' => 'required|in:en cours,terminé,en attente,annulé'
         ]);
 
-        // Handle file upload
         if ($request->hasFile('fichier')) {
             $validated['fichier'] = $request->file('fichier')->store('projets', 'public');
         }
 
-        Projet::create($validated);
+        $projet = Projet::create($validated);
+        $projet->users()->sync($request->client_ids); // Attacher les clients
 
         return redirect()->route('admin.projets.index')
             ->with('success', 'Projet créé avec succès!');
@@ -76,7 +77,7 @@ class ProjetController extends Controller
      */
     public function show(Projet $projet)
     {
-        $projet->load(['client', 'rendezVous', 'avancements']);
+        $projet->load(['users', 'rendezVous', 'avancements']);
         $pourcentageGlobal = $projet->avancements->avg('pourcentage') ?? 0;
         
         return view('admin.projets.show', compact('projet', 'pourcentageGlobal'));
@@ -102,12 +103,13 @@ class ProjetController extends Controller
      * @param  \App\Models\Projet  $projet
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Projet $projet)
+     public function update(Request $request, Projet $projet)
     {
         $validated = $request->validate([
             'titre' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'user_id' => 'required|exists:users,id',
+            'client_ids' => 'required|array', // Le champ est maintenant un tableau
+            'client_ids.*' => 'exists:users,id', // Chaque élément du tableau doit exister
             'date_debut' => 'required|date',
             'date_fin' => 'nullable|date|after:date_debut',
             'fichier' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:5120',
@@ -124,6 +126,7 @@ class ProjetController extends Controller
         }
 
         $projet->update($validated);
+        $projet->users()->sync($request->client_ids);
 
         return redirect()->route('admin.projets.show', $projet)
             ->with('success', 'Projet mis à jour avec succès!');
@@ -162,7 +165,7 @@ class ProjetController extends Controller
             'projets_en_attente' => Projet::parStatut('en attente')->count(),
         ];
 
-        $projets_recents = Projet::with('client')
+        $projets_recents = Projet::with('users')
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
@@ -184,20 +187,20 @@ class ProjetController extends Controller
 
 
 
-  public function downloadFile(Projet $projet)
-{
-    // Ta'aked men l-woujoud dyal l-fichier
-    if (!$projet->fichier || !Storage::disk('public')->exists($projet->fichier)) {
-        abort(404, 'Fichier non trouvé.');
+    public function downloadFile(Projet $projet)
+    {
+        // Ta'aked men l-woujoud dyal l-fichier
+        if (!$projet->fichier || !Storage::disk('public')->exists($projet->fichier)) {
+            abort(404, 'Fichier non trouvé.');
+        }
+
+        // Njebdou l'ism l'asli dyal l'fichier
+        $originalFileName = basename($projet->fichier);
+
+        // N'ssamiw l'fichier b'smya l'projet + l'ism l'asli dyalou
+        $fileName = 'Projet_' . $projet->titre . '_' . $originalFileName;
+
+        // Télécharger l-fichier b'smiya jdida
+        return Storage::disk('public')->download($projet->fichier, $fileName);
     }
-
-    // Njebdou l'ism l'asli dyal l'fichier
-    $originalFileName = basename($projet->fichier);
-
-    // N'ssamiw l'fichier b'smya l'projet + l'ism l'asli dyalou
-    $fileName = 'Projet_' . $projet->titre . '_' . $originalFileName;
-
-    // Télécharger l-fichier b'smiya jdida
-    return Storage::disk('public')->download($projet->fichier, $fileName);
-}
 }

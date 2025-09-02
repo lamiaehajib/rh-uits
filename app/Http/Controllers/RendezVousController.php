@@ -11,7 +11,7 @@ class RendezVousController extends Controller
 {
     public function index()
     {
-        $rendezVous = RendezVous::with(['projet', 'client'])
+        $rendezVous = RendezVous::with(['projet.users'])
             ->orderBy('date_heure', 'desc')
             ->paginate(10);
         
@@ -20,7 +20,7 @@ class RendezVousController extends Controller
 
     public function create()
     {
-        $projets = Projet::with('client')->get();
+        $projets = Projet::with('users')->get();
         return view('admin.rendez-vous.create', compact('projets'));
     }
 
@@ -35,9 +35,13 @@ class RendezVousController extends Controller
             'statut' => 'required|in:programmé,confirmé,terminé,annulé'
         ]);
 
-        // Get user_id from projet
         $projet = Projet::findOrFail($validated['projet_id']);
-        $validated['user_id'] = $projet->user_id;
+        
+        // Comme un projet peut avoir plusieurs clients, on ne peut pas assigner un seul user_id
+        // On doit décider quel user_id on va stocker pour le rendez-vous.
+        // Une solution serait de prendre le premier client, ou de laisser le champ null.
+        // Pour l'instant, on va le laisser null, car le lien est via le projet.
+        $validated['user_id'] = null; // Il n'y a plus de client unique pour le projet
 
         RendezVous::create($validated);
 
@@ -47,20 +51,18 @@ class RendezVousController extends Controller
 
     public function show(RendezVous $rendezVous)
     {
-        $rendezVous->load(['projet', 'client']);
+        $rendezVous->load(['projet.users']);
         return view('admin.rendez-vous.show', compact('rendezVous'));
     }
 
     public function edit(RendezVous $rendezVous)
     {
-        $projets = Projet::with('client')->get();
+        $projets = Projet::with('users')->get();
         return view('admin.rendez-vous.edit', compact('rendezVous', 'projets'));
     }
 
     public function update(Request $request, RendezVous $rendezVous)
     {
-
-        
         $validated = $request->validate([
             'projet_id' => 'required|exists:projets,id',
             'titre' => 'required|string|max:255',
@@ -71,9 +73,8 @@ class RendezVousController extends Controller
             'notes' => 'nullable|string'
         ]);
 
-        // Get user_id from projet
         $projet = Projet::findOrFail($validated['projet_id']);
-        $validated['user_id'] = $projet->user_id;
+        $validated['user_id'] = null; // On ne peut plus lier à un seul client
 
         $rendezVous->update($validated);
 
@@ -82,19 +83,19 @@ class RendezVousController extends Controller
     }
 
 
-     public function cancelRendezVous(RendezVous $rendezVous)
+    public function cancelRendezVous(RendezVous $rendezVous)
     {
         // Check if the authenticated user is the owner of the rendezvous
-        if (Auth::id() !== $rendezVous->projet->user_id) {
+        // La logique ici est maintenant incorrecte car un projet peut avoir plusieurs clients.
+        // Il faudrait vérifier si l'utilisateur est un des clients associés au projet.
+        if (!Auth::user()->projets()->where('projets.id', $rendezVous->projet_id)->exists()) {
             abort(403, 'Unauthorized action.');
         }
 
-        // T'a99ed ila l'rendez-vous deja fâtte wa9tou, ila kân, ma y9derch y'annulih
         if ($rendezVous->date_heure->isPast()) {
             return back()->with('error', 'Impossible d\'annuler un rendez-vous passé.');
         }
 
-        // Update le statut à 'annulé'
         $rendezVous->update(['statut' => 'annulé']);
 
         return back()->with('success', 'Rendez-vous annulé avec succès.');
@@ -115,7 +116,7 @@ class RendezVousController extends Controller
     // Rendez-vous d'aujourd'hui
     public function aujourdhui()
     {
-        $rendezVous = RendezVous::with(['projet', 'client'])
+        $rendezVous = RendezVous::with(['projet', 'users'])
             ->aujourdhui()
             ->orderBy('date_heure')
             ->get();
@@ -126,7 +127,7 @@ class RendezVousController extends Controller
     // Planning de la semaine
     public function planning()
     {
-        $rendezVous = RendezVous::with(['projet', 'client'])
+        $rendezVous = RendezVous::with(['projet', 'users'])
             ->whereBetween('date_heure', [now()->startOfWeek(), now()->endOfWeek()])
             ->orderBy('date_heure')
             ->get();
@@ -135,7 +136,7 @@ class RendezVousController extends Controller
     }
 
 
-  public function clientPlanning($periode = 'current_week')
+    public function clientPlanning($periode = 'current_week')
     {
         $userId = Auth::id();
 
@@ -156,9 +157,11 @@ class RendezVousController extends Controller
             $endOfWeek = $now->copy()->endOfWeek(Carbon::SUNDAY);
         }
 
-        $rendezVous = RendezVous::with(['projet', 'projet.client'])
+        $rendezVous = RendezVous::with(['projet.users'])
             ->whereHas('projet', function ($query) use ($userId) {
-                $query->where('user_id', $userId);
+                $query->whereHas('users', function ($q) use ($userId) {
+                    $q->where('users.id', $userId);
+                });
             })
             ->whereBetween('date_heure', [$startOfWeek, $endOfWeek])
             ->orderBy('date_heure')
