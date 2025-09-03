@@ -141,8 +141,8 @@
                                                         <form action="{{ route('client.client.rendez-vous.cancel', $rdv) }}" method="POST" >
                                                             @csrf
                                                             @method('PUT')
-                                                            <button type="submit" class="w-full text-center text-sm py-2 px-4 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 font-medium shadow-md hover:shadow-lg" onclick="return confirm('Êtes-vous sûr de vouloir annuler cette maintenance sur site ?')">
-                                                                <i class="fas fa-times-circle mr-2"></i> Annuler la maintenance
+                                                            <button type="submit" class="w-full text-center text-sm py-2 px-4 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 font-medium shadow-md hover:shadow-lg" onclick="return confirm('Êtes-vous sûr de vouloir reporter cette maintenance sur site ?')">
+                                                                <i class="fas fa-times-circle mr-2"></i> reporter la maintenance
                                                             </button>
                                                         </form>
                                                     @endif
@@ -230,7 +230,7 @@
                                     <i class="fas fa-times-circle text-white text-2xl"></i>
                                 </div>
                                 <h4 class="text-red-600  font-bold mb-2">{{ $rendezVous->where('statut', 'annulé')->count() }}</h4>
-                                <small class="text-gray-600 font-medium">Annulés</small>
+                                <small class="text-gray-600 font-medium">reportes</small>
                             </div>
                         </div>
                     </div>
