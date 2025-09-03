@@ -20,7 +20,7 @@
                                     @foreach($projets as $projet)
                                         <option value="{{ $projet->id }}" {{ old('projet_id') == $projet->id ? 'selected' : '' }}>
                                                                                         {{ $projet->titre }}
-                                                                                        @if($projet->users->isNotEmpty())
+                                                               @if($projet->users->isNotEmpty())
                                                                                                 - Clients: {{ $projet->users->pluck('name')->implode(', ') }}
                                                                                         @endif
                                                                                     </option>

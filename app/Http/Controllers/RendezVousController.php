@@ -9,14 +9,17 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 class RendezVousController extends Controller
 {
+
+
    public function index()
 {
-    $rendezVous = RendezVous::with(['projet.users', 'annulePar'])
+    $rendezVous = RendezVous::with(['projet.users', 'annulePar', 'reprogrammePar'])
         ->orderBy('date_heure', 'desc')
         ->paginate(10);
 
     return view('admin.rendez-vous.index', compact('rendezVous'));
 }
+
 
     public function create()
     {
@@ -51,14 +54,23 @@ class RendezVousController extends Controller
         return view('admin.rendez-vous.show', compact('rendezVous'));
     }
 
-    public function edit(RendezVous $rendezVous)
-    {
-        $projets = Projet::with('users')->get();
-        return view('admin.rendez-vous.edit', compact('rendezVous', 'projets'));
+   public function edit($id)
+{
+    // Cherche le rendez-vous par son ID
+    $rendezVous = RendezVous::find($id);
+
+    // Si le rendez-vous n'existe pas, renvoie une erreur 404
+    if (!$rendezVous) {
+        abort(404, 'Rendez-vous introuvable');
     }
 
-    public function update(Request $request, RendezVous $rendezVous)
+    $projets = Projet::with('users')->get();
+    return view('admin.rendez-vous.edit', compact('rendezVous', 'projets'));
+}
+
+    public function update(Request $request, $id)
     {
+         $rendezVous = RendezVous::find($id);
         $validated = $request->validate([
             'projet_id' => 'required|exists:projets,id',
             'titre' => 'required|string|max:255',
@@ -91,13 +103,56 @@ class RendezVousController extends Controller
     // Mise à jour du statut et de l'utilisateur qui a annulé
     $rendezVous->update([
         'statut' => 'annulé',
-        'annule_par_user_id' => Auth::id() // Enregistre l'ID de l'utilisateur authentifié
+        'annule_par_user_id' => Auth::id() // Cette ligne est cruciale
     ]);
 
     return back()->with('success', 'Rendez-vous annulé avec succès.');
 }
 
+    /**
+     * Affiche le formulaire pour reprogrammer un rendez-vous annulé.
+     *
+     * @param \App\Models\RendezVous $rendezVous
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
+    public function reprogrammer(RendezVous $rendezVous)
+    {
+        // Vérifier que l'utilisateur est bien associé au projet et que le statut est 'annulé'
+        if (!Auth::user()->projets()->where('projets.id', $rendezVous->projet_id)->exists() || $rendezVous->statut !== 'annulé') {
+            return back()->with('error', 'Vous ne pouvez reprogrammer que les rendez-vous annulés qui vous concernent.');
+        }
 
+        return view('client.planning.reprogrammer', compact('rendezVous'));
+    }
+
+    /**
+     * Met à jour le rendez-vous avec une nouvelle date et heure.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\RendezVous $rendezVous
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function reprogramStore(Request $request, RendezVous $rendezVous)
+{
+    if (!Auth::user()->projets()->where('projets.id', $rendezVous->projet_id)->exists() || $rendezVous->statut !== 'annulé') {
+        return back()->with('error', 'Action non autorisée.');
+    }
+
+    $validated = $request->validate([
+        'date_heure' => 'required|date|after:now',
+    ]);
+    
+    // Ajoute la nouvelle colonne 'reprogramme_par_user_id'
+    $rendezVous->update([
+        'date_heure' => $validated['date_heure'],
+        'statut' => 'programmé',
+        'annule_par_user_id' => null, // Remet à null l'utilisateur qui a annulé
+        'reprogramme_par_user_id' => Auth::id(), // Enregistre l'utilisateur qui a reprogrammé
+    ]);
+
+    return redirect()->route('client.client.planning')
+        ->with('success', 'Rendez-vous reprogrammé avec succès!');
+}
 
     public function destroy(RendezVous $rendezVous)
     {
@@ -162,5 +217,26 @@ class RendezVousController extends Controller
             ->get();
 
         return view('client.planning.index', compact('rendezVous', 'periode'));
+    }
+
+
+    public function confirmRendezVous(RendezVous $rendezVous)
+    {
+        // Vérification des autorisations et du statut
+        if (!Auth::user()->projets()->where('projets.id', $rendezVous->projet_id)->exists() || $rendezVous->statut !== 'programmé') {
+            return back()->with('error', 'Impossible de confirmer ce rendez-vous.');
+        }
+
+        if ($rendezVous->date_heure->isPast()) {
+            return back()->with('error', 'Impossible de confirmer un rendez-vous passé.');
+        }
+
+        // Mise à jour du statut et de l'utilisateur qui a confirmé
+        $rendezVous->update([
+            'statut' => 'confirmé',
+            'confirme_par_user_id' => Auth::id(), // Enregistre l'ID du client qui a confirmé
+        ]);
+
+        return back()->with('success', 'Rendez-vous confirmé avec succès!');
     }
 }

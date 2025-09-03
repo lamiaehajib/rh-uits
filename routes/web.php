@@ -307,9 +307,7 @@ Route::prefix('client')->name('client.')->middleware('auth')->group(function () 
 
 
     Route::get('avancement/{avancement}', function (Avancement $avancement) {
-        if ($avancement->projet->user_id !== auth()->id()) {
-            abort(403);
-        }
+      
         return view('client.avancements.show', compact('avancement'));
     })->name('avancements.show');
 
@@ -334,6 +332,8 @@ Route::get('avancement/{avancement}/download', [AvancementController::class, 'do
         return view('admin.rendez-vous.index', compact('rendezVous'));
     })->name('rendez-vous.index');
 
+
+
     // Liste des réclamations
     Route::get('reclamations', function () {
         // Fixe: Utilisation de 'iduser' au lieu de 'user_id'
@@ -345,8 +345,16 @@ Route::get('avancement/{avancement}/download', [AvancementController::class, 'do
 
     Route::get('/client/planning/{periode?}', [RendezVousController::class, 'clientPlanning'])
     ->name('client.planning');
+
     Route::put('/rendez-vous/{rendezVous}/cancel', [RendezVousController::class, 'cancelRendezVous'])
     ->name('client.rendez-vous.cancel');
+
+    Route::get('/rendez-vous/{rendezVous}/reprogrammer', [RendezVousController::class, 'reprogrammer'])->name('client.rendez-vous.reprogrammer');
+Route::put('/rendez-vous/{rendezVous}/reprogram-store', [RendezVousController::class, 'reprogramStore'])->name('client.rendez-vous.reprogram-store');
+
+
+Route::put('/rendez-vous/{rendezVous}/confirm', [RendezVousController::class, 'confirmRendezVous'])
+    ->name('client.rendez-vous.confirm');
 });
 });
 

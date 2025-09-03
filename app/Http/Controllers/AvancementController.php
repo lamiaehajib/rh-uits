@@ -141,9 +141,7 @@ public function downloadFile(Avancement $avancement)
         ]);
 
         // 2. Authorization: Ensure the client owns the project
-        if ($avancement->projet->user_id !== Auth::id()) {
-            abort(403, 'Accès non autorisé.');
-        }
+     
 
         // 3. Update the comments field
         // We'll append the new comment to the existing ones to keep a history

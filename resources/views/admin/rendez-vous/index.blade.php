@@ -135,14 +135,41 @@
 
     .table-responsive {
         border-radius: 16px;
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: visible;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        max-width: 100%;
+        /* Enhanced scrollbar styling */
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary-color) rgba(255, 255, 255, 0.1);
+    }
+
+    /* Custom scrollbar for webkit browsers */
+    .table-responsive::-webkit-scrollbar {
+        height: 12px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border-radius: 6px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
     }
 
     .table {
         margin: 0;
         background: transparent;
         color: var(--text-light);
+        min-width: 1200px; /* Force minimum width for horizontal scroll */
+        white-space: nowrap; /* Prevent text wrapping */
     }
 
     .table-dark {
@@ -156,6 +183,10 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
         font-size: 0.85rem;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
     }
 
     .table tbody tr {
@@ -166,7 +197,7 @@
 
     .table tbody tr:hover {
         background: rgba(255, 255, 255, 0.08);
-        transform: scale(1.01);
+        transform: scale(1.005);
     }
 
     .table tbody tr:nth-child(even) {
@@ -181,6 +212,23 @@
         border: none;
         padding: 1.5rem 1rem;
         vertical-align: middle;
+        min-width: 150px; /* Minimum width for each column */
+    }
+
+    /* Specific widths for certain columns */
+    .table td:first-child,
+    .table th:first-child {
+        min-width: 180px;
+        position: sticky;
+        left: 0;
+        background: inherit;
+        z-index: 5;
+    }
+
+    .table td:last-child,
+    .table th:last-child {
+        min-width: 200px;
+        text-align: center;
     }
 
     .badge {
@@ -190,6 +238,7 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
         font-size: 0.75rem;
+        white-space: nowrap;
     }
 
     .badge.bg-secondary { background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important; }
@@ -300,6 +349,21 @@
         border-color: var(--primary-color);
     }
 
+    /* Scroll indicator */
+    .scroll-indicator {
+        position: relative;
+        margin-bottom: 1rem;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .scroll-indicator::after {
+        content: '← Faites défiler horizontalement pour voir plus de colonnes →';
+        opacity: 0.7;
+        font-style: italic;
+    }
+
     /* Animation pour les éléments */
     @keyframes slideInUp {
         from {
@@ -342,6 +406,18 @@
         .table-responsive {
             font-size: 0.875rem;
         }
+        
+        .table {
+            min-width: 1400px; /* Even wider on mobile to ensure all columns are visible */
+        }
+        
+        .scroll-indicator::after {
+            content: '← Balayez horizontalement →';
+        }
+    }
+
+    small.text-muted {
+        color: black !important;
     }
 </style>
 
@@ -353,12 +429,10 @@
                     <h3 class="card-title mb-0">
                         <i class="fas fa-tools me-3"></i>
                         Liste des interventions
-
-
                     </h3>
                     <div>
                         <a href="{{ route('admin.rendez-vous.create') }}" class="btn btn-primary me-2">
-                            <i class="fas fa-plus me-2"></i> Nouveau l'intervention 
+                            <i class="fas fa-plus me-2"></i> Nouveau l'intervention
                         </a>
                         <a href="{{ route('admin.rendez-vous.planning') }}" class="btn btn-info me-2">
                             <i class="fas fa-calendar-week me-2"></i> Planning
@@ -379,6 +453,7 @@
                     @endif
 
                     @if($rendezVous->count() > 0)
+                        <div class="scroll-indicator"></div>
                         <div class="table-responsive">
                             <table class="table table-striped table-hover">
                                 <thead class="table-dark">
@@ -389,7 +464,8 @@
                                         <th><i class="fas fa-user me-2"></i>Client</th>
                                         <th><i class="fas fa-map-marker-alt me-2"></i>Lieu</th>
                                         <th><i class="fas fa-info-circle me-2"></i>Statut</th>
-                                        <th><i class="fas fa-user-times me-2"></i>Annulé par</th>
+                                        <th><i class="fas fa-redo-alt me-2"></i>Date de Re-programmation</th>
+                                        <th><i class="fas fa-redo-alt me-2"></i>confirmer</th>
                                         <th class="text-center"><i class="fas fa-cogs me-2"></i>Actions</th>
                                     </tr>
                                 </thead>
@@ -460,31 +536,42 @@
                                                         @break
                                                 @endswitch
                                             </td>
-
                                             <td>
-                                                @if($rdv->statut === 'annulé')
-                                                    <i class="fas fa-user-times me-1"></i>
-                                                    {{ $rdv->annulePar->name ?? '-' }}
+                                                @if($rdv->reprogrammePar)
+                                                    <span class="fw-bold">{{ $rdv->reprogrammePar->name }}</span>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        Le {{ $rdv->date_heure->format('d/m/Y H:i') }}
+                                                    </small>
+                                                @else
+                                                    <span class="text-muted fst-italic">N/A</span>
                                                 @endif
                                             </td>
-
+                                            <td>
+                                                @if($rdv->confirmePar)
+                                                    <span class="fw-bold">{{ $rdv->confirmePar->name }}</span>
+                                                    <br>
+                                                @else
+                                                    <span class="text-muted fst-italic">N/A</span>
+                                                @endif
+                                            </td>
                                             <td class="text-center">
                                                 <div class="btn-group" role="group">
-                                                    <a href="{{ route('admin.rendez-vous.show', $rdv) }}" 
+                                                    <a href="{{ route('admin.rendez-vous.show', $rdv) }}"
                                                        class="btn btn-sm btn-outline-info" title="Voir">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <a href="{{ route('admin.rendez-vous.edit', $rdv) }}" 
+                                                    <a href="{{ route('admin.rendez-vous.edit', $rdv) }}"
                                                        class="btn btn-sm btn-outline-warning" title="Modifier">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <form method="POST" 
-                                                          action="{{ route('admin.rendez-vous.destroy', $rdv) }}" 
+                                                    <form method="POST"
+                                                          action="{{ route('admin.rendez-vous.destroy', $rdv) }}"
                                                           class="d-inline">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button type="submit" 
-                                                                class="btn btn-sm btn-outline-danger" 
+                                                        <button type="submit"
+                                                                class="btn btn-sm btn-outline-danger"
                                                                 title="Supprimer"
                                                                 onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')">
                                                             <i class="fas fa-trash"></i>
@@ -498,7 +585,6 @@
                             </table>
                         </div>
 
-                        <!-- Pagination -->
                         <div class="d-flex justify-content-center mt-4">
                             {{ $rendezVous->links() }}
                         </div>

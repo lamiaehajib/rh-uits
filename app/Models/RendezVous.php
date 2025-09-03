@@ -22,6 +22,8 @@ class RendezVous extends Model
         'statut',
         'notes',
         'annule_par_user_id',
+        'reprogramme_par_user_id',
+        'confirme_par_user_id', // Ajoute cette ligne
     ];
 
     protected $casts = [
@@ -32,6 +34,16 @@ class RendezVous extends Model
     public function projet()
     {
         return $this->belongsTo(Projet::class);
+    }
+
+    public function confirmePar()
+    {
+        return $this->belongsTo(User::class, 'confirme_par_user_id');
+    }
+
+        public function reprogrammePar()
+    {
+        return $this->belongsTo(User::class, 'reprogramme_par_user_id');
     }
 
      public function annulePar()

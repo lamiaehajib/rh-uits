@@ -72,9 +72,9 @@
                             @endphp
 
                             <div class="flex flex-col h-full rounded-2xl shadow-xl overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-2xl
-                                        @if($isToday) border-3 border-pink-500 bg-gradient-to-br from-white to-pink-50 @elseif($isWeekend) bg-gradient-to-br from-gray-50 to-gray-100 @else bg-white @endif">
+                                         @if($isToday) border-3 border-pink-500 bg-gradient-to-br from-white to-pink-50 @elseif($isWeekend) bg-gradient-to-br from-gray-50 to-gray-100 @else bg-white @endif">
                                 <div class="p-5 text-center
-                                            @if($isToday) bg-gradient-to-r from-pink-600 to-red-600 text-white @elseif($isWeekend) bg-gradient-to-r from-gray-400 to-gray-500 text-white @else bg-gradient-to-r from-pink-500 to-red-500 text-white @endif">
+                                             @if($isToday) bg-gradient-to-r from-pink-600 to-red-600 text-white @elseif($isWeekend) bg-gradient-to-r from-gray-400 to-gray-500 text-white @else bg-gradient-to-r from-pink-500 to-red-500 text-white @endif">
                                     <h6 class="font-bold text-xl mb-2 flex items-center justify-center">
                                         <i class="fas fa-calendar-day mr-2"></i>
                                         {{ ucfirst($dayName) }}
@@ -104,21 +104,21 @@
                                                     </h6>
                                                     <div class="flex items-center">
                                                         <span class="text-sm font-bold px-4 py-2 rounded-xl shadow-lg transform transition-all duration-300 hover:scale-110 
-                                                                    @switch($rdv->statut)
-                                                                        @case('programmé') bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-2 border-yellow-300 @break
-                                                                        @case('confirmé') bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400 @break
-                                                                        @case('terminé') bg-gradient-to-r from-green-500 to-emerald-600 text-white border-2 border-green-400 @break
-                                                                        @case('annulé') bg-gradient-to-r from-red-500 to-rose-600 text-white border-2 border-red-400 @break
-                                                                        @default bg-gradient-to-r from-gray-400 to-gray-600 text-white border-2 border-gray-400 @break
-                                                                    @endswitch">
-                                                            @switch($rdv->statut)
-                                                                @case('programmé') <i class="fas fa-clock mr-2 text-lg animate-pulse"></i> @break
-                                                                @case('confirmé') <i class="fas fa-check-circle mr-2 text-lg"></i> @break
-                                                                @case('terminé') <i class="fas fa-check-double mr-2 text-lg"></i> @break
-                                                                @case('annulé') <i class="fas fa-times-circle mr-2 text-lg"></i> @break
-                                                                @default <i class="fas fa-info-circle mr-2 text-lg"></i> @break
-                                                            @endswitch
-                                                            {{ ucfirst($rdv->statut) }}
+                                                                     @switch($rdv->statut)
+                                                                         @case('programmé') bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-2 border-yellow-300 @break
+                                                                         @case('confirmé') bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-2 border-blue-400 @break
+                                                                         @case('terminé') bg-gradient-to-r from-green-500 to-emerald-600 text-white border-2 border-green-400 @break
+                                                                         @case('annulé') bg-gradient-to-r from-red-500 to-rose-600 text-white border-2 border-red-400 @break
+                                                                         @default bg-gradient-to-r from-gray-400 to-gray-600 text-white border-2 border-gray-400 @break
+                                                                     @endswitch">
+                                                             @switch($rdv->statut)
+                                                                 @case('programmé') <i class="fas fa-clock mr-2 text-lg animate-pulse"></i> @break
+                                                                 @case('confirmé') <i class="fas fa-check-circle mr-2 text-lg"></i> @break
+                                                                 @case('terminé') <i class="fas fa-check-double mr-2 text-lg"></i> @break
+                                                                 @case('annulé') <i class="fas fa-times-circle mr-2 text-lg"></i> @break
+                                                                 @default <i class="fas fa-info-circle mr-2 text-lg"></i> @break
+                                                             @endswitch
+                                                             {{ ucfirst($rdv->statut) }}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -135,18 +135,41 @@
                                                     @endif
                                                 </div>
 
-                                                {{-- Bouton d'annulation --}}
-                                                @if ($rdv->statut !== 'annulé' && $rdv->statut !== 'terminé' && !$rdv->date_heure->isPast())
-                                                    <form action="{{ route('client.client.rendez-vous.cancel', $rdv) }}" method="POST" class="mt-4">
-                                                        @csrf
-                                                        @method('PUT')
-                                                        <button type="submit" class="w-full text-center text-sm py-2 px-4 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 font-medium shadow-md hover:shadow-lg" onclick="return confirm('Êtes-vous sûr de vouloir annuler cette maintenance sur site ?')">
-                                                            <i class="fas fa-times-circle mr-2"></i> Annuler la maintenance
-                                                        </button>
-                                                    </form>
-                                                @endif
+                                                {{-- Boutons d'action --}}
+                                                <div class="mt-4 flex flex-col space-y-2">
+                                                    @if ($rdv->statut !== 'annulé' && $rdv->statut !== 'terminé' && !$rdv->date_heure->isPast())
+                                                        <form action="{{ route('client.client.rendez-vous.cancel', $rdv) }}" method="POST" >
+                                                            @csrf
+                                                            @method('PUT')
+                                                            <button type="submit" class="w-full text-center text-sm py-2 px-4 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105 font-medium shadow-md hover:shadow-lg" onclick="return confirm('Êtes-vous sûr de vouloir annuler cette maintenance sur site ?')">
+                                                                <i class="fas fa-times-circle mr-2"></i> Annuler la maintenance
+                                                            </button>
+                                                        </form>
+                                                    @endif
+
+                                                    
+                                                      {{-- Bouton pour confirmer la maintenance (Nouveau !) --}}
+    @if ($rdv->statut === 'programmé' && !$rdv->date_heure->isPast())
+        <form action="{{ route('client.client.rendez-vous.confirm', $rdv) }}" method="POST">
+            @csrf
+            @method('PUT')
+            <button type="submit" class="w-full text-center text-sm py-2 px-4 rounded-lg bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 font-medium shadow-md hover:shadow-lg" onclick="return confirm('Êtes-vous sûr de vouloir confirmer cette maintenance sur site ?')">
+                <i class="fas fa-check-circle mr-2"></i> Confirmer la maintenance
+            </button>
+        </form>
+    @endif
+
+    
+
+                                                    {{-- Bouton de re-programmation (ajouté ici) --}}
+                                                    @if ($rdv->statut === 'annulé')
+                                                        <a href="{{ route('client.client.rendez-vous.reprogrammer', $rdv) }}" class="w-full text-center text-sm py-2 px-4 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 font-medium shadow-md hover:shadow-lg">
+                                                            <i class="fas fa-redo-alt mr-2"></i> Re-programmer la maintenance
+                                                        </a>
+                                                    @endif
+                                                </div>
                                             </div>
-                                        @endforeach
+                                           @endforeach
                                         </div>
                                     @else
                                         <div class="text-center text-gray-400 py-8">
