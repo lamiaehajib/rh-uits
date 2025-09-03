@@ -35,6 +35,8 @@
                 0 10px 30px rgba(194, 24, 91, 0.4),
                 0 0 0 1px rgba(255, 255, 255, 0.1);
             animation: slideDown 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            /* --- The fix is here! --- */
+            flex-wrap: wrap; 
         }
 
         .client-header::before {
@@ -149,6 +151,8 @@
             text-decoration: none !important;
             backdrop-filter: blur(10px);
             background: rgba(255, 255, 255, 0.1);
+            /* Make text stay on one line */
+            white-space: nowrap;
         }
 
         .nav-link::before {
@@ -331,7 +335,7 @@
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
             animation: dropIn 0.3s ease;
             /* La solution est ici: bach l-menu yban*/
-            display: none; 
+            display: none;
             position: absolute;
             top: 100%;
             right: 0;
@@ -499,15 +503,15 @@
         }
 
         span.d-none.d-lg-block.text-sm.text-gray-800 {
-    color: white;
-    font-weight: 700;
-    font-size: 19px;
-}
+            color: white;
+            font-weight: 700;
+            font-size: 19px;
+        }
 
-span.d-none.d-lg-block.text-xs.text-gray-500 {
-    color: #fffdf0;
-    font-size: 16px;
-}
+        span.d-none.d-lg-block.text-xs.text-gray-500 {
+            color: #fffdf0;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
