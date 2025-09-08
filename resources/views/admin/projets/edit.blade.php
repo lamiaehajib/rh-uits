@@ -795,9 +795,9 @@ body {
                                             <i class="fas fa-file text-primary"></i>
                                             <div style="flex: 1;">
                                                 <strong>Fichier actuel :</strong> 
-                                                <a href="{{ Storage::url($projet->fichier) }}" target="_blank" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
-                                                    {{ basename($projet->fichier) }}
-                                                </a>
+                                                 <a href="{{ route('admin.projets.download', $projet) }}" class="btn-download">
+                                        <i class="fas fa-download"></i> Télécharger le fichier du projet
+                                    </a>
                                             </div>
                                             <button type="button" class="btn btn-outline-danger btn-sm" onclick="supprimerFichier()" style="border-radius: 8px;">
                                                 <i class="fas fa-times"></i>
