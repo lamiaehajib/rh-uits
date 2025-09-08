@@ -103,7 +103,7 @@ class ProjetController extends Controller
      * @param  \App\Models\Projet  $projet
      * @return \Illuminate\Http\Response
      */
-     public function update(Request $request, Projet $projet)
+    public function update(Request $request, Projet $projet)
     {
         $validated = $request->validate([
             'titre' => 'required|string|max:255',
@@ -112,7 +112,7 @@ class ProjetController extends Controller
             'client_ids.*' => 'exists:users,id', // Chaque élément du tableau doit exister
             'date_debut' => 'required|date',
             'date_fin' => 'nullable|date|after:date_debut',
-            'fichier' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:5120',
+            'fichier' => 'nullable|file|mimes:pdf,doc,docx,jpg,png,csv,xls|max:5120',
             'statut_projet' => 'required|in:en cours,terminé,en attente,annulé'
         ]);
 
@@ -131,7 +131,6 @@ class ProjetController extends Controller
         return redirect()->route('admin.projets.show', $projet)
             ->with('success', 'Projet mis à jour avec succès!');
     }
-
     /**
      * Remove the specified resource from storage.
      *
