@@ -855,18 +855,16 @@
                                         </div>
                                     @endif
                                     
-                                    <input type="file"
-                                        class="form-control @error('fichier') is-invalid @enderror"
-                                        id="fichier"
-                                        name="fichier"
-                                        accept=".pdf,.doc,.docx,.jpg,.png,.csv,.xls">
-                                    @error('fichier')
-                                        <div class="invalid-feedback">{{ $message }}
-                                        </div>
-                                    @enderror
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle"></i> Formats
-                                        acceptés : PDF, DOC, DOCX, JPG, PNG, CSV, XLS. Taille maximale : 5 MB
+                                    <input type="file"                                         class="form-control @error('fichier') is-invalid @enderror"  
+                                                                              id="fichier"                                         name="fichier"          
+                                                                      accept=".pdf,.doc,.docx,.jpg,.png,.csv,.xls,.xlsx">
+                                                                        @error('fichier')
+                                                                                <div class="invalid-feedback">{{ $message }}
+                                                                                    </div>
+                                                                        @enderror
+                                                                        <div class="form-text">
+                                                                                <i class="fas fa-info-circle"></i> Formats
+                                                                                acceptés : PDF, DOC, DOCX, JPG, PNG, CSV, XLS, XLSX. Taille maximale : 5 MB
                                         @if($projet->fichier)
                                             <br><em>Sélectionner un nouveau fichier
                                                 remplacera l'actuel</em>
