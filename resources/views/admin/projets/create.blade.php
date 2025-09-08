@@ -592,15 +592,15 @@
                             <div class="form-group">
                                 <label class="form-label">Fichier Joint</label>
                                 <div class="custom-file-upload">
-                                    <input type="file" class="file-input @error('fichier') is-invalid @enderror"
-                                        id="fichier" name="fichier" accept=".pdf,.doc,.docx,.jpg,.png">
+                                    <input type="file" class="file-input @error('fichier') is-invalid @enderror" id="fichier" name="fichier"
+                                        accept=".pdf,.doc,.docx,.jpg,.png,.csv,.xls">
                                     <label for="fichier" class="file-label">
                                         <i class="fas fa-cloud-upload-alt"></i>
                                         <span class="file-text">Choisir un fichier ou glisser ici</span>
                                     </label>
                                 </div>
                                 <small class="form-text text-muted" style="margin-top: 0.8rem; color: #6b7280;">
-                                    <i class="fas fa-info-circle"></i> Formats acceptés: PDF, DOC, DOCX, JPG, PNG (Max:
+                                    <i class="fas fa-info-circle"></i> Formats acceptés: PDF, DOC, DOCX, JPG, PNG, CSV, XLS (Max:
                                     5MB)
                                 </small>
                                 @error('fichier')

@@ -45,7 +45,7 @@ class ProjetController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+ public function store(Request $request)
     {
         $validated = $request->validate([
             'titre' => 'required|string|max:255',
@@ -54,7 +54,7 @@ class ProjetController extends Controller
             'client_ids.*' => 'exists:users,id', // Chaque élément du tableau doit exister
             'date_debut' => 'required|date',
             'date_fin' => 'nullable|date|after:date_debut',
-            'fichier' => 'nullable|file|mimes:pdf,doc,docx,jpg,png|max:5120',
+            'fichier' => 'nullable|file|mimes:pdf,doc,docx,jpg,png,csv,xls|max:5120',
             'statut_projet' => 'required|in:en cours,terminé,en attente,annulé'
         ]);
 
