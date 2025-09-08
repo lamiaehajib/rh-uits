@@ -767,40 +767,34 @@
                                     @enderror
                                 </div>
 
-                                <div class="col-md-6 mb-3">
-                                    <label for="date_debut" class="form-label">
-                                        <i class="fas fa-calendar-plus"></i> Date de
-                                        début <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="date"
-                                        class="form-control @error('date_debut') is-invalid @enderror"
-                                        id="date_debut"
-                                        name="date_debut"
-                                        value="{{ old('date_debut', $projet->date_debut) }}"
-                                        required>
-                                    @error('date_debut')
-                                        <div class="invalid-feedback">{{ $message }}
-                                        </div>
-                                    @enderror
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label for="date_fin" class="form-label">
-                                        <i class="fas fa-calendar-check"></i> Date
-                                        de fin (optionnelle)
-                                    </label>
-                                    <input type="date"
-                                        class="form-control @error('date_fin') is-invalid @enderror"
-                                        id="date_fin"
-                                        name="date_fin"
-                                        value="{{ old('date_fin', $projet->date_fin) }}">
-                                    @error('date_fin')
-                                        <div class="invalid-feedback">{{ $message }}
-                                        </div>
-                                    @enderror
-                                    <div class="form-text">La date de fin doit être
-                                        postérieure à la date de début</div>
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="date_debut" class="form-label">
+                                    <i class="fas fa-calendar-plus"></i> Date de
+                                    début <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" class="form-control @error('date_debut') is-invalid @enderror" id="date_debut" name="date_debut"
+                                    value="{{ old('date_debut', $projet->date_debut ? \Carbon\Carbon::parse($projet->date_debut)->format('Y-m-d') : '') }}"
+                                    required>
+                                @error('date_debut')
+                                    <div class="invalid-feedback">{{ $message }}
+                                    </div>
+                                @enderror
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="date_fin" class="form-label">
+                                    <i class="fas fa-calendar-check"></i> Date
+                                    de fin (optionnelle)
+                                </label>
+                                <input type="date" class="form-control @error('date_fin') is-invalid @enderror" id="date_fin" name="date_fin"
+                                    value="{{ old('date_fin', $projet->date_fin ? \Carbon\Carbon::parse($projet->date_fin)->format('Y-m-d') : '') }}">
+                                @error('date_fin')
+                                    <div class="invalid-feedback">{{ $message }}
+                                    </div>
+                                @enderror
+                                <div class="form-text">La date de fin doit être
+                                    postérieure à la date de début</div>
+                            </div>
 
                                 <div class="col-md-12 mb-3">
                                     <label for="description" class="form-label">

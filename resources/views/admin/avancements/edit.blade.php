@@ -580,10 +580,9 @@
                                     <div class="alert alert-info py-3">
                                         <i class="fas fa-info-circle me-2"></i> 
                                         <strong>Fichier actuel:</strong>
-                                        <a href="{{ Storage::url($avancement->fichiers) }}" target="_blank" class="ms-2">
-                                            <i class="fas fa-download me-1"></i>
-                                            {{ basename($avancement->fichiers) }}
-                                        </a>
+                                         <a href="{{ route('client.avancements.download', $avancement) }}" target="_blank" class="btn btn-custom-primary">
+                                    <i class="fas fa-download me-2"></i> Télécharger le fichier
+                                </a>
                                     </div>
                                 </div>
                             @endif
