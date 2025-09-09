@@ -9,17 +9,25 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 class AvancementController extends Controller
 {
-    public function index(Projet $projet)
-    {
-        $avancements = $projet->avancements()
-            ->orderBy('created_at', 'desc')
-            ->get();
-        
-        $pourcentageGlobal = $avancements->avg('pourcentage') ?? 0;
-        
-        return view('admin.avancements.index', compact('projet', 'avancements', 'pourcentageGlobal'));
+ public function index(Projet $projet)
+{
+    $avancements = $projet->avancements()
+        ->orderBy('created_at', 'desc')
+        ->get();
+    
+    // Ancien code (moyenne) :
+    // $pourcentageGlobal = $avancements->avg('pourcentage') ?? 0;
+    
+    // Nouveau code (somme) :
+    $pourcentageGlobal = $avancements->sum('pourcentage');
+    
+    // On s'assure que le pourcentage ne dépasse pas 100%
+    if ($pourcentageGlobal > 100) {
+        $pourcentageGlobal = 100;
     }
 
+    return view('admin.avancements.index', compact('projet', 'avancements', 'pourcentageGlobal'));
+}
     public function create(Projet $projet)
     {
         return view('admin.avancements.create', compact('projet'));
