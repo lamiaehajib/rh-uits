@@ -47,12 +47,16 @@ class RendezVousController extends Controller
             ->with('success', 'Rendez-vous créé avec succès!');
     }
 
-    public function show(RendezVous $rendezVous)
-    {
-        // Eager load les utilisateurs via le projet
-        $rendezVous->load('projet.users');
-        return view('admin.rendez-vous.show', compact('rendezVous'));
-    }
+   // Remplacer la méthode actuelle par celle-ci
+
+public function show($id)
+{
+    // Chercher le rendez-vous par son ID et charger les relations immédiatement
+    $rendezVous = RendezVous::with(['projet.users', 'annulePar', 'reprogrammePar', 'confirmePar'])
+                            ->findOrFail($id);
+
+    return view('admin.rendez-vous.show', compact('rendezVous'));
+}
 
    public function edit($id)
 {
@@ -154,13 +158,17 @@ class RendezVousController extends Controller
         ->with('success', 'Rendez-vous reprogrammé avec succès!');
 }
 
-    public function destroy(RendezVous $rendezVous)
-    {
-        $rendezVous->delete();
-
-        return redirect()->route('admin.rendez-vous.index')
-            ->with('success', 'Rendez-vous supprimé avec succès!');
-    }
+    public function destroy(Request $request, $id)
+{
+    // Find the rendez-vous by its ID
+    $rdv = RendezVous::findOrFail($id);
+    
+    // Call the delete() method on the found model instance
+    $rdv->delete();
+    
+    return redirect()->route('admin.rendez-vous.index')
+        ->with('success', 'Rendez-vous supprimé avec succès!');
+}
 
     // Rendez-vous d'aujourd'hui
     public function aujourdhui()

@@ -1,209 +1,152 @@
 <x-app-layout>
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <!-- En-tête -->
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <h3 class="card-title mb-1">{{ $rendezVous->titre }}</h3>
-                        @if($rendezVous->date_heure)
-                        <small class="text-muted">
-                            l'intervention  du {{ $rendezVous->date_heure->format('d/m/Y à H:i') }}
-                        </small>
-                        @endif
-                    </div>
-                    <div>
-                        @switch($rendezVous->statut)
-                            @case('programmé')
-                                <span class="badge bg-secondary fs-6">Programmé</span>
-                                @break
-                            @case('confirmé')
-                                <span class="badge bg-primary fs-6">Confirmé</span>
-                                @break
-                            @case('terminé')
-                                <span class="badge bg-success fs-6">Terminé</span>
-                                @break
-                            @case('annulé')
-                                <span class="badge bg-danger fs-6">Annulé</span>
-                                @break
-                        @endswitch
-                    </div>
-                </div>
+<div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <div class="bg-white shadow-xl rounded-lg overflow-hidden border-t-4 border-blue-500">
+        <div class="px-6 py-8">
+            <div class="flex items-center justify-between mb-6">
+                <h1 class="text-3xl font-extrabold text-gray-900">
+                    Détails du Rendez-vous
+                </h1>
+                <a href="{{ route('admin.rendez-vous.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Retour à la liste
+                </a>
             </div>
 
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            <div class="row">
-                <!-- Informations principales -->
-                <div class="col-12 col-lg-8">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-info-circle"></i> Informations de l'intervention
-                            </h5>
+                <div class="bg-gray-50 rounded-lg p-6 shadow-sm border border-gray-200">
+                    <div class="flex items-center mb-4">
+                        <span class="p-2 bg-blue-100 rounded-full text-blue-600 mr-3">
+                            <i class="fas fa-calendar-alt text-xl"></i>
+                        </span>
+                        <h2 class="text-xl font-semibold text-gray-800">Détails Principaux</h2>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Titre</p>
+                            <p class="mt-1 text-lg font-bold text-gray-900">{{ $rendezVous->titre }}</p>
                         </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="fw-bold text-muted">Date et Heure</label>
-                                    @if($rendezVous->date_heure)
-                                    <p class="mb-0">
-                                        <i class="fas fa-calendar me-2"></i>
-                                        {{ $rendezVous->date_heure->format('l d F Y') }}
-                                    </p>
-                                    <p class="mb-0">
-                                        <i class="fas fa-clock me-2"></i>
-                                        {{ $rendezVous->date_heure->format('H:i') }}
-                                    </p>
-                                    @else
-                                    <p class="mb-0 text-muted fst-italic">Non spécifié</p>
-                                    @endif
-                                </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Projet Associé</p>
+                            <a href="#" class="mt-1 text-lg font-semibold text-blue-600 hover:text-blue-800 transition-colors duration-200">
+                                {{-- Here is the fix: check if the 'projet' relationship exists --}}
+                                @if ($rendezVous->projet)
+                                    {{ $rendezVous->projet->titre }}
+                                @else
+                                    <span class="text-gray-500 italic">Aucun projet associé</span>
+                                @endif
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
-                                <div class="col-md-6 mb-3">
-                                    <label class="fw-bold text-muted">Lieu</label>
-                                    <p class="mb-0">
-                                        <i class="fas fa-map-marker-alt me-2"></i>
-                                        {{ $rendezVous->lieu ?? 'Non spécifié' }}
-                                    </p>
-                                </div>
+                <div class="bg-gray-50 rounded-lg p-6 shadow-sm border border-gray-200">
+                    <div class="flex items-center mb-4">
+                        <span class="p-2 bg-green-100 rounded-full text-green-600 mr-3">
+                            <i class="fas fa-clock text-xl"></i>
+                        </span>
+                        <h2 class="text-xl font-semibold text-gray-800">Statut et Horaire</h2>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Statut</p>
+                            <p class="mt-1 text-lg font-bold">
+                                @php
+                                    $statusClass = [
+                                        'programmé' => 'bg-blue-100 text-blue-800',
+                                        'confirmé' => 'bg-green-100 text-green-800',
+                                        'terminé' => 'bg-gray-100 text-gray-800',
+                                        'annulé' => 'bg-red-100 text-red-800',
+                                    ][$rendezVous->statut] ?? 'bg-gray-100 text-gray-800';
+                                @endphp
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClass }}">
+                                    {{ ucfirst($rendezVous->statut) }}
+                                </span>
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Date et Heure</p>
+                            <p class="mt-1 text-lg font-bold text-gray-900">
+                                {{ \Carbon\Carbon::parse($rendezVous->date_heure)->locale('fr')->isoFormat('D MMMM YYYY [à] HH:mm') }}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Lieu</p>
+                            <p class="mt-1 text-lg font-semibold text-gray-700">{{ $rendezVous->lieu ?? 'Non spécifié' }}</p>
+                        </div>
+                    </div>
+                </div>
 
-                                <div class="col-12 mb-3">
-                                    <label class="fw-bold text-muted">Description</label>
-                                    @if($rendezVous->description)
-                                        <div class="border rounded p-3 bg-light">
-                                            {{ $rendezVous->description }}
+                <div class="lg:col-span-1 bg-gray-50 rounded-lg p-6 shadow-sm border border-gray-200">
+                    <div class="flex items-center mb-4">
+                        <span class="p-2 bg-yellow-100 rounded-full text-yellow-600 mr-3">
+                            <i class="fas fa-file-alt text-xl"></i>
+                        </span>
+                        <h2 class="text-xl font-semibold text-gray-800">Description et Notes</h2>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Description</p>
+                            <p class="mt-1 text-base text-gray-700 whitespace-pre-wrap">{{ $rendezVous->description ?? 'Aucune description fournie.' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Notes</p>
+                            <p class="mt-1 text-base text-gray-700 whitespace-pre-wrap">{{ $rendezVous->notes ?? 'Aucune note supplémentaire.' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 lg:col-span-3 bg-gray-50 rounded-lg p-6 shadow-sm border border-gray-200">
+                    <div class="flex items-center mb-4">
+                        <span class="p-2 bg-purple-100 rounded-full text-purple-600 mr-3">
+                            <i class="fas fa-users text-xl"></i>
+                        </span>
+                        <h2 class="text-xl font-semibold text-gray-800">Participants du Projet</h2>
+                    </div>
+                    <ul class="divide-y divide-gray-200 mt-4">
+                        {{-- Here is the second fix: check if the 'projet' relationship exists before looping --}}
+                        @if ($rendezVous->projet)
+                            @forelse($rendezVous->projet->users as $user)
+                                <li class="py-3 flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="h-10 w-10 flex-shrink-0">
+                                            <div class="h-10 w-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold text-sm">
+                                                {{ strtoupper(substr($user->name, 0, 2)) }}
+                                            </div>
                                         </div>
-                                    @else
-                                        <p class="text-muted fst-italic">Aucune description</p>
-                                    @endif
-                                </div>
-
-                                @if($rendezVous->notes)
-                                    <div class="col-12">
-                                        <label class="fw-bold text-muted">Notes</label>
-                                        <div class="border rounded p-3 bg-warning bg-opacity-10 border-warning">
-                                            <i class="fas fa-sticky-note me-2 text-warning"></i>
-                                            {{ $rendezVous->notes }}
+                                        <div class="ml-4">
+                                            <p class="text-sm font-medium text-gray-900">{{ $user->name }}</p>
+                                            <p class="text-sm text-gray-500">{{ $user->email }}</p>
                                         </div>
                                     </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Informations du projet et client -->
-                <div class="col-12 col-lg-4 mt-4 mt-lg-0">
-                    <!-- Projet -->
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <h6 class="card-title mb-0">
-                                <i class="fas fa-project-diagram"></i> Projet associé
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            @if($rendezVous->projet)
-                            <h6 class="mb-2">
-                                <a href="{{ route('admin.projets.show', $rendezVous->projet) }}" 
-                                   class="text-decoration-none">
-                                    {{ $rendezVous->projet->titre }}
-                                </a>
-                            </h6>
-                            <p class="text-muted small mb-2">
-                                <i class="fas fa-tag me-1"></i>
-                                {{ $rendezVous->projet->type }}
-                            </p>
-                            <p class="text-muted small mb-0">
-                                <i class="fas fa-calendar me-1"></i>
-                                Début: {{ $rendezVous->projet->date_debut->format('d/m/Y') }}
-                            </p>
-                            @else
-                            <p class="text-muted fst-italic">Aucun projet associé.</p>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- Client -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="card-title mb-0">
-                                <i class="fas fa-user"></i> Client
-                            </h6>
-                        </div>
-                        <div class="card-body">
-                            @if($rendezVous->client)
-                                <h6 class="mb-2">{{ $rendezVous->client->name }}</h6>
-                                @if($rendezVous->client->email)
-                                    <p class="text-muted small mb-2">
-                                        <i class="fas fa-envelope me-1"></i>
-                                        <a href="mailto:{{ $rendezVous->client->email }}">{{ $rendezVous->client->email }}</a>
-                                    </p>
-                                @endif
-                                @if($rendezVous->client->tele)
-                                    <p class="text-muted small mb-0">
-                                        <i class="fas fa-phone me-1"></i>
-                                        <a href="tel:{{ $rendezVous->client->tele }}">{{ $rendezVous->client->tele }}</a>
-                                    </p>
-                                @endif
-                            @else
-                                <p class="text-muted fst-italic">Aucun client associé.</p>
-                            @endif
-                        </div>
-                    </div>
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        Membre
+                                    </span>
+                                </li>
+                            @empty
+                                <li class="py-4 text-center text-gray-500 italic">Aucun participant associé à ce projet.</li>
+                            @endforelse
+                        @else
+                            <li class="py-4 text-center text-gray-500 italic">Aucun participant associé à ce projet.</li>
+                        @endif
+                    </ul>
                 </div>
             </div>
 
-            <!-- Actions -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <div class="btn-group" role="group">
-                                <a href="{{ route('admin.rendez-vous.index') }}" class="btn btn-secondary">
-                                    <i class="fas fa-arrow-left"></i> Retour à la liste
-                                </a>
-                                {{-- <a href="{{ route('admin.rendez-vous.edit', $rendezVous) }}" class="btn btn-warning"> --}}
-                                    <i class="fas fa-edit"></i> Modifier
-                                </a>
-                                @if($rendezVous->statut !== 'terminé')
-                                    {{-- <form method="POST" action="{{ route('admin.rendez-vous.update', $rendezVous) }}" class="d-inline"> --}}
-                                        @csrf
-                                        @method('PUT')
-                                        <input type="hidden" name="projet_id" value="{{ $rendezVous->projet_id }}">
-                                        <input type="hidden" name="titre" value="{{ $rendezVous->titre }}">
-                                        <input type="hidden" name="description" value="{{ $rendezVous->description }}">
-                                        @if($rendezVous->date_heure)
-                                        <input type="hidden" name="date_heure" value="{{ $rendezVous->date_heure->format('Y-m-d H:i:s') }}">
-                                        @endif
-                                        <input type="hidden" name="lieu" value="{{ $rendezVous->lieu }}">
-                                        <input type="hidden" name="statut" value="terminé">
-                                        <input type="hidden" name="notes" value="{{ $rendezVous->notes }}">
-                                        <button type="submit" class="btn btn-success" 
-                                                onclick="return confirm('Marquer cette intervention comme terminée. ?')">
-                                            <i class="fas fa-check"></i> Marquer terminé
-                                        </button>
-                                    </form>
-                                @endif
-                                {{-- <form method="POST" action="{{ route('admin.rendez-vous.destroy', $rendezVous) }}" class="d-inline">
-                                    @csrf --}}
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger" 
-                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette intervention  ?')">
-                                        <i class="fas fa-trash"></i> Supprimer
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {{-- <div class="mt-8 flex justify-end space-x-4">
+                <a href="{{ route('admin.rendez-vous.edit', $rendezVous->id) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors duration-200">
+                    <i class="fas fa-edit mr-2"></i>
+                    Modifier
+                </a>
+                <form action="{{ route('admin.rendez-vous.destroy', $rendezVous->id) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
+                        <i class="fas fa-trash-alt mr-2"></i>
+                        Supprimer
+                    </button>
+                </form>
+            </div> --}}
         </div>
     </div>
 </div>
