@@ -301,7 +301,12 @@ Route::prefix('client')->name('client.')->middleware('auth')->group(function () 
         //     abort(403);
         // }
         $projet->load(['avancements', 'rendezVous']);
-        $pourcentageGlobal = $projet->avancements->avg('pourcentage') ?? 0;
+        $pourcentageGlobal = $projet->avancements->sum('pourcentage');
+
+    // S'assurer que le pourcentage ne dépasse pas 100%
+    if ($pourcentageGlobal > 100) {
+        $pourcentageGlobal = 100;
+    }
         return view('client.projets.show', compact('projet', 'pourcentageGlobal'));
     })->name('projets.show');
 

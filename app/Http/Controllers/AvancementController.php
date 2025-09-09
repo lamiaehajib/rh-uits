@@ -15,8 +15,6 @@ class AvancementController extends Controller
         ->orderBy('created_at', 'desc')
         ->get();
     
-    // Ancien code (moyenne) :
-    // $pourcentageGlobal = $avancements->avg('pourcentage') ?? 0;
     
     // Nouveau code (somme) :
     $pourcentageGlobal = $avancements->sum('pourcentage');

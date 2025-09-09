@@ -75,13 +75,23 @@ class ProjetController extends Controller
      * @param  \App\Models\Projet  $projet
      * @return \Illuminate\Http\Response
      */
-    public function show(Projet $projet)
-    {
-        $projet->load(['users', 'rendezVous', 'avancements']);
-        $pourcentageGlobal = $projet->avancements->avg('pourcentage') ?? 0;
-        
-        return view('admin.projets.show', compact('projet', 'pourcentageGlobal'));
+ public function show(Projet $projet)
+{
+    $projet->load(['users', 'rendezVous', 'avancements']);
+
+    // Ancien code (moyenne) :
+    // $pourcentageGlobal = $projet->avancements->avg('pourcentage') ?? 0;
+
+    // Nouveau code (somme simple) :
+    $pourcentageGlobal = $projet->avancements->sum('pourcentage');
+
+    // Assurez-vous que le pourcentage ne dépasse pas 100%
+    if ($pourcentageGlobal > 100) {
+        $pourcentageGlobal = 100;
     }
+
+    return view('admin.projets.show', compact('projet', 'pourcentageGlobal'));
+}
 
     /**
      * Show the form for editing the specified resource.

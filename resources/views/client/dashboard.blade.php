@@ -231,7 +231,10 @@
                                                 <h6 class="mb-1 text-gradient">{{ $projet->titre }}</h6>
                                                 <p class="mb-2 text-muted">{{ Str::limit($projet->description, 50) }}</p>
                                                 @php
-                                                    $pourcentage = $projet->avancements->avg('pourcentage') ?? 0;
+                                                    $pourcentage = $projet->avancements->sum('pourcentage');
+                                                    if ($pourcentage > 100) {
+                                                        $pourcentage = 100;
+                                                    }
                                                 @endphp
                                                 <div class="progress progress-custom mt-2">
                                                     <div class="progress-bar progress-bar-custom" role="progressbar" style="width: {{ $pourcentage }}%;" aria-valuenow="{{ $pourcentage }}" aria-valuemin="0" aria-valuemax="100"></div>
@@ -386,15 +389,21 @@
                 });
             }
 
-            // Progression Bar Chart
             const projetsProgressBarCtx = document.getElementById('projetsProgressBarChart');
-            if (projetsProgressBarCtx) {
-                const projets = @json($projetsRecents->map(function($p) {
-                    return [
-                        'titre' => $p->titre,
-                        'pourcentage' => number_format($p->avancements->avg('pourcentage') ?? 0, 0)
-                    ];
-                }));
+if (projetsProgressBarCtx) {
+    const projets = @json($projetsRecents->map(function ($p) {
+        $pourcentage = $p->avancements->sum('pourcentage');
+
+        // Ensure the total doesn't exceed 100%
+        if ($pourcentage > 100) {
+            $pourcentage = 100;
+        }
+
+        return [
+            'titre' => $p->titre,
+            'pourcentage' => number_format($pourcentage, 0)
+        ];
+    }));
 
                 const labels = projets.map(p => p.titre);
                 const data = projets.map(p => p.pourcentage);
