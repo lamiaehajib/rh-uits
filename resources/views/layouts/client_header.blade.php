@@ -512,6 +512,12 @@
             color: #fffdf0;
             font-size: 16px;
         }
+
+
+        .nav-item {
+    position: relative;
+    text-transform: uppercase !important;
+}
     </style>
 </head>
 <body>
@@ -539,12 +545,12 @@
                     </li>
                     <li class="nav-item me-3">
                         <a class="nav-link text-decoration-none text-gray-700 hover:text-primary-red transition" href="{{ route('client.projets.index') }}">
-                            <i class="fas fa-folder me-2"></i>Mes Projets
+                            <i class="fas fa-folder me-2"></i>Projets
                         </a>
                     </li>
                     <li class="nav-item me-3">
                         <a class="nav-link text-decoration-none text-gray-700 hover:text-primary-red transition" href="{{ route('client.client.planning') }}">
-                            <i class="fas fa-calendar-check me-2"></i> intervention sur site
+                            <i class="fas fa-calendar-check me-2"></i> les interventions 
                         </a>
                     </li>
                     <li class="nav-item">
