@@ -67,8 +67,8 @@
                         </div>
                         <div class="card-body p-4">
                             <p class="card-text mb-3">
-                                <strong><i class="fas fa-align-left me-2"></i>Description:</strong> {{ $avancement->description }}
-                            </p>
+    <strong><i class="fas fa-align-left me-2"></i>Description:</strong> {!! nl2br(e($avancement->description)) !!}
+</p>
                             <p class="card-text mb-3">
                                 <strong><i class="fas fa-percentage me-2"></i>Pourcentage:</strong> {{ $avancement->pourcentage }}%
                             </p>

@@ -818,15 +818,15 @@
                         </div>
 
                         <div class="info-row">
-                            <div class="info-label">Description:</div>
-                            <div class="info-value">
-                                @if($projet->description)
-                                    {{ $projet->description }}
-                                @else
-                                    <em style="color: #9ca3af;">Aucune description fournie</em>
-                                @endif
-                            </div>
-                        </div>
+    <div class="info-label">Description:</div>
+    <div class="info-value">
+        @if($projet->description)
+            {!! nl2br(e($projet->description)) !!}
+        @else
+            <em style="color: #9ca3af;">Aucune description fournie</em>
+        @endif
+    </div>
+</div>
 
                         <div class="info-row">
                             <div class="info-label">Date de début:</div>
@@ -901,7 +901,7 @@
                                                     style="color: var(--primary-color); font-weight: 700; margin-bottom: 0.5rem;">
                                                     {{ $avancement->titre }}</h6>
                                                 <p style="color: #4b5563; margin-bottom: 0.8rem; line-height: 1.5;">
-                                                    {{ $avancement->description }}</p>
+                                                   {!! nl2br(e($avancement->description)) !!}
                                                 <small style="color: #9ca3af; font-weight: 500;">
                                                     <i class="fas fa-clock me-1"></i>
                                                     {{ $avancement->created_at->format('d/m/Y à H:i') }}
