@@ -360,6 +360,12 @@ Route::put('/rendez-vous/{rendezVous}/reprogram-store', [RendezVousController::c
 
 Route::put('/rendez-vous/{rendezVous}/confirm', [RendezVousController::class, 'confirmRendezVous'])
     ->name('client.rendez-vous.confirm');
+
+    Route::get('/planning/historique', [RendezVousController::class, 'historiqueClient'])
+    ->name('client.planning.historique');
+
+    Route::get('/rendez-vous/{rendezVous}', [RendezVousController::class, 'showClient'])
+    ->name('client.rendez-vous.show');
 });
 });
 

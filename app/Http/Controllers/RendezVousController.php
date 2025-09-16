@@ -228,6 +228,50 @@ public function show($id)
     }
 
 
+    public function historiqueClient()
+    {
+        $userId = Auth::id();
+
+        // Si l'utilisateur n'est pas authentifié, on le redirige
+        if (!$userId) {
+            return redirect()->route('login');
+        }
+
+        // On récupère tous les rendez-vous de l'utilisateur,
+        // peu importe le statut, en incluant les relations
+        // 'projet', 'annulePar' et 'reprogrammePar'
+        $rendezVous = RendezVous::with(['projet.users', 'annulePar', 'reprogrammePar', 'confirmePar'])
+            ->whereHas('projet', function ($query) use ($userId) {
+                $query->whereHas('users', function ($q) use ($userId) {
+                    $q->where('users.id', $userId);
+                });
+            })
+            // On les trie par date pour que les plus récents soient en haut
+            ->orderBy('date_heure', 'desc')
+            ->paginate(15); // On utilise la pagination pour ne pas surcharger la page
+
+        return view('client.planning.historique', compact('rendezVous'));
+    }
+
+
+
+    public function showClient($id)
+{
+    $userId = Auth::id();
+
+    // On cherche le rendez-vous par son ID
+    $rendezVous = RendezVous::with(['projet.users', 'annulePar', 'reprogrammePar', 'confirmePar'])
+        ->findOrFail($id);
+
+    // On vérifie que le rendez-vous appartient à un projet de l'utilisateur connecté
+    $isClientProject = $rendezVous->projet->users->contains('id', $userId);
+
+    if (!$isClientProject) {
+        abort(403, 'Unauthorized action.');
+    }
+
+    return view('client.planning.show', compact('rendezVous'));
+}
     public function confirmRendezVous(RendezVous $rendezVous)
     {
         // Vérification des autorisations et du statut

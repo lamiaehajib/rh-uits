@@ -1,7 +1,7 @@
 <x-app-layout>
     <div class="container mx-auto p-4 md:p-8 min-h-screen bg-gradient-to-br from-pink-50 via-red-50 to-rose-50">
         <div class="bg-white shadow-2xl rounded-3xl overflow-hidden border border-gray-100 backdrop-blur-sm">
-            <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-pink-600 to-red-600 text-white">
+             <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-pink-600 to-red-600 text-white">
                 <div class="flex flex-col sm:flex-row justify-between items-center">
                     <div>
                         <h3 class="text-3xl font-bold mb-2 flex items-center">
@@ -24,8 +24,12 @@
                             </small>
                         @endif
                     </div>
+                    <a href="{{ route('client.client.planning.historique') }}" class="mt-4 sm:mt-0 ml-auto px-6 py-3 rounded-full bg-white text-pink-600 font-bold hover:bg-pink-100 transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg flex items-center">
+                        <i class="fas fa-history mr-2"></i>
+                        Historique complet
+                    </a>
                 </div>
-            </div>
+             </div>
 
             <div class="p-6 md:p-8">
                 {{-- Navigation pour les semaines --}}
