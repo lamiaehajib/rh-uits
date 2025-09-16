@@ -173,111 +173,108 @@
                         </thead>
                         <tbody>
                             @forelse ($data as $user)
-                                <tr id="user-row-{{ $user->id }}" class="hover:bg-gray-50 transition duration-150">
-                                    <td>
-                                        <input type="checkbox" class="form-check-input user-checkbox accent-primary-red" value="{{ $user->id }}">
-                                    </td>
-                                    
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="avatar-circle-sm text-white me-2 shadow-sm" style="background-color: #D32F2F;">
-                                                {{ strtoupper(substr($user->name, 0, 1)) }}
-                                            </div>
-                                            <strong class="text-dark">{{ $user->name }}</strong>
-                                        </div>
-                                    </td>
-                                    <td>{{ $user->email }}</td>
-                                    <td><span class="badge bg-secondary text-white px-2 py-1 rounded-md">{{ $user->code }}</span></td>
-                                    <td>{{ $user->tele }}</td>
-                                    <td>{{ $user->poste }}</td>
-                                    <td>{{ $user->repos }}</td>
-                                    <td>
-                                        @if(!empty($user->getRoleNames()))
-                                            @foreach($user->getRoleNames() as $rolename)
-                                                <span class="badge text-white me-1 px-2 py-1 rounded-md" style="background-color: #D32F2F;">{{ $rolename }}</span>
-                                            @endforeach
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="form-check form-switch d-flex align-items-center">
-                                            {{-- Le toggle de statut aura toujours besoin de JS pour fonctionner en temps réel --}}
-                                            <input class="form-check-input status-toggle me-2 cursor-pointer" type="checkbox" role="switch"
-                                                            data-user-id="{{ $user->id }}"
-                                                            {{ $user->is_active ? 'checked' : '' }}>
-                                            <span class="badge text-white px-2 py-1 rounded-md transition duration-200 {{ $user->is_active ? 'bg-success' : 'bg-danger' }}">
-                                                {{ $user->is_active ? 'Actif' : 'Inactif' }}
-                                            </span>
-                                        </div>
-                                    </td>
+                                                                <tr id="user-row-{{ $user->id }}" class="hover:bg-gray-50 transition duration-150">
+                                                                    <td>
+                                                                        <input type="checkbox" class="form-check-input user-checkbox accent-primary-red" value="{{ $user->id }}">
+                                                                    </td>
 
-                                    <td>{{ $user->created_at->format('d/m/Y') }}</td>
-                                    <td>
-                                        <div class="d-flex flex-nowrap gap-2">
-                                            @if ($user->hasRole('Client'))
-    {{-- Bouton pour afficher le modal d'affichage (pour les clients) --}}
-    <button type="button" class="btn btn-info btn-sm text-white rounded-md transition duration-200 hover:scale-110"
-            data-bs-toggle="modal"
-            data-bs-target="#showClientModal"
-            data-nom="{{ $user->name }}"
-            data-email="{{ $user->email }}"
-            data-tele="{{ $user->tele }}"
-            data-adresse="{{ $user->adresse }}"
-            data-type="{{ $user->type_client }}"
-            data-societe="{{ $user->societe_name }}"
-            title="Voir les détails du client">
-        <i class="fas fa-eye"></i>
-    </button>
-@else
-    {{-- Bouton pour rediriger vers la page d'affichage classique (pour les autres rôles) --}}
-    <a class="btn btn-info btn-sm text-white rounded-md transition duration-200 hover:scale-110" href="{{ route('users.show', $user->id) }}" title="Voir">
-        <i class="fas fa-eye"></i>
-    </a>
-@endif
-                                            @can('user-edit')
-                                               @if ($user->hasRole('Client'))
-    {{-- Bouton pour afficher le modal d'édition (pour les clients) --}}
-    <button type="button" class="btn btn-sm text-white rounded-md transition duration-200 hover:scale-110"
-            style="background-color: #D32F2F;"
-            data-bs-toggle="modal"
-            data-bs-target="#editClientModal"
-            data-id="{{ $user->id }}"
-            data-nom="{{ $user->name }}"
-            data-email="{{ $user->email }}"
-            data-tele="{{ $user->tele }}"
-            data-adresse="{{ $user->adresse }}"
-            data-type="{{ $user->type_client }}"
-            data-societe="{{ $user->societe_name }}"
-            title="Modifier le client">
-        <i class="fas fa-edit"></i>
-    </button>
-@else
-    {{-- Bouton pour rediriger vers la page d'édition classique (pour les autres rôles) --}}
-    <a class="btn btn-sm text-white rounded-md transition duration-200 hover:scale-110" style="background-color: #D32F2F;" href="{{ route('users.edit', $user->id) }}" title="Modifier">
-        <i class="fas fa-edit"></i>
-    </a>
-@endif
+                                                                    <td>
+                                                                        <div class="d-flex align-items-center">
+                                                                            <div class="avatar-circle-sm text-white me-2 shadow-sm" style="background-color: #D32F2F;">
+                                                                                {{ strtoupper(substr($user->name, 0, 1)) }}
+                                                                            </div>
+                                                                            <strong class="text-dark">{{ $user->name }}</strong>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>{{ $user->email }}</td>
+                                                                    <td><span class="badge bg-secondary text-white px-2 py-1 rounded-md">{{ $user->code }}</span></td>
+                                                                    <td>{{ $user->tele }}</td>
+                                                                    <td>{{ $user->poste }}</td>
+                                                                    <td>{{ $user->repos }}</td>
+                                                                    <td>
+                                                                        @if(!empty($user->getRoleNames()))
+                                                                            @foreach($user->getRoleNames() as $rolename)
+                                                                                <span class="badge text-white me-1 px-2 py-1 rounded-md" style="background-color: #D32F2F;">{{ $rolename }}</span>
+                                                                            @endforeach
+                                                                        @endif
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="form-check form-switch d-flex align-items-center">
+                                                                            {{-- Le toggle de statut aura toujours besoin de JS pour fonctionner en temps réel --}}
+                                                                            <input class="form-check-input status-toggle me-2 cursor-pointer" type="checkbox" role="switch"
+                                                                                            data-user-id="{{ $user->id }}"
+                                                                                            {{ $user->is_active ? 'checked' : '' }}>
+                                                                            <span class="badge text-white px-2 py-1 rounded-md transition duration-200 {{ $user->is_active ? 'bg-success' : 'bg-danger' }}">
+                                                                                {{ $user->is_active ? 'Actif' : 'Inactif' }}
+                                                                            </span>
+                                                                        </div>
+                                                                    </td>
 
-                                                {{-- FORMULAIRE DE DUPLICATION --}}
-                                                <form action="{{ route('users.duplicate', $user->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir dupliquer cet utilisateur ? Une nouvelle entrée sera créée avec les mêmes informations, mais un email et un code différents.');">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-secondary btn-sm rounded-md transition duration-200 hover:scale-110" title="Dupliquer">
-                                                        <i class="fas fa-copy"></i>
-                                                    </button>
-                                                </form>
-                                            @endcan
-                                            @can('user-delete')
-                                                {{-- FORMULAIRE DE SUPPRESSION --}}
-                                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" style="display:inline;" );">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger btn-sm rounded-md transition duration-200 hover:scale-110" title="Supprimer">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            @endcan
-                                        </div>
-                                    </td>
-                                </tr>
+                                                                    <td>{{ $user->created_at->format('d/m/Y') }}</td>
+                                                                    <td>
+                                                                        <div class="d-flex flex-nowrap gap-2">
+                                                                            @if ($user->hasRole('Client'))
+                                                                                {{-- Bouton pour afficher le modal d'affichage (pour les clients) --}}
+                                                                                <button type="button" class="btn btn-info btn-sm text-white rounded-md transition duration-200 hover:scale-110"        
+                                                                                        data-bs-toggle="modal"             data-bs-target="#showClientModal"             data-nom="{{ $user->name }}"  
+                                                                                              data-email="{{ $user->email }}"             data-tele="{{ $user->tele }}"            
+                                                                                    data-adresse="{{ $user->adresse }}"             data-type="{{ $user->type_client }}"            
+                                                                                    data-societe="{{ $user->societe_name }}"            
+                                                                                    data-last-login="{{ $user->last_login_at ? $user->last_login_at->format('d/m/Y H:i') : 'Jamais' }}"            
+                                                                                    data-login-count="{{ $user->login_count ?? 0 }}"             title="Voir les détails du client">
+                                                                                            <i class="fas fa-eye"></i>
+                                                                                </button>
+                                                                            @else
+                                    {{-- Bouton pour rediriger vers la page d'affichage classique (pour les autres rôles) --}}
+                                    <a class="btn btn-info btn-sm text-white rounded-md transition duration-200 hover:scale-110" href="{{ route('users.show', $user->id) }}" title="Voir">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                @endif
+                                                                            @can('user-edit')
+                                                                               @if ($user->hasRole('Client'))
+                                    {{-- Bouton pour afficher le modal d'édition (pour les clients) --}}
+                                    <button type="button" class="btn btn-sm text-white rounded-md transition duration-200 hover:scale-110"
+                                            style="background-color: #D32F2F;"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editClientModal"
+                                            data-id="{{ $user->id }}"
+                                            data-nom="{{ $user->name }}"
+                                            data-email="{{ $user->email }}"
+                                            data-tele="{{ $user->tele }}"
+                                            data-adresse="{{ $user->adresse }}"
+                                            data-type="{{ $user->type_client }}"
+                                            data-societe="{{ $user->societe_name }}"
+                                            title="Modifier le client">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                @else
+                                    {{-- Bouton pour rediriger vers la page d'édition classique (pour les autres rôles) --}}
+                                    <a class="btn btn-sm text-white rounded-md transition duration-200 hover:scale-110" style="background-color: #D32F2F;" href="{{ route('users.edit', $user->id) }}" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                @endif
+
+                                                                                {{-- FORMULAIRE DE DUPLICATION --}}
+                                                                                <form action="{{ route('users.duplicate', $user->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir dupliquer cet utilisateur ? Une nouvelle entrée sera créée avec les mêmes informations, mais un email et un code différents.');">
+                                                                                    @csrf
+                                                                                    <button type="submit" class="btn btn-secondary btn-sm rounded-md transition duration-200 hover:scale-110" title="Dupliquer">
+                                                                                        <i class="fas fa-copy"></i>
+                                                                                    </button>
+                                                                                </form>
+                                                                            @endcan
+                                                                            @can('user-delete')
+                                                                                {{-- FORMULAIRE DE SUPPRESSION --}}
+                                                                                <form action="{{ route('users.destroy', $user->id) }}" method="POST" style="display:inline;" );">
+                                                                                    @csrf
+                                                                                    @method('DELETE')
+                                                                                    <button type="submit" class="btn btn-danger btn-sm rounded-md transition duration-200 hover:scale-110" title="Supprimer">
+                                                                                        <i class="fas fa-trash"></i>
+                                                                                    </button>
+                                                                                </form>
+                                                                            @endcan
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
                             @empty
                                 <tr>
                                     <td colspan="11" class="text-center py-4 text-gray-500">Aucun utilisateur trouvé.</td>
@@ -474,54 +471,73 @@
 
 {{-- MODAL POUR AFFICHER LES DÉTAILS D'UN CLIENT --}}
 <div class="modal fade" id="showClientModal" tabindex="-1" aria-labelledby="showClientModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-md">
-        <div class="modal-content rounded-lg shadow-xl animate-scale-in">
-            <div class="modal-header text-white rounded-t-lg" style="background-color: #D32F2F;">
-                <h5 class="modal-title font-bold" id="showClientModalLabel">Détails du client</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-dialog modal-md">
+                <div class="modal-content rounded-lg shadow-xl animate-scale-in">
+                        <div class="modal-header text-white rounded-t-lg" style="background-color: #D32F2F;">
+                                <h5 class="modal-title font-bold" id="showClientModalLabel">Détails du client</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+                            </div>
+                        <div class="modal-body p-4">
+                                <div class="row g-3">
+                                        {{-- Nom Complet --}}
+                                        <div class="col-12">
+                                                <label class="form-label text-sm text-gray-500">Nom Complet:</label>
+                                                <p id="show_nom_complet" class="font-semibold text-gray-800"></p>
+                                            </div>
+                                        {{-- Email --}}
+                                        <div class="col-12">
+                                                <label class="form-label text-sm text-gray-500">Email:</label>
+                                                <p id="show_email_client" class="font-semibold text-gray-800"></p>
+                                            </div>
+                                        {{-- Téléphone --}}
+                                        <div class="col-12">
+                                                <label class="form-label text-sm text-gray-500">Téléphone:</label>
+                                                <p id="show_tele_client" class="font-semibold text-gray-800"></p>
+                                            </div>
+                                        {{-- Adresse --}}
+                                        <div class="col-12">
+                                                <label class="form-label text-sm text-gray-500">Adresse:</label>
+                                                <p id="show_adresse_client" class="font-semibold text-gray-800"></p>
+                                            </div>
+                                        {{-- Type de Client --}}
+                                        <div class="col-12" id="show_type_client_container">
+                                                <label class="form-label text-sm text-gray-500">Type de Client:</label>
+                                                <p id="show_type_client" class="font-semibold text-gray-800"></p>
+                                            </div>
+                                        {{-- Nom de la Société (kaché par défaut) --}}
+                                        <div class="col-12" id="show_societe_name_container" style="display: none;">
+                                                <label class="form-label text-sm text-gray-500">Nom de la
+                            Société:</label>
+                                                <p id="show_societe_name" class="font-semibold text-gray-800"></p>
+                                            </div>
+                                       
+                                                            <div class="col-12 border-t mt-4 pt-4">
+                                                <h6 class="font-semibold text-gray-700 mb-2">Historique de Connexion
+                        </h6>
+                                                <p>
+                                                        <strong><i
+                                    class="fas fa-sign-in-alt me-2 text-gray-500"></i>Nombre de connexions:</strong>
+                                                        <span id="show_login_count"
+                                class="font-semibold text-gray-800"></span>
+                                                    </p>
+                                                <p>
+                                                        <strong><i
+                                    class="fas fa-calendar-alt me-2 text-gray-500"></i>Dernière connexion:</strong>
+                                                        <span id="show_last_login"
+                                class="font-semibold text-gray-800"></span>
+                                                    </p>
+                                            </div>
+                                                        </div>
+                            </div>
+                        <div class="modal-footer border-t border-gray-200 p-3 flex justify-end">
+                                <button type="button"
+                    class="btn btn-secondary me-2 transition duration-200 hover:bg-gray-200"
+                    data-bs-dismiss="modal">Fermer</button>
+                            </div>
+                    </div>
             </div>
-            <div class="modal-body p-4">
-                <div class="row g-3">
-                    {{-- Nom Complet --}}
-                    <div class="col-12">
-                        <label class="form-label text-sm text-gray-500">Nom Complet:</label>
-                        <p id="show_nom_complet" class="font-semibold text-gray-800"></p>
-                    </div>
-                    {{-- Email --}}
-                    <div class="col-12">
-                        <label class="form-label text-sm text-gray-500">Email:</label>
-                        <p id="show_email_client" class="font-semibold text-gray-800"></p>
-                    </div>
-                    {{-- Téléphone --}}
-                    <div class="col-12">
-                        <label class="form-label text-sm text-gray-500">Téléphone:</label>
-                        <p id="show_tele_client" class="font-semibold text-gray-800"></p>
-                    </div>
-                    {{-- Adresse --}}
-                    <div class="col-12">
-                        <label class="form-label text-sm text-gray-500">Adresse:</label>
-                        <p id="show_adresse_client" class="font-semibold text-gray-800"></p>
-                    </div>
-                    {{-- Type de Client --}}
-                    <div class="col-12" id="show_type_client_container">
-                        <label class="form-label text-sm text-gray-500">Type de Client:</label>
-                        <p id="show_type_client" class="font-semibold text-gray-800"></p>
-                    </div>
-                    {{-- Nom de la Société (kaché par défaut) --}}
-                    <div class="col-12" id="show_societe_name_container" style="display: none;">
-                        <label class="form-label text-sm text-gray-500">Nom de la Société:</label>
-                        <p id="show_societe_name" class="font-semibold text-gray-800"></p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-t border-gray-200 p-3 flex justify-end">
-                <button type="button" class="btn btn-secondary me-2 transition duration-200 hover:bg-gray-200" data-bs-dismiss="modal">Fermer</button>
-            </div>
-        </div>
-    </div>
 </div>
-{{-- FIN MODAL POUR AFFICHER LES DÉTAILS D'UN CLIENT --}}
-
 
     @section('scripts')
     {{-- On garde juste ce qui est absolument nécessaire, comme le JavaScript pour Bootstrap Modal (pour l'import) et le toggle de statut, et toastr. --}}
@@ -705,34 +721,41 @@ $('.edit-client-type').on('change', function() {
 
 
 // NOUVEAU LOGIC JS POUR LE MODAL DE DÉTAILS DU CLIENT
+// NOUVEAU LOGIC JS POUR LE MODAL DE DÉTAILS DU CLIENT
 $('#showClientModal').on('show.bs.modal', function (event) {
-    const button = $(event.relatedTarget);
-    const nom = button.data('nom');
-    const email = button.data('email');
-    const tele = button.data('tele');
-    const adresse = button.data('adresse');
-    const type = button.data('type');
-    const societe = button.data('societe');
+    const button = $(event.relatedTarget);
+    const nom = button.data('nom');
+    const email = button.data('email');
+    const tele = button.data('tele');
+    const adresse = button.data('adresse');
+    const type = button.data('type');
+    const societe = button.data('societe');
+    const lastLogin = button.data('last-login'); // Ajoutez cette ligne
+    const loginCount = button.data('login-count'); // Ajoutez cette ligne
 
-    const modal = $(this);
+    const modal = $(this);
 
-    // Remplir les champs du modal avec les données du client
-    modal.find('#show_nom_complet').text(nom);
-    modal.find('#show_email_client').text(email);
-    modal.find('#show_tele_client').text(tele);
-    modal.find('#show_adresse_client').text(adresse);
-    modal.find('#show_type_client').text(type.charAt(0).toUpperCase() + type.slice(1)); // Capitalize the first letter
+    // Remplir les champs du modal avec les données du client
+    modal.find('#show_nom_complet').text(nom);
+    modal.find('#show_email_client').text(email);
+    modal.find('#show_tele_client').text(tele);
+    modal.find('#show_adresse_client').text(adresse);
+    modal.find('#show_type_client').text(type.charAt(0).toUpperCase() + type.slice(1));
+    
+    // AJOUTEZ CES LIGNES POUR AFFICHER L'HISTORIQUE DE CONNEXION
+    modal.find('#show_last_login').text(lastLogin);
+    modal.find('#show_login_count').text(loginCount);
 
-    const societeNameContainer = modal.find('#show_societe_name_container');
-    const societeNameP = modal.find('#show_societe_name');
+    const societeNameContainer = modal.find('#show_societe_name_container');
+    const societeNameP = modal.find('#show_societe_name');
 
-    if (type === 'entreprise') {
-        societeNameContainer.show();
-        societeNameP.text(societe);
-    } else {
-        societeNameContainer.hide();
-        societeNameP.text('');
-    }
+    if (type === 'entreprise') {
+        societeNameContainer.show();
+        societeNameP.text(societe);
+    } else {
+        societeNameContainer.hide();
+        societeNameP.text('');
+    }
 });
 
         });
