@@ -273,7 +273,9 @@
                                         <div class="d-flex w-100 justify-content-between align-items-start">
                                             <div class="flex-grow-1">
                                                 <h6 class="mb-1 text-gradient">{{ $rdv->titre }}</h6>
-                                                <p class="mb-1 text-muted">{{ $rdv->description }}</p>
+                                               <p class="mb-1 text-muted">
+    {!! nl2br(e(Str::limit($rdv->description, 40, '...'))) !!}
+</p>
                                             </div>
                                             <div class="ml-3 text-right">
                                                 <small class="badge badge-custom">

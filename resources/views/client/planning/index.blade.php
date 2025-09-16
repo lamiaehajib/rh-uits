@@ -34,20 +34,12 @@
             <div class="p-6 md:p-8">
                 {{-- Navigation pour les semaines --}}
                 <div class="flex justify-between items-center mb-8 text-center bg-white rounded-2xl p-4 shadow-lg border border-gray-100">
-                    <a href="{{ route('client.client.planning', ['periode' => 'previous_week']) }}" 
-                       class="flex items-center text-pink-600 hover:text-red-600 px-6 py-3 rounded-xl transition-all duration-300 hover:bg-pink-50 hover:shadow-md transform hover:-translate-y-0.5">
-                        <i class="fas fa-chevron-left mr-2 text-lg"></i> 
-                        <span class="font-semibold">Semaine précédente</span>
-                    </a>
+                   
                     <span class="text-xl font-bold text-gray-700 bg-gradient-to-r from-pink-600 to-red-600 bg-clip-text text-transparent">
                         <i class="fas fa-calendar-day mr-2 text-pink-500"></i>
                         Semaine {{ \Carbon\Carbon::now()->weekOfYear }} - {{ \Carbon\Carbon::now()->year }}
                     </span>
-                    <a href="{{ route('client.client.planning', ['periode' => 'next_week']) }}" 
-                       class="flex items-center text-pink-600 hover:text-red-600 px-6 py-3 rounded-xl transition-all duration-300 hover:bg-pink-50 hover:shadow-md transform hover:-translate-y-0.5">
-                        <span class="font-semibold">Semaine suivante</span>
-                        <i class="fas fa-chevron-right ml-2 text-lg"></i>
-                    </a>
+                    
                 </div>
 
                 @if ($rendezVous->count() > 0)
