@@ -136,7 +136,7 @@
                     <div class="card-body p-4">
                         <div class="mb-4">
                             <h6 class="fw-bold text-muted">Description</h6>
-                            <p class="text-color">{{ $avancement->description }}</p>
+                            <p class="text-color">{!! nl2br(e($avancement->description)) !!}</p>
                         </div>
 
                         <div class="mb-4">
