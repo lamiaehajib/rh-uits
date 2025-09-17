@@ -118,7 +118,7 @@
                                             Votre navigateur ne supporte pas l'élément audio.
                                         </audio>
                                     @elseif($tache->description && $tache->description != '-')
-                                        <p class="text-gray-800">{{ $tache->description }}</p>
+                                        <p class="text-gray-800">{!! nl2br(e($tache->description)) !!}</p>
                                     @else
                                         <p class="text-gray-500">-</p>
                                     @endif
