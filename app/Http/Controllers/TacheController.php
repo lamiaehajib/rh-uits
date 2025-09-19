@@ -587,4 +587,37 @@ class TacheController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+
+    public function corbeille()
+{
+    // Kanst3amlo onlyTrashed() bach njebdo GHI les Tâches li mamsou7in
+    // Load les relations li 3endek b7al 'creator' w 'users'
+    $taches = Tache::onlyTrashed()
+                  ->with(['creator', 'users']) 
+                  ->orderBy('deleted_at', 'desc')
+                  ->get();
+
+    return view('taches.corbeille', compact('taches'));
+}
+
+// N°2. Restauration d'une Tâche (I3ada l'Hayat)
+public function restore($id)
+{
+    // Kanjebdo l-Tâche b ID men l'Corbeille (withTrashed) w kan3ayto 3la restore()
+    $tache = Tache::withTrashed()->findOrFail($id);
+    $tache->restore();
+
+    return redirect()->route('taches.corbeille')->with('success', 'Tâche restaurée avec succès!');
+}
+
+// N°3. Suppression Définitive (Mass7 Nnéha'i)
+public function forceDelete($id)
+{
+    // Kanjebdo l-Tâche b ID men l'Corbeille w kan3ayto 3la forceDelete()
+    $tache = Tache::withTrashed()->findOrFail($id);
+    $tache->forceDelete(); // Hadchi kaymassah men la base de données b neha'i!
+
+    return redirect()->route('taches.corbeille')->with('success', 'Tâche supprimée définitivement!');
+}
 }

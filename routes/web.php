@@ -101,6 +101,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Supprimer un utilisateur spécifique
 //Route::delete('/users/{id}', [RegisteredUserController::class, 'destroy'])->name('users.destroy');
 
+
+Route::get('/taches/corbeille', [TacheController::class, 'corbeille'])
+      ->name('taches.corbeille');
+
+// 2. Route dyal Restauration
+Route::put('/taches/{id}/restore', [TacheController::class, 'restore'])
+      ->name('taches.restore');
+
+// 3. Route dyal Suppression Définitive
+Route::delete('/taches/{id}/forceDelete', [TacheController::class, 'forceDelete'])
+      ->name('taches.forceDelete');
 Route::get('/taches', [TacheController::class, 'index'])->name('taches.index');
 
 

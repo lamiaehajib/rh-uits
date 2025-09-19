@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tache extends Model
 {
-    use HasFactory, Notifiable,HasRoles; 
+    use HasFactory, Notifiable,HasRoles,SoftDeletes; 
 
     protected $fillable = [
         'description',
