@@ -119,17 +119,17 @@ Route::post('taches/{id}/duplicate', [TacheController::class, 'duplicate'])->nam
 Route::patch('taches/{id}/complete', [TacheController::class, 'markAsComplete'])->name('taches.complete');
 Route::get('taches/dashboard', [TacheController::class, 'dashboard'])->name('taches.dashboard');
 Route::get('taches/export', [TacheController::class, 'export'])->name('taches.export');
-
+Route::get('/taches/{tache}', [TacheController::class, 'show'])
+      ->name('taches.show')
+      ->withTrashed();
+      
 Route::resource('taches', TacheController::class);
 
 Route::resource('formations', FormationController::class);
  Route::post('formations/{formation}/duplicate', [FormationController::class, 'duplicate'])->name('formations.duplicate');
 // Additional routes that are not part of the standard resource methods
 
-Route::get('/taches/{tache}', [TacheController::class, 'show'])
-      ->name('taches.show')
-      ->withTrashed();
-      
+
 // Route for downloading a file associated with a formation
 Route::get('formations/{id}/download', [FormationController::class, 'downloadFile'])->name('formations.download');
 

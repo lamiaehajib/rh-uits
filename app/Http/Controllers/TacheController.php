@@ -187,23 +187,43 @@ class TacheController extends Controller
         }
     }
 
-    public function show($id, Request $request)
-    {
-        $user = auth()->user();
-        $tache = Tache::with(['users', 'creator'])->findOrFail($id);
+    public function show($id, Request $request) // Khass ykoun $id, Request $request (kif ma derti)
+{
+    $user = auth()->user();
+    
+    // ⬅️ L'MOUHIM: Ista3mel withTrashed() bach yjib hta Tâche mamsouḥa
+    $tache = Tache::withTrashed()
+                  ->with(['users', 'creator'])
+                  ->findOrFail($id);
+                  
+    // -----------------------------------------------------------------
+    // ⚠️ L-HAL L-MOUHIM L2: Mli tkoun f l-Corbeille, khass l-Admins/SuperAdmins y9adrou ychoufou.
+    // L-Admin/SuperAdmin 3endhom dima l'accès l'Tâches mamsou7in.
+    // Ghandirou waḥed l-Verification 3la l'deleted_at w l-Role.
+    
+    $isTrashed = $tache->trashed(); // Kanchekkiw wach raha mamsouḥa
 
-        if (!$this->hasAccessToTask($user, $tache)) {
-            return redirect()->route('taches.index')
-                                ->with('error', 'Accès refusé.');
+    // Ila kanti mamsouḥa W l-user machi Admin, 3ad n9adrou n'appliquer l-verification dyal l-Access
+    if ($isTrashed) {
+        // L'Admin w Super Admin hiyya li 3endhom l'droit ychoufou Tâches mamsou7in
+        if (!$user->hasRole(['Admin', 'Super Admin'])) {
+            return redirect()->route('taches.corbeille')
+                             ->with('error', 'Accès refusé. Seuls les administrateurs peuvent voir les tâches supprimées.');
         }
-
-        // Récupérer tous les paramètres de requête de l'URL d'où vous venez (page d'index)
-        // Cela conservera : search, status, date_filter, user_filter, sort_by, sort_direction, page.
-        $filterParams = $request->query();
-
-        return view('taches.show', compact('tache', 'filterParams')); // Passer filterParams à la vue
+    } 
+    // Ila ma kanatch mamsouḥa, wla kanti Admin, nkemlou l-Verification l'3adiya
+    elseif (!$this->hasAccessToTask($user, $tache)) {
+        return redirect()->route('taches.index')
+                         ->with('error', 'Accès refusé.');
     }
+    // -----------------------------------------------------------------
 
+
+    // Récupérer tous les paramètres de requête de l'URL d'où vous venez
+    $filterParams = $request->query();
+
+    return view('taches.show', compact('tache', 'filterParams')); 
+}
     public function edit($id, Request $request)
     {
         $user = auth()->user();
