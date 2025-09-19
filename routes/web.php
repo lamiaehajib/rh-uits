@@ -114,7 +114,9 @@ Route::delete('/taches/{id}/forceDelete', [TacheController::class, 'forceDelete'
       ->name('taches.forceDelete');
 Route::get('/taches', [TacheController::class, 'index'])->name('taches.index');
 
-
+Route::get('/taches/{tache}', [TacheController::class, 'show'])
+      ->name('taches.show')
+      ->withTrashed();
 Route::post('taches/{id}/duplicate', [TacheController::class, 'duplicate'])->name('taches.duplicate');
 Route::patch('taches/{id}/complete', [TacheController::class, 'markAsComplete'])->name('taches.complete');
 Route::get('taches/dashboard', [TacheController::class, 'dashboard'])->name('taches.dashboard');
