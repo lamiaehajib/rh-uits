@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity; // Make sure to import this
-
+use Illuminate\Database\Eloquent\SoftDeletes; 
 class Reclamation extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory, LogsActivity , SoftDeletes;
 
     // ... (your existing fillable or guarded properties) ...
     protected $fillable = [

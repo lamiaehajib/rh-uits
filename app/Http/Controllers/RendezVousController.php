@@ -291,4 +291,39 @@ public function show($id)
 
         return back()->with('success', 'Rendez-vous confirmé avec succès!');
     }
+
+
+    public function corbeille()
+{
+    // Kanst3amlo onlyTrashed() bach njebdo GHI les Rendez-vous li mamsou7in
+    // KanLoadéw relation 'projet'
+    $rendezVous = RendezVous::onlyTrashed()
+                  ->with('projet') 
+                  ->orderBy('deleted_at', 'desc')
+                  ->get();
+
+    // ⚠️ Khass t'assurer annou l-View dyal l-Corbeille machi nested!
+    return view('admin.rendez-vous.corbeille', compact('rendezVous'));
+}
+
+// N°2. Restauration d'un Rendez-vous (I3ada l'Hayat)
+public function restore($id)
+{
+    // Kanjebdo l-Rendez-vous b ID men l'Corbeille (withTrashed) w kan3ayto 3la restore()
+    $rendezVous = RendezVous::withTrashed()->findOrFail($id);
+    $rendezVous->restore();
+
+    return redirect()->route('admin.rendezvous.corbeille')->with('success', 'Rendez-vous restauré avec succès!');
+}
+
+// N°3. Suppression Définitive (Mass7 Nnéha'i)
+public function forceDelete($id)
+{
+    // Kanjebdo l-Rendez-vous b ID men l'Corbeille (withTrashed) w kan3ayto 3la forceDelete()
+    $rendezVous = RendezVous::withTrashed()->findOrFail($id);
+    
+    $rendezVous->forceDelete(); // Hadchi kaymassah men la base de données b neha'i!
+
+    return redirect()->route('admin.rendezvous.corbeille')->with('success', 'Rendez-vous supprimé définitivement!');
+}
 }

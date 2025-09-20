@@ -746,4 +746,34 @@ class ObjectifController extends Controller
         return $user->hasRole(['Sup_Admin', 'Custom_Admin']);
     }
 
+
+    public function corbeille()
+{
+    // جلب الأهداف المحذوفة فقط مع تحميل العلاقات الضرورية
+    $objectifs = Objectif::onlyTrashed()
+                  ->with(['creator', 'users']) 
+                  ->orderBy('deleted_at', 'desc')
+                  ->get();
+
+    return view('objectifs.corbeille', compact('objectifs'));
+}
+
+// N°2. استعادة الهدف
+public function restore($id)
+{
+    $objectif = Objectif::withTrashed()->findOrFail($id);
+    $objectif->restore();
+
+    return redirect()->route('objectifs.corbeille')->with('success', 'Objectif restauré avec succès!');
+}
+
+// N°3. الحذف النهائي
+public function forceDelete($id)
+{
+    $objectif = Objectif::withTrashed()->findOrFail($id);
+    $objectif->forceDelete(); 
+
+    return redirect()->route('objectifs.corbeille')->with('success', 'Objectif supprimé définitivement!');
+}
+
 }

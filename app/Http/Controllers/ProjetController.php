@@ -213,4 +213,41 @@ class ProjetController extends Controller
         // Télécharger l-fichier b'smiya jdida
         return Storage::disk('public')->download($projet->fichier, $fileName);
     }
+
+
+    public function corbeille()
+{
+    // Kanst3amlo onlyTrashed() bach njebdo GHI les Projets li mamsou7in
+    // KanLoadéw relation users bach yban l-assigné
+    $projets = Projet::onlyTrashed()
+                  ->with('users') 
+                  ->orderBy('deleted_at', 'desc')
+                  ->get();
+
+    return view('admin.projets.corbeille', compact('projets'));
+}
+
+// N°2. Restauration d'un Projet (I3ada l'Hayat)
+public function restore($id)
+{
+    // Kanjebdo l-Projet b ID men l'Corbeille (withTrashed) w kan3ayto 3la restore()
+    $projet = Projet::withTrashed()->findOrFail($id);
+    $projet->restore();
+
+    return redirect()->route('admin.projets.corbeille')->with('success', 'Projet restauré avec succès!');
+}
+
+// N°3. Suppression Définitive (Mass7 Nnéha'i)
+public function forceDelete($id)
+{
+    // Kanjebdo l-Projet b ID men l'Corbeille w kan3ayto 3la forceDelete()
+    $projet = Projet::withTrashed()->findOrFail($id);
+    
+    // ⚠️ Mola7aḍa: Ila 3endek des fichiers flouked (b7al `fichier`), khass tmass7hom hna 9bel Force Delete.
+    // Storage::disk('public')->delete($projet->fichier);
+
+    $projet->forceDelete(); // Hadchi kaymassah men la base de données b neha'i!
+
+    return redirect()->route('admin.projets.corbeille')->with('success', 'Projet supprimé définitivement!');
+}
 }

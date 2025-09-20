@@ -7,10 +7,10 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Permission\Traits\HasRoles; // Vérifie si ce trait est vraiment nécessaire ici
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class Objectif extends Model
 {
-    use HasFactory, Notifiable; // Retiré HasRoles si ce n'est pas le modèle Objectif qui gère les permissions
+    use HasFactory, Notifiable , SoftDeletes; // Retiré HasRoles si ce n'est pas le modèle Objectif qui gère les permissions
 
     /**
      * Les attributs pouvant être assignés en masse.

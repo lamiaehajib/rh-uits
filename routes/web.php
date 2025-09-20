@@ -119,9 +119,7 @@ Route::post('taches/{id}/duplicate', [TacheController::class, 'duplicate'])->nam
 Route::patch('taches/{id}/complete', [TacheController::class, 'markAsComplete'])->name('taches.complete');
 Route::get('taches/dashboard', [TacheController::class, 'dashboard'])->name('taches.dashboard');
 Route::get('taches/export', [TacheController::class, 'export'])->name('taches.export');
-Route::get('/taches/{tache}', [TacheController::class, 'show'])
-      ->name('taches.show')
-      ->withTrashed();
+
       
 Route::resource('taches', TacheController::class);
 
@@ -174,7 +172,18 @@ Route::middleware(['auth', 'role:Sup_Admin|Custom_Admin'])->group(function () {
         ->name('suivre_pointage.corriger');
 });
  // ✅ routes personnalisées أولاً
-Route::get('/objectifs/calendar-view', [ObjectifController::class, 'calendarView'])->name('objectifs.calendar.view');
+Route::get('/objectifs/corbeille', [ObjectifController::class, 'corbeille'])
+      ->name('objectifs.corbeille');
+
+// 2. استعادة الهدف
+Route::put('/objectifs/{id}/restore', [ObjectifController::class, 'restore'])
+      ->name('objectifs.restore');
+
+// 3. الحذف النهائي
+Route::delete('/objectifs/{id}/forceDelete', [ObjectifController::class, 'forceDelete'])
+      ->name('objectifs.forceDelete');
+
+ Route::get('/objectifs/calendar-view', [ObjectifController::class, 'calendarView'])->name('objectifs.calendar.view');
 Route::get('/objectifs/calendar', [ObjectifController::class, 'calendar'])->name('objectifs.calendar');
 Route::get('/objectifs/export', [ObjectifController::class, 'export'])->name('objectifs.export');
 Route::get('/objectifs/all', [ObjectifController::class, 'getAllObjectifs'])->name('objectifs.all');
@@ -186,7 +195,18 @@ Route::resource('objectifs', ObjectifController::class);
 
    
 
+Route::get('/reclamations/corbeille', [ReclamationController::class, 'corbeille'])
+      ->name('reclamations.corbeille');
 
+// 2. Route dyal Restauration
+Route::put('/reclamations/{id}/restore', [ReclamationController::class, 'restore'])
+      ->name('reclamations.restore');
+
+// 3. Route dyal Suppression Définitive
+Route::delete('/reclamations/{id}/forceDelete', [ReclamationController::class, 'forceDelete'])
+      ->name('reclamations.forceDelete');
+
+      Route::get('/reclamations/{reclamation}', [TacheController::class, 'show'])->name('reclamations.show')->withTrashed();
 
  Route::resource('reclamations', ReclamationController::class);
 
@@ -231,16 +251,54 @@ Route::get('/login-history', [AuthenticatedSessionController::class, 'showLoginH
 Route::prefix('admin')->name('admin.')->group(function () {
     
     // Projets
+
+   
+Route::get('/projets/corbeille', [ProjetController::class, 'corbeille'])
+      ->name('projets.corbeille');
+
+// 2. Route dyal Restauration
+Route::put('/projets/{id}/restore', [ProjetController::class, 'restore'])
+      ->name('projets.restore');
+
+// 3. Route dyal Suppression Définitive
+Route::delete('/projets/{id}/forceDelete', [ProjetController::class, 'forceDelete'])
+      ->name('projets.forceDelete');
+
     Route::resource('projets', ProjetController::class);
     Route::get('projets/{projet}/download', [ProjetController::class, 'downloadFile'])
     ->name('projets.download');
     // Rendez-vous
+    Route::get('/rendez-vous/corbeille', [RendezVousController::class, 'corbeille'])
+      ->name('rendezvous.corbeille');
+
+// 2. Route dyal Restauration
+Route::put('/rendez-vous/{id}/restore', [RendezVousController::class, 'restore'])
+      ->name('rendezvous.restore');
+
+// 3. Route dyal Suppression Définitive
+Route::delete('/rendez-vous/{id}/forceDelete', [RendezVousController::class, 'forceDelete'])
+      ->name('rendezvous.forceDelete');
     Route::resource('rendez-vous', RendezVousController::class);
     Route::get('rendez-vous-aujourdhui', [RendezVousController::class, 'aujourdhui'])->name('rendez-vous.aujourdhui');
     Route::get('planning-semaine', [RendezVousController::class, 'planning'])->name('rendez-vous.planning');
     
+
+    Route::get('/avancements/corbeille', [AvancementController::class, 'corbeille'])
+         ->name('avancements.corbeille_globale'); 
+
+         Route::put('/avancements/{id}/restore', [AvancementController::class, 'restore'])
+      ->name('avancements.restore');
+
+// 3. Route dyal Suppression Définitive
+Route::delete('/avancements/{id}/forceDelete', [AvancementController::class, 'forceDelete'])
+      ->name('avancements.forceDelete');
     // Avancements (imbriqué dans les projets)
     Route::prefix('projets/{projet}')->group(function () {
+       
+
+
+      
+
         Route::resource('avancements', AvancementController::class);
         Route::patch('avancements/{avancement}/pourcentage', [AvancementController::class, 'updatePourcentage'])
             ->name('avancements.update-pourcentage');

@@ -431,6 +431,9 @@
                         Liste des interventions
                     </h3>
                     <div>
+                        <a href="{{ route('admin.rendezvous.corbeille') }}" class="btn btn-danger">
+    <i class="fa fa-trash"></i> Corbeille
+</a>
                         <a href="{{ route('admin.rendez-vous.create') }}" class="btn btn-primary me-2">
                             <i class="fas fa-plus me-2"></i> Nouveau l'intervention
                         </a>

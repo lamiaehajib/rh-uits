@@ -160,4 +160,39 @@ public function downloadFile(Avancement $avancement)
 
         return redirect()->back()->with('success', 'Votre commentaire a été ajouté avec succès!');
     }
+
+    public function corbeille()
+{
+    // Kanst3amlo onlyTrashed() bach njebdo GHI les Avancements li mamsou7in
+    // KanLoadéw relation 'projet'
+    $avancements = Avancement::onlyTrashed()
+                  ->with('projet') 
+                  ->orderBy('deleted_at', 'desc')
+                  ->get();
+
+    return view('admin.avancements.corbeille', compact('avancements'));
+}
+
+// N°2. Restauration d'un Avancement (I3ada l'Hayat)
+public function restore($id)
+{
+    // Kanjebdo l-Avancement b ID men l'Corbeille (withTrashed) w kan3ayto 3la restore()
+    $avancement = Avancement::withTrashed()->findOrFail($id);
+    $avancement->restore();
+
+    return redirect()->route('admin.avancements.corbeille_globale')->with('success', 'Avancement restauré avec succès!');
+}
+
+// N°3. Suppression Définitive (Mass7 Nnéha'i)
+public function forceDelete($id)
+{
+    // Kanjebdo l-Avancement b ID men l'Corbeille (withTrashed) w kan3ayto 3la forceDelete()
+    $avancement = Avancement::withTrashed()->findOrFail($id);
+    
+    // ⚠️ Mola7aḍa: Ila 3endek des fichiers flouked (b7al `fichiers`), khass tmass7hom hna.
+    
+    $avancement->forceDelete(); // Hadchi kaymassah men la base de données b neha'i!
+
+    return redirect()->route('admin.avancements.corbeille_globale')->with('success', 'Avancement supprimé définitivement!');
+}
 }

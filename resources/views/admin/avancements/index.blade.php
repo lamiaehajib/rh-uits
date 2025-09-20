@@ -406,6 +406,10 @@
                 <h2>Avancements du projet</h2>
                 <p>{{ $projet->titre }}</p>
             </div>
+           <a href="{{ route('admin.avancements.corbeille_globale') }}" class="btn btn-danger">
+    <i class="fa fa-trash"></i> Corbeille
+</a>
+
             <a href="{{ route('admin.avancements.create', $projet) }}" class="btn-primary">
                 <i class="fas fa-plus"></i> Nouvelle étape
             </a>

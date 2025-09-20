@@ -357,6 +357,9 @@
                                     <i class="fas fa-calendar-alt mr-2"></i>
                                     Voir le Calendrier
                                 </a>
+                                <a href="{{ route('objectifs.corbeille') }}" class="btn btn-danger">
+    <i class="fa fa-trash"></i> Corbeille
+</a>
                                 @role('Sup_Admin')
                                 <a href="{{ route('objectifs.create') }}" class="btn-gradient px-6 py-3 rounded-full font-semibold text-sm text-white uppercase tracking-wider flex items-center justify-center">
                                     <i class="fas fa-plus-circle mr-2"></i>

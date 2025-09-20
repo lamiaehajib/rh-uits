@@ -187,18 +187,39 @@ class ReclamationController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
-    {
-        $user = auth()->user();
-        $reclamation = Reclamation::with(['user', 'activities'])->findOrFail($id);
+    public function show($id) // ⬅️ Khass t'assurer annou machi Reclamation $reclamation
+{
+    $user = auth()->user();
 
-        // Vérifiez si l'utilisateur a accès à cette réclamation
-        if ($user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin') || $reclamation->iduser == $user->id) { 
-            return view('reclamations.show', compact('reclamation'));
-        }
+    // ⬅️ L'MOUHIM: Ista3mel withTrashed() bach yjib hta Réclamation mamsouḥa
+    $reclamation = Reclamation::withTrashed()
+                           ->with(['user', 'activities'])
+                           ->findOrFail($id);
 
-        return redirect()->route('reclamations.index')->with('error', 'Accès refusé.');
+    // -----------------------------------------------------------------
+    // Vérification d'accès mou3addala:
+    
+    $isSupAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
+    $isOwner = $reclamation->iduser == $user->id;
+    $isTrashed = $reclamation->trashed();
+    
+    // Condition dyal l'Accès:
+    // 1. Ya اما ykoun Sup/Custom Admin (ykoun 3endou l-accés dima)
+    // 2. Ya اما ykoun Moul l-Réclamation w hiya machi mamsouḥa
+    
+    if ($isSupAdmin || ($isOwner && !$isTrashed)) { 
+        return view('reclamations.show', compact('reclamation'));
     }
+
+    // L-Halat dyal Accès Refusé:
+    // Mamsouḥa wla machi mamsouḥa, ila kan l-user machi Admin wla machi Moul l-Réclamation, Accès Refusé
+    if ($isTrashed) {
+        return redirect()->route('reclamations.corbeille')->with('error', 'Accès refusé pour les éléments supprimés.');
+    }
+    
+    // Ila kant active, w machi dyalek wla machi Admin, Accès refusé
+    return redirect()->route('reclamations.index')->with('error', 'Accès refusé.');
+}
 
     /**
      * Affiche le formulaire d'édition d'une réclamation.
@@ -446,4 +467,36 @@ class ReclamationController extends Controller
 
         return view('reclamations.dashboard', compact('stats', 'recentReclamations', 'monthlyStats'));
     }
+
+    public function corbeille()
+{
+    $reclamations = Reclamation::onlyTrashed()
+                  ->with('user') 
+                  ->orderBy('deleted_at', 'desc')
+                  ->get();
+
+    return view('reclamations.corbeille', compact('reclamations'));
+}
+
+// N°2. Restauration d'une Réclamation
+public function restore($id)
+{
+    $reclamation = Reclamation::withTrashed()->findOrFail($id);
+    $reclamation->restore();
+
+    return redirect()->route('reclamations.corbeille')->with('success', 'Réclamation restaurée avec succès!');
+}
+
+// N°3. Suppression Définitive
+public function forceDelete($id)
+{
+    $reclamation = Reclamation::withTrashed()->findOrFail($id);
+    
+    // ⚠️ Mola7aḍa: Ila bghiti tmass7 hta Activity Logs dyal Spatie, khass tzid had l-code:
+    // Activity::forSubject($reclamation)->where('log_name', 'reclamation')->delete();
+    
+    $reclamation->forceDelete(); 
+
+    return redirect()->route('reclamations.corbeille')->with('success', 'Réclamation supprimée définitivement!');
+}
 }
