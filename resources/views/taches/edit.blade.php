@@ -165,10 +165,10 @@
                             @endforeach
 
                            @php
-                         $user = auth()->user();
-                          $isAdminOrAdmin1 = $user->hasAnyRole(['Sup_Admin', 'Custom_Admin']);
-                       $canModifyRetourRoles = ['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH','Custom_Admin'];
-                       $canEditRetour = $user->hasAnyRole($canModifyRetourRoles);
+$user = auth()->user();
+$isAdminOrAdmin1 = $user->hasAnyRole(['Sup_Admin', 'Custom_Admin']);
+$canModifyRetourRoles = ['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH', 'Custom_Admin'];
+$canEditRetour = $user->hasAnyRole($canModifyRetourRoles);
                           @endphp
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -236,26 +236,24 @@
                                 </div>
 
 
-                               <div>
-    <label for="duree" class="block text-sm font-semibold text-gray-700 mb-1">
-        <i class="fas fa-hourglass-half mr-2 text-green-500"></i> {{ __('Durée Estimée') }} <span class="text-primary-red text-lg">*</span>
-    </label>
-    <input type="text" name="duree" id="duree"
-        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
-        focus:ring-primary-red focus:border-primary-red
-        @error('duree') border-primary-red ring-red-200 @enderror
-        {{ !$isAdminOrAdmin1 ? 'bg-gray-100 cursor-not-allowed' : '' }}" {{-- Add these classes --}}
-        value="{{ old('duree', $tache->duree) }}"
-        placeholder="{{ __('Ex: 1 jour, 3 jours, 2 semaines, 1 mois') }}"
-        {{ !$isAdminOrAdmin1 ? 'readonly' : '' }} required> {{-- Add 'readonly' attribute --}}
-    @error('duree')
-        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
-    @enderror
-    {{-- If disabled (readonly for text input), ensure value is sent via hidden input for consistency --}}
-    @if (!$isAdminOrAdmin1)
-        <input type="hidden" name="duree" value="{{ old('duree', $tache->duree) }}">
-    @endif
-</div>
+                            <div>
+                                <label for="duree" class="block text-sm font-semibold text-gray-700 mb-1">
+                                    <i class="fas fa-hourglass-half mr-2 text-green-500"></i> {{ __('Durée Estimée') }} <span
+                                        class="text-primary-red text-lg">*</span>
+                                </label>
+                                <input type="text" name="duree" id="duree" class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
+                                    focus:ring-primary-red focus:border-primary-red
+                                    @error('duree') border-primary-red ring-red-200 @enderror
+                                    {{ !$isAdminOrAdmin1 ? 'bg-gray-100 cursor-not-allowed' : '' }}" value="{{ old('duree', $tache->duree) }}"
+                                    placeholder="{{ __('Ex: 15 minutes, 2 heures, 1 jour, 3 jours, 2 semaines, 1 mois') }}" {{ !$isAdminOrAdmin1 ? 'readonly' : '' }} required>
+                                @error('duree')
+                                    <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                                {{-- If disabled (readonly for text input), ensure value is sent via hidden input for consistency --}}
+                                @if (!$isAdminOrAdmin1)
+                                    <input type="hidden" name="duree" value="{{ old('duree', $tache->duree) }}">
+                                @endif
+                            </div>
 
                                 <div>
                                     <label for="datedebut" class="block text-sm font-semibold text-gray-700 mb-1">
@@ -290,28 +288,31 @@
                                     @enderror
                                 </div>
 
-                                <div>
-                                    <label for="date" class="block text-sm font-semibold text-gray-700 mb-1">
-                                        <i class="fas fa-clock mr-2 text-orange-500"></i> {{ __('Type de Planification') }} <span class="text-primary-red text-lg">*</span>
-                                    </label>
-                                    <select name="date" id="date"
-                                        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
-                                        focus:ring-primary-red focus:border-primary-red
-                                        @error('date') border-primary-red ring-red-200 @enderror
-                                        {{ !$isAdminOrAdmin1 ? 'bg-gray-100 cursor-not-allowed' : '' }}"
-                                        {{ !$isAdminOrAdmin1 ? 'disabled' : '' }} required>
-                                        <option value="jour" {{ old('date', $tache->date) == 'jour' ? 'selected' : '' }}>{{ __('Journalier') }}</option>
-                                        <option value="semaine" {{ old('date', $tache->date) == 'semaine' ? 'selected' : '' }}>{{ __('Hebdomadaire') }}</option>
-                                        <option value="mois" {{ old('date', $tache->date) == 'mois' ? 'selected' : '' }}>{{ __('Mensuel') }}</option>
-                                    </select>
-                                    @error('date')
-                                        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
-                                    @enderror
-                                    {{-- If disabled, ensure value is sent via hidden input --}}
-                                    @if (!$isAdminOrAdmin1)
-                                        <input type="hidden" name="date" value="{{ old('date', $tache->date) }}">
-                                    @endif
-                                </div>
+                            <div>
+                                <label for="date" class="block text-sm font-semibold text-gray-700 mb-1">
+                                    <i class="fas fa-clock mr-2 text-orange-500"></i> {{ __('Type de Planification') }} <span
+                                        class="text-primary-red text-lg">*</span>
+                                </label>
+                                <select name="date" id="date" class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
+                                    focus:ring-primary-red focus:border-primary-red
+                                    @error('date') border-primary-red ring-red-200 @enderror
+                                    {{ !$isAdminOrAdmin1 ? 'bg-gray-100 cursor-not-allowed' : '' }}" {{ !$isAdminOrAdmin1 ? 'disabled' : '' }}
+                                    required>
+                                    <option value="minute" {{ old('date', $tache->date) == 'minute' ? 'selected' : '' }}>{{ __('Minute') }}</option>
+                                    <option value="heure" {{ old('date', $tache->date) == 'heure' ? 'selected' : '' }}>{{ __('Heure') }}</option>
+                                    <option value="jour" {{ old('date', $tache->date) == 'jour' ? 'selected' : '' }}>{{ __('Journalier') }}</option>
+                                    <option value="semaine" {{ old('date', $tache->date) == 'semaine' ? 'selected' : '' }}>{{ __('Hebdomadaire') }}
+                                    </option>
+                                    <option value="mois" {{ old('date', $tache->date) == 'mois' ? 'selected' : '' }}>{{ __('Mensuel') }}</option>
+                                </select>
+                                @error('date')
+                                    <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                                {{-- If disabled, ensure value is sent via hidden input --}}
+                                @if (!$isAdminOrAdmin1)
+                                    <input type="hidden" name="date" value="{{ old('date', $tache->date) }}">
+                                @endif
+                            </div>
 
                                 <div class="form-group mb-4">
                                     <label class="form-label" for="user_ids">Assigné(e) <span class="text-danger">*</span></label>
