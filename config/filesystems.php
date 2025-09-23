@@ -38,21 +38,24 @@ return [
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
         ],
 
-    ],
+        'google' => [
+            'driver' => 'google',
+            'clientId' => env('GOOGLE_DRIVE_CLIENT_ID'),
+            'clientSecret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
+            'refreshToken' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Symbolic Links
-    |--------------------------------------------------------------------------
-    |
-    | Here you may configure the symbolic links that will be created when the
-    | `storage:link` Artisan command is executed. The array keys should be
-    | the locations of the links and the values should be their targets.
-    |
-    */
+            // Use the Folder ID of the subfolder directly
+            'folderId' => '1qhAaXQGam_pT_oAyX4-rsDN_wjXEbZc7',
 
-    'links' => [
+            // Remove the 'folder' and 'root' keys to avoid conflicts
+            'root' => '',
+            'folder' => '',
+        ],
+
+       ],
+
+      'links' => [
         public_path('storage') => storage_path('app/public'),
-    ],
+      ],
 
 ];

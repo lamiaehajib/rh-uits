@@ -14,7 +14,9 @@
         "laravel/tinker": "^2.7",
         "laravelcollective/html": "^6.4",
         "spatie/laravel-activitylog": "^4.10",
-        "spatie/laravel-permission": "^6.10"
+        "spatie/laravel-backup": "^8.2",
+        "spatie/laravel-permission": "^6.10",
+        "yaza/laravel-google-drive-storage": "^2.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

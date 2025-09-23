@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\AvancementController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjetController;
@@ -440,6 +441,8 @@ Route::put('/rendez-vous/{rendezVous}/confirm', [RendezVousController::class, 'c
     Route::get('/rendez-vous/{rendezVous}', [RendezVousController::class, 'showClient'])
     ->name('client.rendez-vous.show');
 });
+
+Route::get('/download-backup', [BackupController::class, 'downloadBackup'])->name('download.backup');
 });
 
 // Handle registration
