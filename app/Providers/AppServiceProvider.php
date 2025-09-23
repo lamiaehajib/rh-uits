@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Schema; // Add this line
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        // Add this code block
+        Schema::defaultStringLength(191);
+
+        // Add the ENUM type registration
+        if (Schema::hasTable('taches') && config('database.default') === 'mysql') {
+            \Doctrine\DBAL\Types\Type::addType('enum', 'Doctrine\DBAL\Types\StringType');
+            \DB::getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'enum');
+        }
     }
 }

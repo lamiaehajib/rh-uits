@@ -116,7 +116,7 @@ class TacheController extends Controller
             'duree' => 'required|string|max:255',
             'datedebut' => 'required|date|after_or_equal:today',
             'status' => 'required|in:nouveau,en cours,termine',
-            'date' => 'required|in:jour,semaine,mois',
+              'date' => 'required|in:jour,semaine,mois,heure,minute', 
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
             'priorite' => 'required|in:faible,moyen,élevé',
@@ -248,7 +248,7 @@ class TacheController extends Controller
                 'duree' => 'required|string|max:255',
                 'datedebut' => 'required|date',
                 'status' => 'required|in:nouveau,en cours,termine',
-                'date' => 'required|in:jour,semaine,mois',
+                'date' => 'required|in:jour,semaine,mois,heure,minute', 
                 'user_ids' => 'required|array',
                 'user_ids.*' => 'exists:users,id',
                 'priorite' => 'required|in:faible,moyen,élevé',
@@ -446,23 +446,29 @@ class TacheController extends Controller
         return $this->isAdmin($user) || $tache->users->contains($user->id);
     }
 
-    private function calculateExpectedEndDate(Carbon $startDate, string $duree): ?Carbon
-    {
-        $duration = strtolower($duree);
-        $expectedEndDate = null;
+   private function calculateExpectedEndDate(Carbon $startDate, string $duree): ?Carbon
+{
+    $duration = strtolower($duree);
+    $expectedEndDate = null;
 
-        if (preg_match('/(\d+)\s*jour/i', $duration, $matches)) {
-            $expectedEndDate = $startDate->copy()->addDays($matches[1]);
-        } elseif (preg_match('/(\d+)\s*semaine/i', $duration, $matches)) {
-            $expectedEndDate = $startDate->copy()->addWeeks($matches[1]);
-        } elseif (preg_match('/(\d+)\s*mois/i', $duration, $matches)) {
-            $expectedEndDate = $startDate->copy()->addMonths($matches[1]);
-        } else {
-            \Log::warning("Format de durée inconnu pour la tâche : " . $duree);
-        }
-
-        return $expectedEndDate;
+    if (preg_match('/(\d+)\s*jour/i', $duration, $matches)) {
+        $expectedEndDate = $startDate->copy()->addDays($matches[1]);
+    } elseif (preg_match('/(\d+)\s*semaine/i', $duration, $matches)) {
+        $expectedEndDate = $startDate->copy()->addWeeks($matches[1]);
+    } elseif (preg_match('/(\d+)\s*mois/i', $duration, $matches)) {
+        $expectedEndDate = $startDate->copy()->addMonths($matches[1]);
+    } elseif (preg_match('/(\d+)\s*heure/i', $duration, $matches)) {
+        // Nouvelle logique pour les heures
+        $expectedEndDate = $startDate->copy()->addHours($matches[1]);
+    } elseif (preg_match('/(\d+)\s*minute/i', $duration, $matches)) {
+        // Nouvelle logique pour les minutes
+        $expectedEndDate = $startDate->copy()->addMinutes($matches[1]);
+    } else {
+        \Log::warning("Format de durée inconnu pour la tâche : " . $duree);
     }
+
+    return $expectedEndDate;
+}
 
     private function getTaskStats($user)
     {
