@@ -60,7 +60,7 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     // Route pour afficher le tableau de bord
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard'); 
-   
+   Route::get('/download-backup', [BackupController::class, 'download'])->name('download.backup');
     //Route::get('/dashboard', [FormationController::class, 'index'])->name('dashboard');
     // Routes pour la gestion du profil utilisateur
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -442,7 +442,7 @@ Route::put('/rendez-vous/{rendezVous}/confirm', [RendezVousController::class, 'c
     ->name('client.rendez-vous.show');
 });
 
-Route::get('/download-backup', [BackupController::class, 'downloadBackup'])->name('download.backup');
+
 });
 
 // Handle registration
