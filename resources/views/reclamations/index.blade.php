@@ -340,13 +340,15 @@
                     </div>
                 @endif
 
+
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg animate-fade-in delay-200">
                     <div class="p-6 bg-white border-b border-gray-200">
                         <div class="flex flex-col md:flex-row justify-between items-center mb-6">
                             <div class="mb-4 md:mb-0">
+
                                 <a href="{{ route('reclamations.corbeille') }}" class="btn btn-danger">
-    <i class="fa fa-trash"></i> Corbeille
-</a>
+                                <i class="fa fa-trash"></i> Corbeille
+                                      </a>
                                 @can('reclamation-create')
                                     <a href="{{ route('reclamations.create') }}" class="inline-flex items-center px-6 py-3 bg-primary-red border border-transparent rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red">
                                         <i class="fas fa-plus-circle mr-2"></i> {{ __('Nouvelle Réclamation') }}

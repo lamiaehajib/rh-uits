@@ -7,6 +7,7 @@ use App\Models\Projet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Notifications\RendezVousCreatedNotification;
 class RendezVousController extends Controller
 {
 
@@ -28,7 +29,7 @@ class RendezVousController extends Controller
         return view('admin.rendez-vous.create', compact('projets'));
     }
 
-    public function store(Request $request)
+     public function store(Request $request)
     {
         $validated = $request->validate([
             'projet_id' => 'required|exists:projets,id',
@@ -39,12 +40,24 @@ class RendezVousController extends Controller
             'statut' => 'required|in:programmé,confirmé,terminé,annulé'
         ]);
         
-        // La colonne user_id a été supprimée, donc on ne l'assigne plus.
-        // Le rendez-vous est maintenant lié uniquement au projet.
-        RendezVous::create($validated);
+        // 1. Création du Rendez-vous
+        $rendezVous = RendezVous::create($validated);
+
+        // 2. Récupérer le projet avec ses clients
+        // On charge l'instance pour accéder aux relations
+        $rendezVous->load('projet.users'); 
+
+        // 3. Envoyer la notification à tous les utilisateurs (clients) du projet
+        // Kanassumew annou l-relation 'users' katjib les clients
+        if ($rendezVous->projet && $rendezVous->projet->users->isNotEmpty()) {
+            foreach ($rendezVous->projet->users as $client) {
+                // Kan3ayto 3la méthode notify() w kanpassiwha l-Notification lli creéna
+                $client->notify(new RendezVousCreatedNotification($rendezVous));
+            }
+        }
 
         return redirect()->route('admin.rendez-vous.index')
-            ->with('success', 'Rendez-vous créé avec succès!');
+            ->with('success', 'Rendez-vous créé avec succès! Un email a été envoyé aux clients.');
     }
 
    // Remplacer la méthode actuelle par celle-ci
