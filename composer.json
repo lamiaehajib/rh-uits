@@ -16,6 +16,7 @@
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-backup": "^8.2",
         "spatie/laravel-permission": "^6.10",
+        "twilio/sdk": "^8.8",
         "yaza/laravel-google-drive-storage": "^2.0"
     },
     "require-dev": {

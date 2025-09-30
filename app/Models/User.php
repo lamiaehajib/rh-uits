@@ -33,6 +33,7 @@ class User extends Authenticatable
         'login_count',
         'societe_name',
         'type_client',
+        'two_factor_expires_at',
     ];
 
   public function projets()

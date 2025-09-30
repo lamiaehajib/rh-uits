@@ -69,5 +69,7 @@ class Kernel extends HttpKernel
 
     'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
     'check.clocked.in' => \App\Http\Middleware\CheckUserClockIn::class,
+    
+    '2fa' => \App\Http\Middleware\TwoFactorAuth::class, // 🚨 أضف هذا السطر
     ];
 }

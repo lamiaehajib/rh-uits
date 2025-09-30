@@ -7,6 +7,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjetController;
 use App\Http\Controllers\RendezVousController;
+use App\Http\Controllers\TwoFactorController;
 use App\Models\Avancement;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
@@ -57,7 +58,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/2fa/notice', [TwoFactorController::class, 'showVerificationForm'])->name('verification.notice');
+Route::post('/2fa/verify', [TwoFactorController::class, 'verifyCode'])->name('verification.verify');
 Route::middleware(['auth', 'verified'])->group(function () {
+
+
     // Route pour afficher le tableau de bord
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard'); 
    Route::get('/download-backup', [BackupController::class, 'download'])->name('download.backup');
@@ -207,7 +212,7 @@ Route::put('/reclamations/{id}/restore', [ReclamationController::class, 'restore
 Route::delete('/reclamations/{id}/forceDelete', [ReclamationController::class, 'forceDelete'])
       ->name('reclamations.forceDelete');
 
-      Route::get('/reclamations/{reclamation}', [TacheController::class, 'show'])->name('reclamations.show')->withTrashed();
+     
 
  Route::resource('reclamations', ReclamationController::class);
 
@@ -216,6 +221,8 @@ Route::delete('/reclamations/{id}/forceDelete', [ReclamationController::class, '
     Route::get('reclamations/{reclamation}/download-attachment/{attachmentIndex}', [ReclamationController::class, 'downloadAttachment'])->name('reclamations.downloadAttachment');
     Route::get('reclamations/export', [ReclamationController::class, 'export'])->name('reclamations.export');
     Route::get('reclamations/dashboard', [ReclamationController::class, 'dashboard'])->name('reclamations.dashboard');
+
+
 Route::resource('users', UserController::class);
 // Dans routes/web.php
 Route::get('/users/export', [UserController::class, 'export'])->name('users.export');
@@ -328,16 +335,15 @@ Route::prefix('client')->name('client.')->middleware('auth')->group(function () 
         $projetsEnAttente = $projets->where('statut_projet', 'en attente')->count();
         $projetsAnnules = $projets->where('statut_projet', 'annulé')->count();
 
-        // Récupérer les 5 projets les plus récents de la collection
         $projetsRecents = $projets->sortByDesc('created_at')->take(5);
 
-        // Créez le tableau $chartData avec les comptes de projets
+        
         $chartData = [
             'labels' => ['En cours', 'Terminés', 'En attente', 'Annulés'],
             'data' => [$projetsEnCours, $projetsTermines, $projetsEnAttente, $projetsAnnules]
         ];
 
-        // Reste du code pour les rendez-vous et les réclamations
+      
         // On récupère les rendez-vous en se basant sur les IDs des projets
         $rendezVous = RendezVous::whereIn('projet_id', $projetIds)
                                ->where('date_heure', '>', now())
