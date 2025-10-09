@@ -7,6 +7,7 @@ use App\Models\Projet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\AvancementCreatedNotification;
 class AvancementController extends Controller
 {
  public function index(Projet $projet)
@@ -34,13 +35,13 @@ class AvancementController extends Controller
     public function store(Request $request, Projet $projet)
     {
         $validated = $request->validate([
+            // ... (validation rules here)
             'etape' => 'required|string|max:255',
             'description' => 'required|string',
             'pourcentage' => 'required|integer|min:0|max:100',
             'statut' => 'required|in:en cours,terminé,bloqué',
             'date_prevue' => 'nullable|date',
             'date_realisee' => 'nullable|date',
-            // 'commentaires' => 'nullable|string',
             'fichiers' => 'nullable|file|mimes:pdf,doc,docx,jpg,png,zip|max:10240'
         ]);
 
@@ -51,10 +52,23 @@ class AvancementController extends Controller
             $validated['fichiers'] = $request->file('fichiers')->store('avancements', 'public');
         }
 
-        Avancement::create($validated);
+        // 1. Création de l'avancement
+        $avancement = Avancement::create($validated);
+        
+        // 2. Notification des clients
+        // Charger la relation des utilisateurs (clients) associés au projet.
+        // Assurez-vous que la relation 'users' dans le modèle Projet récupère les clients.
+        $clients = $projet->users; 
+
+        if ($clients->isNotEmpty()) {
+            foreach ($clients as $client) {
+                // Envoyer la notification à chaque client
+                $client->notify(new AvancementCreatedNotification($avancement));
+            }
+        }
 
         return redirect()->route('admin.avancements.index', $projet)
-            ->with('success', 'Étape d\'avancement créée avec succès!');
+            ->with('success', 'Étape d\'avancement créée avec succès! Les clients ont été notifiés.');
     }
 
     public function show(Projet $projet, Avancement $avancement)

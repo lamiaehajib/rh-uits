@@ -758,7 +758,7 @@ class ObjectifController extends Controller
     return view('objectifs.corbeille', compact('objectifs'));
 }
 
-// N°2. استعادة الهدف
+
 public function restore($id)
 {
     $objectif = Objectif::withTrashed()->findOrFail($id);
