@@ -63,9 +63,10 @@ return [
             ]) : [],
             // ...
             'dump' => [
-         'dump_binary_path' => '/usr/bin', // غيّري المسار من C:\laragon\... إلى /usr/bin
-         'default_binary' => 'mysqldump', 
-    ],
+                // ** يجب أن يكون هذا المسار هو مسار Laragon **
+                'dump_binary_path' => 'C:\\laragon\\bin\\mysql\\mysql-8.0.30-winx64\\bin',
+                'default_binary' => 'mysqldump',
+            ],
         ],
 
         'pgsql' => [
