@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        /* Your existing CSS code here */
         :root {
             --primary-pink: #C2185B;
             --primary-red: #D32F2F;
@@ -16,7 +16,7 @@
         }
 
         body {
-            padding-top: 30px;
+            padding-top: 80px;
         }
 
         .client-header {
@@ -35,8 +35,7 @@
                 0 10px 30px rgba(194, 24, 91, 0.4),
                 0 0 0 1px rgba(255, 255, 255, 0.1);
             animation: slideDown 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            /* --- The fix is here! --- */
-            flex-wrap: wrap; 
+            flex-wrap: wrap;
         }
 
         .client-header::before {
@@ -151,7 +150,6 @@
             text-decoration: none !important;
             backdrop-filter: blur(10px);
             background: rgba(255, 255, 255, 0.1);
-            /* Make text stay on one line */
             white-space: nowrap;
         }
 
@@ -334,7 +332,6 @@
             border-radius: 15px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
             animation: dropIn 0.3s ease;
-            /* La solution est ici: bach l-menu yban*/
             display: none;
             position: absolute;
             top: 100%;
@@ -343,7 +340,6 @@
             z-index: 1050;
         }
 
-        /* Had l-class 3andha d'orore fiha l-jawb */
         .dropdown-menu.show {
             display: block;
         }
@@ -417,44 +413,9 @@
             100% { transform: translateX(100vw); }
         }
 
-        @media (max-width: 768px) {
-            .client-header .d-flex {
-                flex-wrap: wrap;
-            }
-
-            .greeting-text {
-                font-size: 1.5rem !important;
-            }
-
-            .nav {
-                display: none;
-            }
-
-            .nav.mobile-show {
-                display: flex;
-                flex-direction: column;
-                width: 100%;
-                margin-top: 10px;
-            }
-
-            .mobile-menu-toggle {
-                display: block;
-                background: none;
-                border: none;
-                color: white;
-                font-size: 1.5rem;
-                cursor: pointer;
-            }
-        }
-
-        @media (min-width: 769px) {
-            .mobile-menu-toggle {
-                display: none;
-            }
-        }
-
         .nav-item {
             position: relative;
+            text-transform: uppercase !important;
         }
 
         .nav-item::before {
@@ -513,11 +474,143 @@
             font-size: 16px;
         }
 
+        /* Mobile Menu Button */
+        .mobile-menu-toggle {
+            display: none;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
 
-        .nav-item {
-    position: relative;
-    text-transform: uppercase !important;
-}
+        .mobile-menu-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        /* Mobile Navigation */
+        .mobile-nav {
+            display: none;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            margin-top: 15px;
+            padding: 10px;
+            animation: slideDown 0.3s ease;
+        }
+
+        .mobile-nav.show {
+            display: block;
+        }
+
+        .mobile-nav .nav {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mobile-nav .nav-item {
+            width: 100%;
+        }
+
+        .mobile-nav .nav-link {
+            width: 100%;
+            text-align: left;
+            padding: 15px 20px !important;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 991px) {
+            body {
+                padding-top: 140px;
+            }
+
+            .client-header {
+                padding: 15px 20px !important;
+            }
+
+            .text-3xl {
+                font-size: 1.3rem !important;
+            }
+
+            .flex.items-center.space-x-2 img {
+                height: 45px !important;
+            }
+
+            /* Hide desktop nav */
+            .client-header > .d-flex > nav {
+                display: none !important;
+            }
+
+            /* Show mobile menu button */
+            .mobile-menu-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* User info text smaller on mobile */
+            span.d-none.d-lg-block.text-sm.text-gray-800 {
+                font-size: 14px;
+            }
+
+            span.d-none.d-lg-block.text-xs.text-gray-500 {
+                font-size: 12px;
+            }
+
+            .dropdown-toggle .h-10 {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding-top: 160px;
+            }
+
+            .text-3xl {
+                font-size: 1.1rem !important;
+            }
+
+            .flex.items-center.space-x-2 img {
+                height: 40px !important;
+            }
+
+            .client-header {
+                padding: 12px 15px !important;
+            }
+        }
+
+        @media (max-width: 576px) {
+            body {
+                padding-top: 180px;
+            }
+
+            .text-3xl {
+                font-size: 0.95rem !important;
+            }
+
+            .flex.items-center.space-x-2 img {
+                height: 35px !important;
+            }
+
+            /* Hide email on very small screens */
+            span.d-none.d-lg-block.text-xs.text-gray-500 {
+                display: none !important;
+            }
+
+            .dropdown-menu {
+                right: -10px;
+                min-width: 200px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -536,6 +629,7 @@
         </a>
 
         <div class="d-flex align-items-center">
+            <!-- Desktop Navigation -->
             <nav class="me-3">
                 <ul class="nav">
                     <li class="nav-item me-3">
@@ -560,6 +654,13 @@
                     </li>
                 </ul>
             </nav>
+
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle me-3" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- User Dropdown -->
             <div class="dropdown">
                 <a class="dropdown-toggle d-flex align-items-center text-decoration-none" href="#" role="button" onclick="toggleDropdown()">
                     <div class="h-10 w-10 bg-red-600 rounded-full d-flex align-items-center justify-content-center text-white font-bold me-2">
@@ -586,7 +687,33 @@
                     </form>
                 </div>
             </div>
-            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div class="mobile-nav" id="mobileNav">
+            <ul class="nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('client.dashboard') }}">
+                        <i class="fas fa-chart-line me-2"></i>Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('client.projets.index') }}">
+                        <i class="fas fa-folder me-2"></i>Projets
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('client.client.planning') }}">
+                        <i class="fas fa-calendar-check me-2"></i>Interventions 
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('client.reclamations.index') }}">
+                        <i class="fas fa-exclamation-circle me-2"></i>Réclamations
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
 
     <script>
@@ -594,6 +721,40 @@
             const dropdownMenu = document.getElementById('profileDropdown');
             dropdownMenu.classList.toggle('show');
         }
+
+        function toggleMobileMenu() {
+            const mobileNav = document.getElementById('mobileNav');
+            const toggleBtn = document.querySelector('.mobile-menu-toggle i');
+            
+            mobileNav.classList.toggle('show');
+            
+            if (mobileNav.classList.contains('show')) {
+                toggleBtn.className = 'fas fa-times';
+            } else {
+                toggleBtn.className = 'fas fa-bars';
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.querySelector('.dropdown');
+            const dropdownMenu = document.getElementById('profileDropdown');
+            
+            if (!dropdown.contains(event.target)) {
+                dropdownMenu.classList.remove('show');
+            }
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const mobileNav = document.getElementById('mobileNav');
+            const toggleBtn = document.querySelector('.mobile-menu-toggle');
+            
+            if (!mobileNav.contains(event.target) && !toggleBtn.contains(event.target)) {
+                mobileNav.classList.remove('show');
+                document.querySelector('.mobile-menu-toggle i').className = 'fas fa-bars';
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', function() {
             const themeToggleBtn = document.getElementById('theme-toggle');
