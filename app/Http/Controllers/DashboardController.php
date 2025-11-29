@@ -904,7 +904,7 @@ class DashboardController extends Controller
 }
    
  
-    ## Get Pointage Punctuality Chart Data
+   
 
     
     /**
