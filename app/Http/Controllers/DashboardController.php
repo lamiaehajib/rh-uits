@@ -708,8 +708,7 @@ class DashboardController extends Controller
             $q->where('users.id', $user->id);
         });
     }
-    // T7aydna datedebut filter bach nchofo kolchi
-    // $query->where('datedebut', '<=', Carbon::now());
+    // Kolchi yban men bdat l'application - ma kaynch filter 3la datedebut
 
     switch ($period) {
         case 'week':
@@ -782,8 +781,7 @@ class DashboardController extends Controller
                 $q->where('users.id', $user->id);
             });
         }
-        // T7aydna datedebut filter
-        // $query->where('datedebut', '<=', Carbon::now());
+        // Kolchi yban men bdat l'application - ma kaynch filter 3la datedebut
 
         $count = $query->count();
 
@@ -818,7 +816,7 @@ class DashboardController extends Controller
     $query->whereNotNull('heure_arrivee')
           ->whereNotNull('heure_depart');
 
-    // Ma kayn 7ta limite dyal 30 jours, kolchi men bdat application
+    // Ma kayn 7ta limite - kolchi men bdat application
 
     switch ($period) {
         case 'week':
@@ -918,7 +916,7 @@ class DashboardController extends Controller
         $query->where('iduser', $user->id);
     }
 
-    // Apply period filter bach user i9der ichof 7ssab period li bghaha
+    // Apply period filter - user i9der ichof 7ssab period
     switch ($period) {
         case 'today':
             $query->whereDate('heure_arrivee', today());

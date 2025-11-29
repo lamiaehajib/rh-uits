@@ -509,7 +509,7 @@
             {{-- NEW SMALL BUTTON TO OPEN POINTAGE MODAL --}}
             <div class="text-center mt-6">
                 <button id="openPointageModalBtn" class="flex items-center justify-center mx-auto px-6 py-3 bg-gradient-to-r from-red-600 to-red-400 text-white rounded-full shadow-lg hover:from-red-700 hover:to-red-500 transition duration-300 transform hover:scale-105 text-lg font-semibold">
-                    <i class="fas fa-clock mr-3 text-2xl"></i> Gérer mon Pointajjhge
+                    <i class="fas fa-clock mr-3 text-2xl"></i> Gérer mon Pointage
                 </button>
             </div>
 
