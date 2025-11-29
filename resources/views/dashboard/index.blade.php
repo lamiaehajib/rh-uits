@@ -1084,7 +1084,7 @@
         let pointageChart;
         let pointagePunctualityChart; // Declare new chart instance globally
 
-        async function fetchAndRenderCharts(periodForWorkTime = 'month', periodForPunctuality = 'all') {
+        async function fetchAndRenderCharts(periodForWorkTime = 'all', periodForPunctuality = 'all') {
             try {
                 // Fetch all chart data from the analytics endpoint
                 const response = await fetch("{{ route('dashboard.analytics') }}?period=" + periodForWorkTime + "&punctuality_period=" + periodForPunctuality);
@@ -1421,12 +1421,11 @@
             }
 
             // Initial render of all charts on page load
-           const initialPointagePeriod = document.getElementById('pointagePeriodSelect')?.value || 'month';
-// For punctuality, if not admin, force 'all' to ensure it gets user's total data without period filter.
-// If admin, use selected value or default to 'month'.
-const initialPunctualityPeriod = "{{ Auth::user()->hasRole('Sup_Admin') || Auth::user()->hasRole('Custom_Admin') ? 'month' : 'all' }}";
+            // Default to 'all' to show everything from the beginning of the application
+            const initialPointagePeriod = document.getElementById('pointagePeriodSelect')?.value || 'all';
+            const initialPunctualityPeriod = 'all'; // Always 'all' by default for everyone
 
-fetchAndRenderCharts(initialPointagePeriod, initialPunctualityPeriod);
+            fetchAndRenderCharts(initialPointagePeriod, initialPunctualityPeriod);
 
             // Event listener for "Temps de Travail" period select
             const pointagePeriodSelect = document.getElementById('pointagePeriodSelect');
