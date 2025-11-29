@@ -748,9 +748,7 @@ class DashboardController extends Controller
     ## Get Projects Chart Data
 
     
-    /**
-     * Get projects chart data (static data - consider making it dynamic)
-     */
+  
     private function getProjectsChartData($user, $period)
     {
         // This remains static for now, you might want to make it dynamic based on your Project model statuses
@@ -785,7 +783,7 @@ class DashboardController extends Controller
                             ->whereBetween('updated_at', [$currentWeekStart, $currentWeekEnd]);
 
             if (!$isAdmin) {
-                // Corrected: Use whereHas for Tache model
+                
                 $query->whereHas('users', function($q) use ($user) {
                     $q->where('users.id', $user->id);
                 });
