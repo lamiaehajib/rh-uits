@@ -675,7 +675,7 @@ class DashboardController extends Controller
     /**
      * Get dashboard analytics API
      */
-    public function analytics(Request $request)
+   public function analytics(Request $request)
     {
         $user = auth()->user();
         $period = $request->get('period', 'month'); // Default to 'month'
@@ -712,6 +712,7 @@ class DashboardController extends Controller
         // Always apply datedebut filter for tasks in charts
         $query->where('datedebut', '<=', Carbon::now());
 
+        // 👇 MODIFICATION ICI 👇
         switch ($period) {
             case 'week':
                 $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
@@ -722,7 +723,11 @@ class DashboardController extends Controller
             case 'year':
                 $query->whereYear('created_at', now()->year);
                 break;
+            case 'all': // 👈 AJOUTER LE CAS 'all'
+                // Ne rien faire pour inclure toutes les données depuis le début
+                break;
         }
+        // 👆 FIN DE LA MODIFICATION 👆
 
         $newTasks = (clone $query)->where('status', 'nouveau')->count();
         $completedTasks = (clone $query)->where('status', 'terminé')->count();
@@ -807,7 +812,7 @@ class DashboardController extends Controller
     /**
      * Get pointage chart data (time worked per day/week/month)
      */
-    private function getPointageChartData($user, $period)
+   private function getPointageChartData($user, $period)
     {
         $labels = [];
         $totalHoursData = [];
@@ -819,88 +824,69 @@ class DashboardController extends Controller
         }
 
         $query->whereNotNull('heure_arrivee')
-              ->whereNotNull('heure_depart');
+             ->whereNotNull('heure_depart'); // On ne compte que les pointages complets
 
+        // 👇 MODIFICATION ICI 👇
         switch ($period) {
             case 'week':
-                for ($i = 6; $i >= 0; $i--) {
-                    $date = Carbon::now()->subDays($i);
-                    $dayTotalMinutes = (clone $query)
-                        ->whereDate('heure_arrivee', $date->toDateString())
-                        ->get()
-                        ->sum(function($pointage) {
-                            return Carbon::parse($pointage->heure_arrivee)->diffInMinutes(Carbon::parse($pointage->heure_depart));
-                        });
-                    $labels[] = $date->format('D d/m');
-                    $totalHoursData[] = round($dayTotalMinutes / 60, 1);
-                }
+                $startDate = now()->startOfWeek();
+                $endDate = now()->endOfWeek();
+                $query->whereBetween('date_pointage', [$startDate, $endDate])
+                      ->groupBy(DB::raw('DATE(date_pointage)'))
+                      ->select(DB::raw('DATE(date_pointage) as label'), DB::raw('SUM(TIME_TO_SEC(TIMEDIFF(heure_depart, heure_arrivee))) / 3600 as total_hours'))
+                      ->orderBy('label');
+                $results = $query->get();
+                $labels = $results->pluck('label')->map(function($date) { return Carbon::parse($date)->format('D'); });
+                $totalHoursData = $results->pluck('total_hours')->map(function($hours) { return round($hours, 1); });
                 break;
             case 'month':
-                $startOfMonth = Carbon::now()->startOfMonth();
-                $endOfMonth = Carbon::now()->endOfMonth();
-
-                $currentWeek = $startOfMonth->copy()->startOfWeek(Carbon::MONDAY);
-                $weekCount = 0;
-
-                while ($currentWeek->lessThanOrEqualTo($endOfMonth) && $weekCount < 4) {
-                    $weekEnd = $currentWeek->copy()->endOfWeek(Carbon::SUNDAY);
-                    if ($weekEnd->greaterThan($endOfMonth)) {
-                        $weekEnd = $endOfMonth;
-                    }
-
-                    $weekTotalMinutes = (clone $query)
-                        ->whereBetween('heure_arrivee', [$currentWeek, $weekEnd])
-                        ->get()
-                        ->sum(function($pointage) {
-                            return Carbon::parse($pointage->heure_arrivee)->diffInMinutes(Carbon::parse($pointage->heure_depart));
-                        });
-
-                    $labels[] = 'Sem. ' . $currentWeek->format('W') . ' (' . $currentWeek->format('d/m') . ')';
-                    $totalHoursData[] = round($weekTotalMinutes / 60, 1);
-
-                    $currentWeek->addWeek();
-                    $weekCount++;
-                }
+                $startDate = now()->startOfMonth();
+                $endDate = now()->endOfMonth();
+                $query->whereBetween('date_pointage', [$startDate, $endDate])
+                      ->groupBy(DB::raw('WEEK(date_pointage)'))
+                      ->select(DB::raw('WEEK(date_pointage) as label'), DB::raw('SUM(TIME_TO_SEC(TIMEDIFF(heure_depart, heure_arrivee))) / 3600 as total_hours'))
+                      ->orderBy('label');
+                $results = $query->get();
+                $labels = $results->pluck('label')->map(function($week) { return 'Semaine ' . $week; });
+                $totalHoursData = $results->pluck('total_hours')->map(function($hours) { return round($hours, 1); });
                 break;
             case 'year':
-                for ($i = 11; $i >= 0; $i--) {
-                    $month = Carbon::now()->subMonths($i);
-                    $monthTotalMinutes = (clone $query)
-                        ->whereMonth('heure_arrivee', $month->month)
-                        ->whereYear('heure_arrivee', $month->year)
-                        ->get()
-                        ->sum(function($pointage) {
-                            return Carbon::parse($pointage->heure_arrivee)->diffInMinutes(Carbon::parse($pointage->heure_depart));
-                        });
-                    $labels[] = $month->format('M Y');
-                    $totalHoursData[] = round($monthTotalMinutes / 60, 1);
-                }
+                $startDate = now()->startOfYear();
+                $endDate = now()->endOfYear();
+                $query->whereBetween('date_pointage', [$startDate, $endDate])
+                      ->groupBy(DB::raw('MONTH(date_pointage)'))
+                      ->select(DB::raw('MONTH(date_pointage) as label'), DB::raw('SUM(TIME_TO_SEC(TIMEDIFF(heure_depart, heure_arrivee))) / 3600 as total_hours'))
+                      ->orderBy('label');
+                $results = $query->get();
+                $labels = $results->pluck('label')->map(function($month) { return Carbon::create(null, $month, 1)->format('M'); });
+                $totalHoursData = $results->pluck('total_hours')->map(function($hours) { return round($hours, 1); });
                 break;
-            default: // Default to last 4 weeks if no period or invalid period provided
-                $now = Carbon::now();
-                $startOfThisWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
-
-                for ($i = 3; $i >= 0; $i--) {
-                    $currentWeekStart = $startOfThisWeek->copy()->subWeeks($i);
-                    $currentWeekEnd = $currentWeekStart->copy()->endOfWeek(Carbon::SUNDAY);
-
-                    $weekTotalMinutes = (clone $query)
-                        ->whereBetween('heure_arrivee', [$currentWeekStart, $currentWeekEnd])
-                        ->get()
-                        ->sum(function($pointage) {
-                            return Carbon::parse($pointage->heure_arrivee)->diffInMinutes(Carbon::parse($pointage->heure_depart));
-                        });
-
-                    $labels[] = 'Semaine du ' . $currentWeekStart->format('d/m');
-                    $totalHoursData[] = round($weekTotalMinutes / 60, 1);
-                }
+            case 'all': // 👈 AJOUTER LE CAS 'all' POUR TOUTES LES DONNÉES
+                $query->groupBy(DB::raw('YEAR(date_pointage)'))
+                      ->select(DB::raw('YEAR(date_pointage) as label'), DB::raw('SUM(TIME_TO_SEC(TIMEDIFF(heure_depart, heure_arrivee))) / 3600 as total_hours'))
+                      ->orderBy('label');
+                $results = $query->get();
+                $labels = $results->pluck('label');
+                $totalHoursData = $results->pluck('total_hours')->map(function($hours) { return round($hours, 1); });
+                break;
+            default:
+                // Si la période est 'month' (par défaut), on utilise la même logique que le case 'month'
+                $startDate = now()->startOfMonth();
+                $endDate = now()->endOfMonth();
+                $query->whereBetween('date_pointage', [$startDate, $endDate])
+                      ->groupBy(DB::raw('WEEK(date_pointage)'))
+                      ->select(DB::raw('WEEK(date_pointage) as label'), DB::raw('SUM(TIME_TO_SEC(TIMEDIFF(heure_depart, heure_arrivee))) / 3600 as total_hours'))
+                      ->orderBy('label');
+                $results = $query->get();
+                $labels = $results->pluck('label')->map(function($week) { return 'Semaine ' . $week; });
+                $totalHoursData = $results->pluck('total_hours')->map(function($hours) { return round($hours, 1); });
                 break;
         }
+        // 👆 FIN DE LA MODIFICATION 👆
 
         return [
             'labels' => $labels,
-            'data' => $totalHoursData,
-            'title' => 'Temps Travaillé (Heures)'
+            'data' => $totalHoursData
         ];
     }
    
