@@ -790,7 +790,7 @@ class DashboardController extends Controller
                     $q->where('users.id', $user->id);
                 });
             }
-            // Always apply datedebut filter for tasks in productivity charts
+           
             $query->where('datedebut', '<=', Carbon::now());
 
             $count = $query->count();
@@ -824,7 +824,7 @@ class DashboardController extends Controller
         }
 
         $query->whereNotNull('heure_arrivee')
-             ->whereNotNull('heure_depart'); // On ne compte que les pointages complets
+             ->whereNotNull('heure_depart'); 
 
         // 👇 MODIFICATION ICI 👇
         switch ($period) {
@@ -861,7 +861,7 @@ class DashboardController extends Controller
                 $labels = $results->pluck('label')->map(function($month) { return Carbon::create(null, $month, 1)->format('M'); });
                 $totalHoursData = $results->pluck('total_hours')->map(function($hours) { return round($hours, 1); });
                 break;
-            case 'all': // 👈 AJOUTER LE CAS 'all' POUR TOUTES LES DONNÉES
+            case 'all': 
                 $query->groupBy(DB::raw('YEAR(date_pointage)'))
                       ->select(DB::raw('YEAR(date_pointage) as label'), DB::raw('SUM(TIME_TO_SEC(TIMEDIFF(heure_depart, heure_arrivee))) / 3600 as total_hours'))
                       ->orderBy('label');
