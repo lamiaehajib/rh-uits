@@ -675,7 +675,7 @@ class DashboardController extends Controller
     /**
      * Get dashboard analytics API
      */
-   public function analytics(Request $request)
+    public function analytics(Request $request)
     {
         $user = auth()->user();
         $period = $request->get('period', 'month'); // Default to 'month'
@@ -699,56 +699,52 @@ class DashboardController extends Controller
      * Get tasks chart data
      */
     private function getTasksChartData($user, $period)
-    {
-        $query = Tache::query();
-        $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
+{
+    $query = Tache::query();
+    $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
-        if (!$isAdmin) {
-            // Corrected: Use whereHas for Tache model
-            $query->whereHas('users', function($q) use ($user) {
-                $q->where('users.id', $user->id);
-            });
-        }
-        // Always apply datedebut filter for tasks in charts
-        $query->where('datedebut', '<=', Carbon::now());
-
-        // 👇 MODIFICATION ICI 👇
-        switch ($period) {
-            case 'week':
-                $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-                break;
-            case 'month':
-                $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year);
-                break;
-            case 'year':
-                $query->whereYear('created_at', now()->year);
-                break;
-            case 'all': // 👈 AJOUTER LE CAS 'all'
-                // Ne rien faire pour inclure toutes les données depuis le début
-                break;
-        }
-        // 👆 FIN DE LA MODIFICATION 👆
-
-        $newTasks = (clone $query)->where('status', 'nouveau')->count();
-        $completedTasks = (clone $query)->where('status', 'terminé')->count();
-        $inProgressTasks = (clone $query)->where('status', 'en cours')->count();
-
-        return [
-            'labels' => ['Nouveau', 'En Cours', 'Terminé'],
-            'data' => [$newTasks, $inProgressTasks, $completedTasks],
-            'colors' => [
-                $this->getStatusColor('nouveau'),
-                $this->getStatusColor('en cours'),
-                $this->getStatusColor('terminé')
-            ]
-        ];
+    if (!$isAdmin) {
+        $query->whereHas('users', function($q) use ($user) {
+            $q->where('users.id', $user->id);
+        });
     }
-    
+    // T7aydna datedebut filter bach nchofo kolchi
+    // $query->where('datedebut', '<=', Carbon::now());
+
+    switch ($period) {
+        case 'week':
+            $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+            break;
+        case 'month':
+            $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year);
+            break;
+        case 'year':
+            $query->whereYear('created_at', now()->year);
+            break;
+        // case 'all' or default - ma kayn 7ta filter, kolchi men bdat application
+    }
+
+    $newTasks = (clone $query)->where('status', 'nouveau')->count();
+    $completedTasks = (clone $query)->where('status', 'terminé')->count();
+    $inProgressTasks = (clone $query)->where('status', 'en cours')->count();
+
+    return [
+        'labels' => ['Nouveau', 'En Cours', 'Terminé'],
+        'data' => [$newTasks, $inProgressTasks, $completedTasks],
+        'colors' => [
+            $this->getStatusColor('nouveau'),
+            $this->getStatusColor('en cours'),
+            $this->getStatusColor('terminé')
+        ]
+    ];
+}
  
     ## Get Projects Chart Data
 
     
-  
+    /**
+     * Get projects chart data (static data - consider making it dynamic)
+     */
     private function getProjectsChartData($user, $period)
     {
         // This remains static for now, you might want to make it dynamic based on your Project model statuses
@@ -766,42 +762,40 @@ class DashboardController extends Controller
      * Get productivity chart data
      */
     private function getProductivityChartData($user, $period)
-    {
-        $labels = [];
-        $productivityData = [];
+{
+    $labels = [];
+    $productivityData = [];
 
-        $now = Carbon::now();
-        $startOfThisWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
-        $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
+    $now = Carbon::now();
+    $startOfThisWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
+    $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
+    for ($i = 3; $i >= 0; $i--) {
+        $currentWeekStart = $startOfThisWeek->copy()->subWeeks($i);
+        $currentWeekEnd = $currentWeekStart->copy()->endOfWeek(Carbon::SUNDAY);
 
-        for ($i = 3; $i >= 0; $i--) {
-            $currentWeekStart = $startOfThisWeek->copy()->subWeeks($i);
-            $currentWeekEnd = $currentWeekStart->copy()->endOfWeek(Carbon::SUNDAY);
+        $query = Tache::where('status', 'terminé')
+                        ->whereBetween('updated_at', [$currentWeekStart, $currentWeekEnd]);
 
-            $query = Tache::where('status', 'terminé')
-                            ->whereBetween('updated_at', [$currentWeekStart, $currentWeekEnd]);
-
-            if (!$isAdmin) {
-                
-                $query->whereHas('users', function($q) use ($user) {
-                    $q->where('users.id', $user->id);
-                });
-            }
-           
-            $query->where('datedebut', '<=', Carbon::now());
-
-            $count = $query->count();
-
-            $labels[] = 'Semaine du ' . $currentWeekStart->format('d/m');
-            $productivityData[] = $count;
+        if (!$isAdmin) {
+            $query->whereHas('users', function($q) use ($user) {
+                $q->where('users.id', $user->id);
+            });
         }
+        // T7aydna datedebut filter
+        // $query->where('datedebut', '<=', Carbon::now());
 
-        return [
-            'labels' => $labels,
-            'productivity' => $productivityData
-        ];
+        $count = $query->count();
+
+        $labels[] = 'Semaine du ' . $currentWeekStart->format('d/m');
+        $productivityData[] = $count;
     }
+
+    return [
+        'labels' => $labels,
+        'productivity' => $productivityData
+    ];
+}
     
  
     ## Get Pointage Chart Data (Time Worked)
@@ -810,83 +804,104 @@ class DashboardController extends Controller
     /**
      * Get pointage chart data (time worked per day/week/month)
      */
-   private function getPointageChartData($user, $period)
-    {
-        $labels = [];
-        $totalHoursData = [];
+    private function getPointageChartData($user, $period)
+{
+    $labels = [];
+    $totalHoursData = [];
 
-        $query = SuivrePointage::query();
+    $query = SuivrePointage::query();
 
-        if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) {
-            $query->where('iduser', $user->id);
-        }
-
-        $query->whereNotNull('heure_arrivee')
-             ->whereNotNull('heure_depart'); 
-
-        // 👇 MODIFICATION ICI 👇
-        switch ($period) {
-            case 'week':
-                $startDate = now()->startOfWeek();
-                $endDate = now()->endOfWeek();
-                $query->whereBetween('date_pointage', [$startDate, $endDate])
-                      ->groupBy(DB::raw('DATE(date_pointage)'))
-                      ->select(DB::raw('DATE(date_pointage) as label'), DB::raw('SUM(TIME_TO_SEC(TIMEDIFF(heure_depart, heure_arrivee))) / 3600 as total_hours'))
-                      ->orderBy('label');
-                $results = $query->get();
-                $labels = $results->pluck('label')->map(function($date) { return Carbon::parse($date)->format('D'); });
-                $totalHoursData = $results->pluck('total_hours')->map(function($hours) { return round($hours, 1); });
-                break;
-            case 'month':
-                $startDate = now()->startOfMonth();
-                $endDate = now()->endOfMonth();
-                $query->whereBetween('date_pointage', [$startDate, $endDate])
-                      ->groupBy(DB::raw('WEEK(date_pointage)'))
-                      ->select(DB::raw('WEEK(date_pointage) as label'), DB::raw('SUM(TIME_TO_SEC(TIMEDIFF(heure_depart, heure_arrivee))) / 3600 as total_hours'))
-                      ->orderBy('label');
-                $results = $query->get();
-                $labels = $results->pluck('label')->map(function($week) { return 'Semaine ' . $week; });
-                $totalHoursData = $results->pluck('total_hours')->map(function($hours) { return round($hours, 1); });
-                break;
-            case 'year':
-                $startDate = now()->startOfYear();
-                $endDate = now()->endOfYear();
-                $query->whereBetween('date_pointage', [$startDate, $endDate])
-                      ->groupBy(DB::raw('MONTH(date_pointage)'))
-                      ->select(DB::raw('MONTH(date_pointage) as label'), DB::raw('SUM(TIME_TO_SEC(TIMEDIFF(heure_depart, heure_arrivee))) / 3600 as total_hours'))
-                      ->orderBy('label');
-                $results = $query->get();
-                $labels = $results->pluck('label')->map(function($month) { return Carbon::create(null, $month, 1)->format('M'); });
-                $totalHoursData = $results->pluck('total_hours')->map(function($hours) { return round($hours, 1); });
-                break;
-            case 'all': 
-                $query->groupBy(DB::raw('YEAR(date_pointage)'))
-                      ->select(DB::raw('YEAR(date_pointage) as label'), DB::raw('SUM(TIME_TO_SEC(TIMEDIFF(heure_depart, heure_arrivee))) / 3600 as total_hours'))
-                      ->orderBy('label');
-                $results = $query->get();
-                $labels = $results->pluck('label');
-                $totalHoursData = $results->pluck('total_hours')->map(function($hours) { return round($hours, 1); });
-                break;
-            default:
-                // Si la période est 'month' (par défaut), on utilise la même logique que le case 'month'
-                $startDate = now()->startOfMonth();
-                $endDate = now()->endOfMonth();
-                $query->whereBetween('date_pointage', [$startDate, $endDate])
-                      ->groupBy(DB::raw('WEEK(date_pointage)'))
-                      ->select(DB::raw('WEEK(date_pointage) as label'), DB::raw('SUM(TIME_TO_SEC(TIMEDIFF(heure_depart, heure_arrivee))) / 3600 as total_hours'))
-                      ->orderBy('label');
-                $results = $query->get();
-                $labels = $results->pluck('label')->map(function($week) { return 'Semaine ' . $week; });
-                $totalHoursData = $results->pluck('total_hours')->map(function($hours) { return round($hours, 1); });
-                break;
-        }
-        // 👆 FIN DE LA MODIFICATION 👆
-
-        return [
-            'labels' => $labels,
-            'data' => $totalHoursData
-        ];
+    if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) {
+        $query->where('iduser', $user->id);
     }
+
+    $query->whereNotNull('heure_arrivee')
+          ->whereNotNull('heure_depart');
+
+    // Ma kayn 7ta limite dyal 30 jours, kolchi men bdat application
+
+    switch ($period) {
+        case 'week':
+            for ($i = 6; $i >= 0; $i--) {
+                $date = Carbon::now()->subDays($i);
+                $dayTotalMinutes = (clone $query)
+                    ->whereDate('heure_arrivee', $date->toDateString())
+                    ->get()
+                    ->sum(function($pointage) {
+                        return Carbon::parse($pointage->heure_arrivee)->diffInMinutes(Carbon::parse($pointage->heure_depart));
+                    });
+                $labels[] = $date->format('D d/m');
+                $totalHoursData[] = round($dayTotalMinutes / 60, 1);
+            }
+            break;
+        case 'month':
+            $startOfMonth = Carbon::now()->startOfMonth();
+            $endOfMonth = Carbon::now()->endOfMonth();
+
+            $currentWeek = $startOfMonth->copy()->startOfWeek(Carbon::MONDAY);
+            $weekCount = 0;
+
+            while ($currentWeek->lessThanOrEqualTo($endOfMonth) && $weekCount < 4) {
+                $weekEnd = $currentWeek->copy()->endOfWeek(Carbon::SUNDAY);
+                if ($weekEnd->greaterThan($endOfMonth)) {
+                    $weekEnd = $endOfMonth;
+                }
+
+                $weekTotalMinutes = (clone $query)
+                    ->whereBetween('heure_arrivee', [$currentWeek, $weekEnd])
+                    ->get()
+                    ->sum(function($pointage) {
+                        return Carbon::parse($pointage->heure_arrivee)->diffInMinutes(Carbon::parse($pointage->heure_depart));
+                    });
+
+                $labels[] = 'Sem. ' . $currentWeek->format('W') . ' (' . $currentWeek->format('d/m') . ')';
+                $totalHoursData[] = round($weekTotalMinutes / 60, 1);
+
+                $currentWeek->addWeek();
+                $weekCount++;
+            }
+            break;
+        case 'year':
+            for ($i = 11; $i >= 0; $i--) {
+                $month = Carbon::now()->subMonths($i);
+                $monthTotalMinutes = (clone $query)
+                    ->whereMonth('heure_arrivee', $month->month)
+                    ->whereYear('heure_arrivee', $month->year)
+                    ->get()
+                    ->sum(function($pointage) {
+                        return Carbon::parse($pointage->heure_arrivee)->diffInMinutes(Carbon::parse($pointage->heure_depart));
+                    });
+                $labels[] = $month->format('M Y');
+                $totalHoursData[] = round($monthTotalMinutes / 60, 1);
+            }
+            break;
+        default: // Default to last 4 weeks
+            $now = Carbon::now();
+            $startOfThisWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
+
+            for ($i = 3; $i >= 0; $i--) {
+                $currentWeekStart = $startOfThisWeek->copy()->subWeeks($i);
+                $currentWeekEnd = $currentWeekStart->copy()->endOfWeek(Carbon::SUNDAY);
+
+                $weekTotalMinutes = (clone $query)
+                    ->whereBetween('heure_arrivee', [$currentWeekStart, $currentWeekEnd])
+                    ->get()
+                    ->sum(function($pointage) {
+                        return Carbon::parse($pointage->heure_arrivee)->diffInMinutes(Carbon::parse($pointage->heure_depart));
+                    });
+
+                $labels[] = 'Semaine du ' . $currentWeekStart->format('d/m');
+                $totalHoursData[] = round($weekTotalMinutes / 60, 1);
+            }
+            break;
+    }
+
+    return [
+        'labels' => $labels,
+        'data' => $totalHoursData,
+        'title' => 'Temps Travaillé (Heures)'
+    ];
+}
    
  
     ## Get Pointage Punctuality Chart Data
@@ -896,61 +911,56 @@ class DashboardController extends Controller
      * Get pointage punctuality chart data (late vs on-time arrivals)
      */
     private function getPointagePunctualityChartData($user, $period = 'all')
-    {
-        $query = SuivrePointage::query();
+{
+    $query = SuivrePointage::query();
 
-        if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) {
-            $query->where('iduser', $user->id);
-        }
-
-        // Apply period filter if needed for punctuality analysis
-        switch ($period) {
-            case 'today':
-                $query->whereDate('heure_arrivee', today());
-                break;
-            case 'week':
-                $query->whereBetween('heure_arrivee', [now()->startOfWeek(), now()->endOfWeek()]);
-                break;
-            case 'month':
-                $query->whereMonth('heure_arrivee', now()->month)->whereYear('heure_arrivee', now()->year);
-                break;
-            case 'year':
-                $query->whereYear('heure_arrivee', now()->year);
-                break;
-            // 'all' means no date filter
-        }
-
-
-        // Only consider pointages that have an arrival time for this analysis
-        $allPointagesWithArrival = (clone $query)->whereNotNull('heure_arrivee')->get();
-        $totalArrivals = $allPointagesWithArrival->count();
-
-        $lateArrivalsCount = 0;
-        if ($totalArrivals > 0) {
-            $lateArrivalsCount = $allPointagesWithArrival
-                ->filter(function($pointage) {
-                    $arriveeTime = Carbon::parse($pointage->heure_arrivee);
-                    // Define the threshold for late arrival: 9:10 AM
-                    $expectedArrivee = Carbon::parse($arriveeTime->format('Y-m-d') . ' 09:10:00');
-                    // Check if arrival time is strictly greater than 9:10:00
-                    return $arriveeTime->greaterThan($expectedArrivee);
-                })
-                ->count();
-        }
-
-        $onTimeArrivalsCount = $totalArrivals - $lateArrivalsCount;
-
-        // Calculate percentages
-        $percentageLate = $totalArrivals > 0 ? round(($lateArrivalsCount / $totalArrivals) * 100, 1) : 0;
-        $percentageOnTime = $totalArrivals > 0 ? round(($onTimeArrivalsCount / $totalArrivals) * 100, 1) : 0;
-
-        return [
-            'labels' => ['En Retard', 'À l\'heure'],
-            'data' => [$percentageLate, $percentageOnTime],
-            'colors' => ['#D32F2F', '#4CAF50'], // Red for late, Green for on-time
-            'total' => $totalArrivals
-        ];
+    if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) {
+        $query->where('iduser', $user->id);
     }
+
+    // Apply period filter bach user i9der ichof 7ssab period li bghaha
+    switch ($period) {
+        case 'today':
+            $query->whereDate('heure_arrivee', today());
+            break;
+        case 'week':
+            $query->whereBetween('heure_arrivee', [now()->startOfWeek(), now()->endOfWeek()]);
+            break;
+        case 'month':
+            $query->whereMonth('heure_arrivee', now()->month)->whereYear('heure_arrivee', now()->year);
+            break;
+        case 'year':
+            $query->whereYear('heure_arrivee', now()->year);
+            break;
+        // 'all' kaychof kolchi men bdat application
+    }
+
+    $allPointagesWithArrival = (clone $query)->whereNotNull('heure_arrivee')->get();
+    $totalArrivals = $allPointagesWithArrival->count();
+
+    $lateArrivalsCount = 0;
+    if ($totalArrivals > 0) {
+        $lateArrivalsCount = $allPointagesWithArrival
+            ->filter(function($pointage) {
+                $arriveeTime = Carbon::parse($pointage->heure_arrivee);
+                $expectedArrivee = Carbon::parse($arriveeTime->format('Y-m-d') . ' 09:10:00');
+                return $arriveeTime->greaterThan($expectedArrivee);
+            })
+            ->count();
+    }
+
+    $onTimeArrivalsCount = $totalArrivals - $lateArrivalsCount;
+
+    $percentageLate = $totalArrivals > 0 ? round(($lateArrivalsCount / $totalArrivals) * 100, 1) : 0;
+    $percentageOnTime = $totalArrivals > 0 ? round(($onTimeArrivalsCount / $totalArrivals) * 100, 1) : 0;
+
+    return [
+        'labels' => ['En Retard', 'À l\'heure'],
+        'data' => [$percentageLate, $percentageOnTime],
+        'colors' => ['#D32F2F', '#4CAF50'],
+        'total' => $totalArrivals
+    ];
+}
    
  
     ## Get Reclamations Data for Dashboard
