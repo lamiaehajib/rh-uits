@@ -1421,12 +1421,12 @@
             }
 
             // Initial render of all charts on page load
-            const initialPointagePeriod = document.getElementById('pointagePeriodSelect')?.value || 'month';
-            // For punctuality, if not admin, force 'all' to ensure it gets user's total data without period filter.
-            // If admin, use selected value or default to 'month'.
-            const initialPunctualityPeriod = "{{ Auth::user()->hasRole('Sup_Admin') || Auth::user()->hasRole('Custom_Admin') ? 'month' : 'all' }}";
+           const initialPointagePeriod = document.getElementById('pointagePeriodSelect')?.value || 'month';
+// For punctuality, if not admin, force 'all' to ensure it gets user's total data without period filter.
+// If admin, use selected value or default to 'month'.
+const initialPunctualityPeriod = "{{ Auth::user()->hasRole('Sup_Admin') || Auth::user()->hasRole('Custom_Admin') ? 'month' : 'all' }}";
 
-            fetchAndRenderCharts(initialPointagePeriod, initialPunctualityPeriod);
+fetchAndRenderCharts(initialPointagePeriod, initialPunctualityPeriod);
 
             // Event listener for "Temps de Travail" period select
             const pointagePeriodSelect = document.getElementById('pointagePeriodSelect');
@@ -1441,7 +1441,7 @@
             const punctualityPeriodSelect = document.getElementById('punctualityPeriodSelect');
             if (punctualityPeriodSelect) {
                 punctualityPeriodSelect.addEventListener('change', (event) => {
-                    const currentPointagePeriod = document.getElementById('pointagePeriodSelect')?.value || 'month';
+                    const currentPointagePeriod = document.getElementById('pointagePeriodSelect')?.value || 'all';
                     fetchAndRenderCharts(currentPointagePeriod, event.target.value);
                 });
             }
