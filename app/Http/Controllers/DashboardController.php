@@ -910,30 +910,30 @@ class DashboardController extends Controller
     /**
      * Get pointage punctuality chart data (late vs on-time arrivals)
      */
-    private function getPointagePunctualityChartData($user, $period = 'all')
-{
-    $query = SuivrePointage::query();
+//     private function getPointagePunctualityChartData($user, $period = 'all')
+// {
+//     $query = SuivrePointage::query();
 
-    if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) {
-        $query->where('iduser', $user->id);
-    }
+//     if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) {
+//         $query->where('iduser', $user->id);
+//     }
 
-    // Apply period filter bach user i9der ichof 7ssab period li bghaha
-    switch ($period) {
-        case 'today':
-            $query->whereDate('heure_arrivee', today());
-            break;
-        case 'week':
-            $query->whereBetween('heure_arrivee', [now()->startOfWeek(), now()->endOfWeek()]);
-            break;
-        case 'month':
-            $query->whereMonth('heure_arrivee', now()->month)->whereYear('heure_arrivee', now()->year);
-            break;
-        case 'year':
-            $query->whereYear('heure_arrivee', now()->year);
-            break;
-        // 'all' kaychof kolchi men bdat application
-    }
+//     // Apply period filter bach user i9der ichof 7ssab period li bghaha
+//     switch ($period) {
+//         case 'today':
+//             $query->whereDate('heure_arrivee', today());
+//             break;
+//         case 'week':
+//             $query->whereBetween('heure_arrivee', [now()->startOfWeek(), now()->endOfWeek()]);
+//             break;
+//         case 'month':
+//             $query->whereMonth('heure_arrivee', now()->month)->whereYear('heure_arrivee', now()->year);
+//             break;
+//         case 'year':
+//             $query->whereYear('heure_arrivee', now()->year);
+//             break;
+//         // 'all' kaychof kolchi men bdat application
+//     }
 
     $allPointagesWithArrival = (clone $query)->whereNotNull('heure_arrivee')->get();
     $totalArrivals = $allPointagesWithArrival->count();
