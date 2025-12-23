@@ -82,9 +82,12 @@ class DepensesController extends Controller
         $depenses = $query->latest('date_depense')->paginate(20);
         $total = $query->sum('montant');
         
-        $salaries = User::whereHas('roles', function($q) {
-            $q->whereIn('name', ['admin', 'user', 'employee']);
-        })->get();
+        // Récupérer tous les users avec leurs salaires
+        $salaries = User::whereNotNull('salaire')
+            ->where('salaire', '>', 0)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
         
         return view('depenses.fixes.index', compact('depenses', 'total', 'mois', 'salaries'));
     }
@@ -135,6 +138,45 @@ class DepensesController extends Controller
     {
         $depense->delete();
         return redirect()->back()->with('success', 'Dépense fixe supprimée avec succès!');
+    }
+    
+    // Générer salaires automatiquement pour le mois
+    public function genererSalaires(Request $request)
+    {
+        $mois = $request->get('mois', Carbon::now()->format('Y-m'));
+        $date = Carbon::parse($mois . '-01');
+        
+        // Récupérer tous les users actifs avec salaire
+        $salaries = User::whereNotNull('salaire')
+            ->where('salaire', '>', 0)
+            ->where('is_active', true)
+            ->get();
+        
+        $count = 0;
+        foreach ($salaries as $salarie) {
+            // Vérifier si le salaire existe déjà pour ce mois
+            $exists = DepenseFixe::where('salarie_id', $salarie->id)
+                ->where('mois', $mois)
+                ->where('type', 'SALAIRE')
+                ->exists();
+            
+            if (!$exists) {
+                DepenseFixe::create([
+                    'type' => 'SALAIRE',
+                    'description' => 'Salaire de ' . $salarie->name,
+                    'montant' => $salarie->salaire,
+                    'date_depense' => $date->lastOfMonth(),
+                    'mois' => $mois,
+                    'statut' => 'en_attente',
+                    'notes' => 'Généré automatiquement',
+                    'user_id' => auth()->id(),
+                    'salarie_id' => $salarie->id
+                ]);
+                $count++;
+            }
+        }
+        
+        return redirect()->back()->with('success', "$count salaire(s) généré(s) avec succès pour $mois!");
     }
     
     // Liste des dépenses variables

@@ -35,8 +35,10 @@ class DepenseVariable extends Model
         // Primes & Repos
         'PRIME_REPOS_KHALID' => 'Prime & Repos (Khalid)',
         'PRIME_REPOS_ABDELLATIF' => 'Prime & Repos (Abdellatif)',
+        'PRIME_REPOS_SARA' => 'Prime & Repos (SARA)',
+        'PRIME_REPOS_LAMIAE' => 'Prime & Repos (LAMIAE)',
         'PRIME_REPOS_GHIZLANE' => 'Prime & Repos (Ghizlane)',
-        
+        'PRIME_REPOS_SAAD' => 'Prime & Repos (SAAD)',
         'PRIME_REPOS_AHMED' => 'Prime & Repos (Ahmed)',
        
         'MR_KHALID' => 'Mr. Khalid',
@@ -44,7 +46,9 @@ class DepenseVariable extends Model
         'MR_HAIN' => 'Mr. Hain',
         'MR_KHADIJA' => 'Mr. Khadija',
         
-        // Achats
+        // Achat
+        // s
+        'Alimentation',
         'ACHAT_PCS' => 'Achat des PCS',
         'ACHAT_EQUIPEMENT' => 'Achat des équipements',
         

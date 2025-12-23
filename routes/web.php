@@ -470,11 +470,15 @@ Route::put('/rendez-vous/{rendezVous}/confirm', [RendezVousController::class, 'c
         Route::get('/depenses', [DepensesController::class, 'index'])->name('depenses.index');
     
     // Dépenses Fixes
+    // Dans routes/web.php, ajoute cette route:
+Route::post('/depenses/fixes/generer-salaires', [DepensesController::class, 'genererSalaires'])
+    ->name('depenses.fixes.generer-salaires');
     Route::prefix('depenses/fixes')->name('depenses.fixes.')->group(function () {
         Route::get('/', [DepensesController::class, 'depensesFixes'])->name('index');
         Route::post('/', [DepensesController::class, 'storeDepenseFixe'])->name('store');
         Route::put('/{depense}', [DepensesController::class, 'updateDepenseFixe'])->name('update');
         Route::delete('/{depense}', [DepensesController::class, 'destroyDepenseFixe'])->name('destroy');
+        
     });
     
     // Dépenses Variables
