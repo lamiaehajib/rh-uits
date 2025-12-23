@@ -42,7 +42,8 @@ class AvancementController extends Controller
             'statut' => 'required|in:en cours,terminé,bloqué',
             'date_prevue' => 'nullable|date',
             'date_realisee' => 'nullable|date',
-            'fichiers' => 'nullable|file|mimes:pdf,doc,docx,jpg,png,zip|max:10240'
+            // F la fonction store() w update()
+'fichiers' => 'nullable|file|mimes:pdf,doc,docx,jpg,png,zip,xls,xlsx,csv,txt|max:10240'
         ]);
 
         $validated['projet_id'] = $projet->id;
@@ -91,7 +92,8 @@ class AvancementController extends Controller
             'date_prevue' => 'nullable|date',
             'date_realisee' => 'nullable|date',
             // 'commentaires' => 'nullable|string',
-            'fichiers' => 'nullable|file|mimes:pdf,doc,docx,jpg,png,zip|max:10240'
+            // F la fonction store() w update()
+'fichiers' => 'nullable|file|mimes:pdf,doc,docx,jpg,png,zip,xls,xlsx,csv,txt|max:10240'
         ]);
 
         // Handle file upload

@@ -482,7 +482,7 @@
     </style>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6"> {{-- Changed space-y-8 to space-y-6 for slightly less overall spacing --}}
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             <div class="header-card fade-in p-8 text-center relative z-10">
                 <h1 class="text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent mb-2">
                     <?php
@@ -599,7 +599,7 @@
                             </div>
                         </div>
 
-                        {{-- NEW: Pointage Punctuality Chart (Doughnut) --}}
+                        {{-- NEW:   Chart (Doughnut) --}}
                         <div class="chart-card fade-in p-6">
                             <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800 mb-6">
                                 <div class="section-icon w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-400 rounded-full flex items-center justify-center text-white">

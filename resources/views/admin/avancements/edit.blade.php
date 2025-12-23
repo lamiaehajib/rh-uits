@@ -571,38 +571,39 @@
 
                         <!-- Upload de fichier -->
                         <div class="mb-4">
-                            <label for="fichiers" class="form-label">
-                                <i class="fas fa-paperclip me-2"></i>
-                                Nouveau fichier joint
-                            </label>
-                            @if($avancement->fichiers)
-                                <div class="mb-3">
-                                    <div class="alert alert-info py-3">
-                                        <i class="fas fa-info-circle me-2"></i> 
-                                        <strong>Fichier actuel:</strong>
-                                         <a href="{{ route('client.avancements.download', $avancement) }}" target="_blank" class="btn btn-custom-primary">
-                                    <i class="fas fa-download me-2"></i> Télécharger le fichier
-                                </a>
-                                    </div>
-                                </div>
-                            @endif
-                            <input type="file" 
-                                   class="form-control @error('fichiers') is-invalid @enderror" 
-                                   id="fichiers" 
-                                   name="fichiers" 
-                                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
-                            <div class="form-text">
-                                <i class="fas fa-file-upload me-1"></i>
-                                <strong>Formats acceptés:</strong> PDF, DOC, DOCX, JPG, PNG, ZIP (Max: 10MB)
-                                @if($avancement->fichiers)
-                                    <br><i class="fas fa-exclamation-triangle me-1" style="color: var(--accent-color);"></i>
-                                    <strong>Note:</strong> Uploader un nouveau fichier remplacera le fichier actuel.
-                                @endif
-                            </div>
-                            @error('fichiers')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+    <label for="fichiers" class="form-label">
+        <i class="fas fa-paperclip me-2"></i>
+        Nouveau fichier joint
+    </label>
+
+    @if($avancement->fichiers)
+        <div class="mb-3">
+            <div class="alert alert-info py-3">
+                <i class="fas fa-info-circle me-2"></i> 
+                <strong>Fichier actuel:</strong>
+                <a href="{{ route('client.avancements.download', $avancement) }}" target="_blank" class="btn btn-custom-primary">
+                    <i class="fas fa-download me-2"></i> Télécharger le fichier
+                </a>
+            </div>
+        </div>
+    @endif
+
+    <input type="file" 
+           class="form-control @error('fichiers') is-invalid @enderror" 
+           id="fichiers" 
+           name="fichiers" 
+           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip,.xls,.xlsx,.csv"> <div class="form-text">
+        <i class="fas fa-file-upload me-1"></i>
+        <strong>Formats acceptés:</strong> PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, PNG, ZIP (Max: 10MB) @if($avancement->fichiers)
+            <br><i class="fas fa-exclamation-triangle me-1" style="color: var(--accent-color);"></i>
+            <strong>Note:</strong> Uploader un nouveau fichier remplacera le fichier actuel.
+        @endif
+    </div>
+
+    @error('fichiers')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+</div>
 
                         <!-- Buttons -->
                         <div class="d-flex justify-content-between mt-4">

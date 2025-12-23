@@ -4,6 +4,8 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\AvancementController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CongeController;
+use App\Http\Controllers\DepensesController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjetController;
 use App\Http\Controllers\RendezVousController;
@@ -449,6 +451,42 @@ Route::put('/rendez-vous/{rendezVous}/confirm', [RendezVousController::class, 'c
 });
 
 
+        Route::get('/conges', [CongeController::class, 'index'])->name('conges.index');
+        Route::get('/conges/create', [CongeController::class, 'create'])->name('conges.create');
+        Route::post('/conges', [CongeController::class, 'store'])->name('conges.store');
+        Route::get('/conges/solde', [CongeController::class, 'solde'])->name('conges.solde');
+        Route::post('/conges/preview', [CongeController::class, 'previewCalcul'])->name('conges.preview');
+    
+    
+    // Routes pour voir les détails (tous sauf Clients)
+    Route::get('/conges/{conge}', [CongeController::class, 'show'])
+        ->name('conges.show');    
+    // Routes réservées aux admins (Custom_Admin et Sup_Admin)
+        Route::post('/conges/{conge}/approve', [CongeController::class, 'approve'])->name('conges.approve');
+        Route::post('/conges/{conge}/reject', [CongeController::class, 'reject'])->name('conges.reject');
+    
+
+
+        Route::get('/depenses', [DepensesController::class, 'index'])->name('depenses.index');
+    
+    // Dépenses Fixes
+    Route::prefix('depenses/fixes')->name('depenses.fixes.')->group(function () {
+        Route::get('/', [DepensesController::class, 'depensesFixes'])->name('index');
+        Route::post('/', [DepensesController::class, 'storeDepenseFixe'])->name('store');
+        Route::put('/{depense}', [DepensesController::class, 'updateDepenseFixe'])->name('update');
+        Route::delete('/{depense}', [DepensesController::class, 'destroyDepenseFixe'])->name('destroy');
+    });
+    
+    // Dépenses Variables
+    Route::prefix('depenses/variables')->name('depenses.variables.')->group(function () {
+        Route::get('/', [DepensesController::class, 'depensesVariables'])->name('index');
+        Route::post('/', [DepensesController::class, 'storeDepenseVariable'])->name('store');
+        Route::put('/{depense}', [DepensesController::class, 'updateDepenseVariable'])->name('update');
+        Route::delete('/{depense}', [DepensesController::class, 'destroyDepenseVariable'])->name('destroy');
+    });
+    
+    // Rapport mensuel
+    Route::get('/depenses/rapport', [DepensesController::class, 'rapportMensuel'])->name('depenses.rapport');
 });
 
 // Handle registration

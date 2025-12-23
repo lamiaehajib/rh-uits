@@ -159,6 +159,22 @@
                             </div>
                         </div>
 
+
+                        {{-- Salaire --}}
+<div class="col-md-6">
+    <label for="salaire" class="form-label">Salaire (MAD)</label>
+    <div class="input-group">
+        <span class="input-group-text"><i class="fas fa-money-bill-wave"></i></span>
+        <input type="number" step="0.01" name="salaire" id="salaire" 
+               class="form-control @error('salaire') is-invalid @enderror" 
+               placeholder="Ex: 5000.00" 
+               value="{{ old('salaire') }}">
+        @error('salaire')
+            <div class="invalid-feedback">{{ $message }}</div>
+        @enderror
+    </div>
+    <small class="form-text text-muted mt-2">Montant en dirhams marocains (MAD)</small>
+</div>
                         ---
 
                         {{-- Jours de Repos avec des cases à cocher --}}

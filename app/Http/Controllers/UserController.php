@@ -312,6 +312,7 @@ class UserController extends Controller
             'tele' => 'required|string|max:20',
             'code' => 'required|integer|unique:users,code',
             'poste' => 'required|string|max:255',
+            'salaire' => 'nullable|numeric|min:0',
             'adresse' => 'required|string|max:500',
             'repos' => 'required|array|min:1|max:2', // Permet 1 ou 2 jours
             'repos.*' => 'in:Lundi,Mardi,Mercredi,Jeudi,Vendredi,Samedi,Dimanche', // Valide chaque jour
@@ -380,6 +381,7 @@ class UserController extends Controller
             'tele' => 'required|string|max:20',
             'code' => 'required|integer|unique:users,code,'.$id,
             'poste' => 'required|string|max:255',
+            'salaire' => 'nullable|numeric|min:0',
             'adresse' => 'required|string|max:500',
             // VALIDATION: Expect an array for 'repos' with 1 or 2 items
             'repos' => 'required|array|min:1|max:2', 

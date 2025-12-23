@@ -565,9 +565,9 @@
                                    class="form-control @error('fichiers') is-invalid @enderror" 
                                    id="fichiers" 
                                    name="fichiers" 
-                                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip">
+                                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.zip,.xls,.xlsx,.csv">
                             <div class="form-text">
-                                Formats acceptés: PDF, DOC, DOCX, JPG, PNG, ZIP (Max: 10MB)
+                                Formats acceptés:</strong> PDF, DOC, DOCX, XLS, XLSX, CSV, JPG, PNG, ZIP (Max: 10MB)
                             </div>
                             @error('fichiers')
                                 <div class="invalid-feedback">{{ $message }}</div>

@@ -12,7 +12,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     
-    use HasApiTokens, HasFactory, Notifiable,HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -25,6 +25,7 @@ class User extends Authenticatable
         'code',
         'email',
         'poste',
+        'salaire',
         'adresse',
         'repos',
         'password',
@@ -36,14 +37,12 @@ class User extends Authenticatable
         'two_factor_expires_at',
     ];
 
-  public function projets()
-{
-    // This defines the many-to-many relationship with the Projet model.
-    // It tells Laravel to use the 'projet_user' pivot table to link users and projects.
-    return $this->belongsToMany(Projet::class, 'projet_user', 'user_id', 'projet_id');
-}
-
-  
+    public function projets()
+    {
+        // This defines the many-to-many relationship with the Projet model.
+        // It tells Laravel to use the 'projet_user' pivot table to link users and projects.
+        return $this->belongsToMany(Projet::class, 'projet_user', 'user_id', 'projet_id');
+    }
 
     public function taches()
     {
@@ -65,15 +64,16 @@ class User extends Authenticatable
         return $this->hasMany(ImagePreuve::class, 'iduser');
     }
 
-
     public function Dashboard()
     {
         return $this->hasMany(Dashboard::class, 'iduser');
     }
+    
     public function VenteObjectif()
     {
         return $this->hasMany(VenteObjectif::class, 'iduser');
     }
+    
     public function reclamation()
     {
         return $this->hasMany(reclamation::class, 'iduser');
@@ -83,13 +83,22 @@ class User extends Authenticatable
     {
         return $this->hasMany(LoginLog::class);
     }
-    
 
-    
+    // Relations pour le système de congés
+    public function conges()
+    {
+        return $this->hasMany(Conge::class);
+    }
 
-    
+    public function soldeConges()
+    {
+        return $this->hasMany(SoldeConge::class);
+    }
 
-
+    public function congesTraites()
+    {
+        return $this->hasMany(Conge::class, 'traite_par');
+    }
 
     /**
      * The attributes that should be hidden for serialization.
@@ -108,8 +117,8 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-                'last_login_at' => 'datetime', // <--- Add this line
-
+        'last_login_at' => 'datetime',
+        'repos' => 'array', // IMPORTANT: Cast le champ repos en array pour faciliter la manipulation
     ];
     
 }
