@@ -205,11 +205,18 @@
                                 <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
                                 <div class="form-control @error('repos') is-invalid @enderror"
                                     style="height: auto; min-height: 38px;">
-                                    @php
-                                        $daysOfWeek = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-                                        // Utilise old('repos') en priorité pour les erreurs de validation, sinon $userRepos du contrôleur
-                                        $selectedRepos = old('repos', $userRepos);
-                                    @endphp
+                                   @php
+    $daysOfWeek = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+    
+    // الحل هنا: نضمن أن القيمة دائما مصفوفة (Array)
+    $selectedRepos = old('repos', $userRepos);
+    
+    if (is_string($selectedRepos)) {
+        $selectedRepos = explode(',', $selectedRepos);
+    }
+    
+    $selectedRepos = $selectedRepos ?: []; // إذا كان null رجعو مصفوفة خاوية
+@endphp
                                     <div class="row g-1">
                                         @foreach ($daysOfWeek as $day)
                                             <div class="col-auto">
