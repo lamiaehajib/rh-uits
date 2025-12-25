@@ -28,31 +28,41 @@ class SyncAttendance extends Command
             // 2. نجيبو كاع البصمات اللي في الماكينة
             $attendance = $zk->getAttendance();
 
-           foreach ($attendance as $log) {
+          foreach ($attendance as $log) {
+    // 1. البحث عن الموظف بالكود
     $user = User::where('code', $log['id'])->first();
 
     if ($user) {
-        $attendanceDate = Carbon::parse($log['timestamp']);
-        
-        // التحقق واش ديجا كاين
-        $exists = SuivrePointage::where('iduser', $user->id)
-                    ->where('date', $attendanceDate->toDateTimeString())
-                    ->exists();
+        $fullTimestamp = \Carbon\Carbon::parse($log['timestamp']);
+        $dateOnly = $fullTimestamp->toDateString(); // YYYY-MM-DD
 
-        if (!$exists) {
+        // 2. البحث عن سجل لهذا الموظف في هذا اليوم
+        $pointage = SuivrePointage::where('iduser', $user->id)
+                                  ->whereDate('date_pointage', $dateOnly)
+                                  ->first();
+
+        if (!$pointage) {
+            // أول مرة يبصم اليوم -> نعتبرها وقت وصول
             SuivrePointage::create([
-                'iduser' => $user->id,
-                'date'   => $attendanceDate,
+                'iduser'         => $user->id,
+                'date_pointage'  => $dateOnly,
+                'heure_arrivee'  => $fullTimestamp,
+                'description'    => 'Pointage via Machine F18',
+                'localisation'   => 'Office (Titre Mellil)'
             ]);
-            // سطر جديد باش يطبع ليك السمية في Terminal
-            $this->info("✔ سجلنا بصمة جديدة لـ: " . $user->name . " بتاريخ " . $attendanceDate);
+            $this->info("✔ تسجيل وصول جديد: " . $user->name);
         } else {
-            // سطر باش يقول ليك راه هاد البصمة كاين ديجا
-            $this->line("ℹ البصمة ديال " . $user->name . " ديجا مسجلة.");
+            // بصم مرة أخرى في نفس اليوم -> نحدث وقت المغادرة
+            // (بشرط أن يكون الوقت الجديد أحدث من وقت الوصول)
+            if ($fullTimestamp->gt($pointage->heure_arrivee)) {
+                $pointage->update([
+                    'heure_depart' => $fullTimestamp
+                ]);
+                $this->line("⏳ تحديث مغادرة: " . $user->name);
+            }
         }
     } else {
-        // إذا كان شي واحد بصم في الماكينة وماعندوش كود في السيستم
-        $this->warn("⚠ كود الماكينة (" . $log['id'] . ") ما كاينش في جدول الموظفين.");
+        $this->warn("⚠ كود (" . $log['id'] . ") غير مرتبط بموظف.");
     }
 }
 
