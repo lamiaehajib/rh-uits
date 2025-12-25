@@ -236,89 +236,7 @@
                     </div>
                 @endif
 
-                @if(!auth()->user()->hasRole('Sup_Admin') && !auth()->user()->hasRole('Custom_Admin'))
-                    <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg mb-6 animate-fade-in delay-200">
-                        <div class="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
-                            <h3 class="text-xl font-semibold text-gray-900 mb-4">
-                                <i class="fas fa-clock mr-3 text-blue-600"></i>
-                                {{ __('Pointage Rapide') }}
-                            </h3>
-
-                            @if($pointageEnCours)
-                                <div class="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-4 mb-4 rounded-r-lg shadow-md animate-fade-in animate-pulse-subtle">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0">
-                                            <i class="fas fa-play-circle text-yellow-500 text-2xl mr-3"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-sm font-medium">
-                                                {{ __('Pointage en cours depuis') }} <span class="font-bold">{{ $pointageEnCours->heure_arrivee->format('H:i') }}</span>
-                                            </p>
-                                            <p class="text-xs text-yellow-700 mt-1">
-                                                {{ __('Durée:') }} <span id="duree-travail" data-debut="{{ $pointageEnCours->heure_arrivee->timestamp }}" class="font-bold"></span>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <form action="{{ route('pointage.pointer') }}" method="POST" class="space-y-4" id="pointageSortieForm">
-                                    @csrf
-                                    {{-- Hidden input fields for geolocation --}}
-                                    <input type="hidden" name="user_latitude" id="user_latitude_out">
-                                    <input type="hidden" name="user_longitude" id="user_longitude_out">
-                                    <input type="hidden" name="localisation" id="localisation_hidden_out">
-                                    <div>
-                                        <label for="description_out" class="block text-sm font-medium text-gray-700 mb-2">
-                                            <i class="fas fa-comment mr-2 text-gray-500"></i>
-                                            {{ __('Description du travail effectué (optionnel)') }}
-                                        </label>
-                                        <textarea id="description_out" name="description" rows="3"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red transition duration-200"
-                                            placeholder="{{ __('Décrivez brièvement les tâches accomplies...') }}"></textarea>
-                                    </div>
-                                    <button type="submit" id="pointerSortieBtn"
-                                        class="w-full bg-primary-red hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 transform hover:scale-105 shadow-lg btn-primary-red">
-                                        <i class="fas fa-stop-circle mr-2"></i>
-                                        {{ __('Pointer la Sortie') }}
-                                    </button>
-                                </form>
-                            @else
-                                <form action="{{ route('pointage.pointer') }}" method="POST" class="space-y-4" id="pointageArriveeForm">
-                                    @csrf
-                                    {{-- Hidden input fields for geolocation --}}
-                                    <input type="hidden" name="user_latitude" id="user_latitude_in">
-                                    <input type="hidden" name="user_longitude" id="user_longitude_in">
-                                    <input type="hidden" name="localisation" id="localisation_hidden_in">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label for="description_in" class="block text-sm font-medium text-gray-700 mb-2">
-                                                <i class="fas fa-comment mr-2 text-gray-500"></i>
-                                                {{ __('Description (optionnel)') }}
-                                            </label>
-                                            <textarea id="description_in" name="description" rows="2"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red transition duration-200"
-                                                placeholder="{{ __('Description de la journée...') }}"></textarea>
-                                        </div>
-                                        <div>
-                                            <label for="localisation_display" class="block text-sm font-medium text-gray-700 mb-2">
-                                                <i class="fas fa-map-marker-alt mr-2 text-gray-500"></i>
-                                                {{ __('Localisation détectée (automatique)') }}
-                                            </label>
-                                            <input type="text" id="localisation_display" disabled
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-600 cursor-not-allowed"
-                                                value="{{ __('En attente de localisation...') }}">
-                                        </div>
-                                    </div>
-                                    <button type="submit" id="pointerArriveeBtn"
-                                        class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 transform hover:scale-105 shadow-lg">
-                                        <i class="fas fa-play-circle mr-2"></i>
-                                        {{ __('Pointer l\'Arrivée') }}
-                                    </button>
-                                </form>
-                            @endif
-                        </div>
-                    </div>
-                @endif
+                
 
                 <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg mb-6 animate-fade-in delay-300">
                     <div class="p-6 border-b border-gray-200">
@@ -551,63 +469,7 @@
             </div>
         </div>
 
-        {{-- Correction Modal --}}
-        @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
-            <div id="modalCorrection" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
-                <div class="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white animate-fade-in">
-                    <div class="mt-3 text-center">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-4">{{ __('Corriger le pointage') }}</h3>
-                        <form id="formCorrection" method="POST">
-                            @csrf
-                            @method('PUT')
-                            <div class="space-y-4 text-left">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Heure d\'arrivée') }}</label>
-                                    <input type="datetime-local" name="heure_arrivee" id="modal_heure_arrivee" required
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Heure de départ') }}</label>
-                                    <input type="datetime-local" name="heure_depart" id="modal_heure_depart"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Description') }}</label>
-                                    <textarea name="description" id="modal_description" rows="3"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red"></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Localisation') }}</label>
-                                    <input type="text" name="localisation" id="modal_localisation"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
-                                </div>
-                                {{-- Added latitude and longitude inputs to the correction modal --}}
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Latitude') }}</label>
-                                    <input type="text" name="user_latitude" id="modal_user_latitude"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('Longitude') }}</label>
-                                    <input type="text" name="user_longitude" id="modal_user_longitude"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
-                                </div>
-                            </div>
-                            <div class="flex justify-end space-x-3 mt-6">
-                                <button type="button" onclick="fermerModalCorrection()"
-                                    class="btn-secondary-tailwind px-4 py-2 rounded-md transition duration-200">
-                                    {{ __('Annuler') }}
-                                </button>
-                                <button type="submit"
-                                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-200">
-                                    {{ __('Sauvegarder') }}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        @endif
+     
 
         @push('scripts')
             <script>
