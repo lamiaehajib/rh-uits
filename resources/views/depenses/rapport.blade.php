@@ -1,377 +1,432 @@
 <x-app-layout>
-    <style>
-        .rapport-card {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.12);
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .rapport-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-        }
-        
-        .print-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-        
-        .print-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
-        
-        .stat-row {
-            padding: 1.5rem;
-            border-bottom: 1px solid #f3f4f6;
-            transition: all 0.3s ease;
-        }
-        
-        .stat-row:hover {
-            background: linear-gradient(90deg, rgba(194, 24, 91, 0.03) 0%, transparent 100%);
-        }
-        
-        .stat-row:last-child {
-            border-bottom: none;
-        }
-        
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-            
-            body {
-                background: white !important;
-            }
-            
-            .rapport-card {
-                box-shadow: none !important;
-                page-break-inside: avoid;
-            }
-        }
-    </style>
-
-    <div class="py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            
-            {{-- Header --}}
-            <div class="mb-8 flex flex-wrap justify-between items-center gap-4 no-print">
-                <div>
-                    <h1 class="text-4xl font-bold text-white mb-2">
-                        <i class="fas fa-file-invoice mr-3"></i>Rapport Mensuel
-                    </h1>
-                    <p class="text-white text-opacity-90">Analyse détaillée des dépenses</p>
+    <div class="container-fluid px-4">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="hight mb-2" style="font-size: 2.5rem;">
+                            <i class="fas fa-chart-line me-2"></i>Rapport Mensuel
+                        </h1>
+                        <p class="text-muted">Analyse détaillée des dépenses du mois</p>
+                    </div>
+                    <div>
+                        <form method="GET" action="{{ route('depenses.rapport') }}" class="d-flex gap-2">
+                            <input type="month" name="mois" value="{{ $mois }}" 
+                                   class="form-control" style="max-width: 200px;">
+                            <button type="submit" class="btn text-white" 
+                                    style="background: linear-gradient(135deg, #C2185B, #D32F2F);">
+                                <i class="fas fa-search"></i> Filtrer
+                            </button>
+                        </form>
+                    </div>
                 </div>
-                
-                <div class="flex gap-3">
-                    <form method="GET" class="flex items-center gap-2">
-                        <input type="month" name="mois" value="{{ $mois }}" 
-                               class="form-control-custom bg-white text-gray-700 font-semibold">
-                        <button type="submit" class="action-btn bg-white text-purple-700 hover:bg-purple-50">
-                            <i class="fas fa-calendar-alt"></i> Changer
-                        </button>
-                    </form>
-                    
-                    <button onclick="window.print()" class="print-btn ripple-btn">
-                        <i class="fas fa-print mr-2"></i> Imprimer
+            </div>
+        </div>
+
+        @php
+            $totalFixe = $rapportFixe->sum('total');
+            $totalVariable = $rapportVariable->sum('total');
+            $grandTotal = $totalFixe + $totalVariable;
+        @endphp
+
+        <!-- Cards Overview -->
+        <div class="row g-4 mb-4">
+            <!-- Total Général -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100" 
+                     style="background: linear-gradient(135deg, #C2185B, #D32F2F); color: white;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="text-white-50 mb-2">TOTAL GÉNÉRAL</h6>
+                                <h2 class="mb-0 fw-bold">{{ number_format($grandTotal, 2) }} DH</h2>
+                            </div>
+                            <div class="bg-white bg-opacity-25 p-3 rounded-circle">
+                                <i class="fas fa-wallet fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dépenses Fixes -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="text-muted mb-2">DÉPENSES FIXES</h6>
+                                <h2 class="mb-0 fw-bold" style="color: #D32F2F;">
+                                    {{ number_format($totalFixe, 2) }} DH
+                                </h2>
+                                <small class="text-muted">
+                                    {{ $grandTotal > 0 ? number_format(($totalFixe / $grandTotal) * 100, 1) : 0 }}% du total
+                                </small>
+                            </div>
+                            <div class="p-3 rounded-circle" style="background: rgba(211, 47, 47, 0.1);">
+                                <i class="fas fa-file-invoice-dollar fa-2x" style="color: #D32F2F;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dépenses Variables -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="text-muted mb-2">DÉPENSES VARIABLES</h6>
+                                <h2 class="mb-0 fw-bold" style="color: #C2185B;">
+                                    {{ number_format($totalVariable, 2) }} DH
+                                </h2>
+                                <small class="text-muted">
+                                    {{ $grandTotal > 0 ? number_format(($totalVariable / $grandTotal) * 100, 1) : 0 }}% du total
+                                </small>
+                            </div>
+                            <div class="p-3 rounded-circle" style="background: rgba(194, 24, 91, 0.1);">
+                                <i class="fas fa-shopping-cart fa-2x" style="color: #C2185B;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row g-4 mb-4">
+            <!-- Pie Chart - Répartition Globale -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-bold" style="color: #D32F2F;">
+                            <i class="fas fa-chart-pie me-2"></i>Répartition Globale
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="globalChart" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bar Chart - Dépenses Fixes par Type -->
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-bold" style="color: #D32F2F;">
+                            <i class="fas fa-chart-bar me-2"></i>Dépenses Fixes par Type
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="fixesChart" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Tables Row -->
+        <div class="row g-4 mb-4">
+            <!-- Table Dépenses Fixes -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header text-white py-3" 
+                         style="background: linear-gradient(135deg, #D32F2F, #C2185B);">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clipboard-list me-2"></i>Détail Dépenses Fixes
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead style="background-color: #f8f9fa;">
+                                    <tr>
+                                        <th class="py-3">TYPE</th>
+                                        <th class="py-3">STATUT</th>
+                                        <th class="py-3">NOMBRE</th>
+                                        <th class="py-3">MONTANT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($rapportFixe as $item)
+                                        <tr>
+                                            <td class="py-3">
+                                                <span class="badge rounded-pill px-3 py-2" 
+                                                      style="background: rgba(211, 47, 47, 0.1); color: #D32F2F;">
+                                                    {{ $item->type }}
+                                                </span>
+                                            </td>
+                                            <td class="py-3">
+                                                @if($item->statut === 'payé')
+                                                    <span class="badge bg-success">Payé</span>
+                                                @elseif($item->statut === 'en_attente')
+                                                    <span class="badge bg-warning text-dark">En attente</span>
+                                                @else
+                                                    <span class="badge bg-secondary">Annulé</span>
+                                                @endif
+                                            </td>
+                                            <td class="py-3 fw-bold">{{ $item->nombre }}</td>
+                                            <td class="py-3 fw-bold" style="color: #D32F2F;">
+                                                {{ number_format($item->total, 2) }} DH
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center py-5 text-muted">
+                                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                                <p>Aucune dépense fixe pour ce mois</p>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                                @if($rapportFixe->count() > 0)
+                                    <tfoot style="background-color: #f8f9fa;">
+                                        <tr class="fw-bold">
+                                            <td colspan="3" class="py-3">TOTAL</td>
+                                            <td class="py-3" style="color: #D32F2F;">
+                                                {{ number_format($totalFixe, 2) }} DH
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                @endif
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Dépenses Variables -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header text-white py-3" 
+                         style="background: linear-gradient(135deg, #C2185B, #D32F2F);">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list-ul me-2"></i>Détail Dépenses Variables
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead style="background-color: #f8f9fa;">
+                                    <tr>
+                                        <th class="py-3">CATÉGORIE</th>
+                                        <th class="py-3">NOMBRE</th>
+                                        <th class="py-3">MONTANT</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($rapportVariable as $item)
+                                        <tr>
+                                            <td class="py-3">
+                                                <span class="badge rounded-pill px-3 py-2" 
+                                                      style="background: rgba(194, 24, 91, 0.1); color: #C2185B;">
+                                                    {{ ucfirst(str_replace('_', ' ', $item->categorie)) }}
+                                                </span>
+                                            </td>
+                                            <td class="py-3 fw-bold">{{ $item->nombre }}</td>
+                                            <td class="py-3 fw-bold" style="color: #C2185B;">
+                                                {{ number_format($item->total, 2) }} DH
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="3" class="text-center py-5 text-muted">
+                                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                                <p>Aucune dépense variable pour ce mois</p>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                                @if($rapportVariable->count() > 0)
+                                    <tfoot style="background-color: #f8f9fa;">
+                                        <tr class="fw-bold">
+                                            <td colspan="2" class="py-3">TOTAL</td>
+                                            <td class="py-3" style="color: #C2185B;">
+                                                {{ number_format($totalVariable, 2) }} DH
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                @endif
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Doughnut Chart - Dépenses Variables -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0 fw-bold" style="color: #C2185B;">
+                            <i class="fas fa-chart-pie me-2"></i>Répartition des Dépenses Variables
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="variablesChart" style="max-height: 300px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex gap-2 justify-content-end">
+                    <button onclick="window.print()" class="btn btn-outline-secondary">
+                        <i class="fas fa-print me-2"></i>Imprimer
                     </button>
-                    
-                    <button onclick="exportPDF()" class="action-btn bg-gradient-to-r from-red-600 to-pink-600 text-white ripple-btn">
-                        <i class="fas fa-file-pdf mr-2"></i> Export PDF
-                    </button>
+                    <a href="{{ route('depenses.index') }}" class="btn text-white" 
+                       style="background: linear-gradient(135deg, #C2185B, #D32F2F);">
+                        <i class="fas fa-arrow-left me-2"></i>Retour au Dashboard
+                    </a>
                 </div>
             </div>
-
-            {{-- Période --}}
-            <div class="mb-8 bg-white rounded-2xl shadow-lg p-6">
-                <div class="text-center">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-2">
-                        Rapport du mois: {{ \Carbon\Carbon::parse($mois . '-01')->locale('fr')->isoFormat('MMMM YYYY') }}
-                    </h2>
-                    <p class="text-gray-600">
-                        Généré le {{ \Carbon\Carbon::now()->locale('fr')->isoFormat('LL à HH:mm') }}
-                    </p>
-                </div>
-            </div>
-
-            {{-- Vue d'ensemble --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                @php
-                    $totalFixePaye = $rapportFixe->where('statut', 'payé')->sum('total');
-                    $totalFixeAttente = $rapportFixe->where('statut', 'en_attente')->sum('total');
-                    $totalVariable = $rapportVariable->sum('total');
-                    $totalGeneral = $totalFixePaye + $totalVariable;
-                @endphp
-                
-                <div class="rapport-card">
-                    <div class="p-6 bg-gradient-to-br from-purple-500 to-purple-700 text-white">
-                        <i class="fas fa-lock text-4xl mb-3 opacity-80"></i>
-                        <p class="text-sm font-semibold opacity-90 mb-1">Dépenses Fixes Payées</p>
-                        <h3 class="text-4xl font-bold">{{ number_format($totalFixePaye, 2) }} DH</h3>
-                    </div>
-                    <div class="p-4 bg-purple-50">
-                        <p class="text-sm text-purple-700 font-semibold">
-                            En attente: {{ number_format($totalFixeAttente, 2) }} DH
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="rapport-card">
-                    <div class="p-6 bg-gradient-to-br from-pink-500 to-red-600 text-white">
-                        <i class="fas fa-chart-line text-4xl mb-3 opacity-80"></i>
-                        <p class="text-sm font-semibold opacity-90 mb-1">Dépenses Variables</p>
-                        <h3 class="text-4xl font-bold">{{ number_format($totalVariable, 2) }} DH</h3>
-                    </div>
-                    <div class="p-4 bg-pink-50">
-                        <p class="text-sm text-pink-700 font-semibold">
-                            {{ $rapportVariable->count() }} transactions
-                        </p>
-                    </div>
-                </div>
-                
-                <div class="rapport-card">
-                    <div class="p-6 bg-gradient-to-br from-yellow-500 to-orange-600 text-white">
-                        <i class="fas fa-calculator text-4xl mb-3 opacity-80"></i>
-                        <p class="text-sm font-semibold opacity-90 mb-1">Total Général</p>
-                        <h3 class="text-4xl font-bold">{{ number_format($totalGeneral, 2) }} DH</h3>
-                    </div>
-                    <div class="p-4 bg-yellow-50">
-                        <p class="text-sm text-orange-700 font-semibold">
-                            Fixes: {{ number_format(($totalFixePaye / max($totalGeneral, 1)) * 100, 1) }}% | Variables: {{ number_format(($totalVariable / max($totalGeneral, 1)) * 100, 1) }}%
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Détail Dépenses Fixes --}}
-            <div class="rapport-card mb-8">
-                <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-purple-100">
-                    <h3 class="text-2xl font-bold text-gray-800">
-                        <i class="fas fa-list-ul text-purple-600 mr-3"></i>
-                        Détail Dépenses Fixes
-                    </h3>
-                </div>
-                
-                <div class="p-6">
-                    @php
-                        $groupedFixe = $rapportFixe->groupBy('type');
-                    @endphp
-                    
-                    @forelse($groupedFixe as $type => $items)
-                        <div class="mb-6 border-b border-gray-100 pb-6 last:border-0 last:pb-0">
-                            <h4 class="font-bold text-lg text-gray-800 mb-3">
-                                <i class="fas fa-tag text-purple-600 mr-2"></i>{{ $type }}
-                            </h4>
-                            
-                            @foreach($items as $item)
-                                <div class="stat-row flex justify-between items-center bg-gray-50 rounded-lg mb-2">
-                                    <div class="flex items-center gap-3">
-                                        @if($item->statut == 'payé')
-                                            <i class="fas fa-check-circle text-green-500 text-xl"></i>
-                                        @elseif($item->statut == 'en_attente')
-                                            <i class="fas fa-clock text-yellow-500 text-xl"></i>
-                                        @else
-                                            <i class="fas fa-times-circle text-red-500 text-xl"></i>
-                                        @endif
-                                        
-                                        <div>
-                                            <p class="font-semibold text-gray-700">{{ ucfirst($item->statut) }}</p>
-                                            <p class="text-sm text-gray-500">{{ $item->nombre }} transaction(s)</p>
-                                        </div>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-2xl font-bold text-purple-600">{{ number_format($item->total, 2) }} DH</p>
-                                    </div>
-                                </div>
-                            @endforeach
-                            
-                            <div class="mt-3 pt-3 border-t border-gray-200">
-                                <div class="flex justify-between items-center">
-                                    <p class="font-bold text-gray-700">Sous-total {{ $type }}</p>
-                                    <p class="text-2xl font-bold text-purple-700">{{ number_format($items->sum('total'), 2) }} DH</p>
-                                </div>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center py-8">
-                            <i class="fas fa-inbox text-5xl text-gray-300 mb-3"></i>
-                            <p class="text-gray-500">Aucune dépense fixe ce mois-ci</p>
-                        </div>
-                    @endforelse
-                    
-                    @if($rapportFixe->isNotEmpty())
-                        <div class="mt-6 pt-6 border-t-2 border-purple-200">
-                            <div class="flex justify-between items-center bg-purple-50 p-4 rounded-lg">
-                                <p class="text-xl font-bold text-gray-800">TOTAL DÉPENSES FIXES PAYÉES</p>
-                                <p class="text-3xl font-bold text-purple-700">{{ number_format($totalFixePaye, 2) }} DH</p>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            </div>
-
-            {{-- Détail Dépenses Variables --}}
-            <div class="rapport-card mb-8">
-                <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-pink-50 to-pink-100">
-                    <h3 class="text-2xl font-bold text-gray-800">
-                        <i class="fas fa-chart-bar text-pink-600 mr-3"></i>
-                        Détail Dépenses Variables
-                    </h3>
-                </div>
-                
-                <div class="p-6">
-                    @forelse($rapportVariable as $item)
-                        <div class="stat-row flex justify-between items-center">
-                            <div class="flex items-center gap-4">
-                                @php
-                                    $categoryIcons = [
-                                        'primes_repos' => 'fa-gift',
-                                        'achats_equipements' => 'fa-shopping-cart',
-                                        'produits_menages' => 'fa-broom',
-                                        'frais_bancaires' => 'fa-university',
-                                        'publications' => 'fa-bullhorn',
-                                        'autres' => 'fa-ellipsis-h'
-                                    ];
-                                    $categoryColors = [
-                                        'primes_repos' => 'text-blue-500',
-                                        'achats_equipements' => 'text-green-500',
-                                        'produits_menages' => 'text-yellow-500',
-                                        'frais_bancaires' => 'text-red-500',
-                                        'publications' => 'text-purple-500',
-                                        'autres' => 'text-gray-500'
-                                    ];
-                                @endphp
-                                
-                                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-pink-100 to-pink-200 flex items-center justify-center">
-                                    <i class="fas {{ $categoryIcons[$item->categorie] ?? 'fa-question' }} text-2xl {{ $categoryColors[$item->categorie] ?? 'text-gray-500' }}"></i>
-                                </div>
-                                
-                                <div>
-                                    <p class="font-bold text-lg text-gray-800">
-                                        {{ \App\Models\DepenseVariable::$categories[$item->categorie] ?? $item->categorie }}
-                                    </p>
-                                    <p class="text-sm text-gray-600">{{ $item->nombre }} transaction(s)</p>
-                                </div>
-                            </div>
-                            
-                            <div class="text-right">
-                                <p class="text-3xl font-bold text-pink-600">{{ number_format($item->total, 2) }} DH</p>
-                                <p class="text-sm text-gray-500">
-                                    Moyenne: {{ number_format($item->total / $item->nombre, 2) }} DH
-                                </p>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center py-8">
-                            <i class="fas fa-inbox text-5xl text-gray-300 mb-3"></i>
-                            <p class="text-gray-500">Aucune dépense variable ce mois-ci</p>
-                        </div>
-                    @endforelse
-                    
-                    @if($rapportVariable->isNotEmpty())
-                        <div class="mt-6 pt-6 border-t-2 border-pink-200">
-                            <div class="flex justify-between items-center bg-pink-50 p-4 rounded-lg">
-                                <p class="text-xl font-bold text-gray-800">TOTAL DÉPENSES VARIABLES</p>
-                                <p class="text-3xl font-bold text-pink-700">{{ number_format($totalVariable, 2) }} DH</p>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            </div>
-
-            {{-- Résumé Final --}}
-            <div class="rapport-card">
-                <div class="p-8 bg-gradient-to-br from-orange-400 to-pink-500 text-white text-center">
-                    <i class="fas fa-coins text-6xl mb-4 opacity-80"></i>
-                    <h3 class="text-3xl font-bold mb-2">Total des Dépenses du Mois</h3>
-                    <p class="text-6xl font-bold mb-4">{{ number_format($totalGeneral, 2) }} DH</p>
-                    <div class="flex justify-center gap-8 text-sm opacity-90">
-                        <div>
-                            <p class="font-semibold">Fixes</p>
-                            <p class="text-2xl font-bold">{{ number_format($totalFixePaye, 2) }} DH</p>
-                        </div>
-                        <div>
-                            <p class="font-semibold">Variables</p>
-                            <p class="text-2xl font-bold">{{ number_format($totalVariable, 2) }} DH</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </div>
 
     @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        async function exportPDF() {
-            const { jsPDF } = window.jspdf;
-            
-            Swal.fire({
-                title: 'Génération du PDF...',
-                html: 'Veuillez patienter',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
+        // Couleurs du thème
+        const colors = {
+            primary: '#D32F2F',
+            secondary: '#C2185B',
+            gradients: [
+                'rgba(211, 47, 47, 0.8)',
+                'rgba(194, 24, 91, 0.8)',
+                'rgba(233, 30, 99, 0.8)',
+                'rgba(156, 39, 176, 0.8)',
+                'rgba(103, 58, 183, 0.8)',
+                'rgba(63, 81, 181, 0.8)'
+            ]
+        };
+
+        // Global Chart - Pie
+        const globalCtx = document.getElementById('globalChart').getContext('2d');
+        new Chart(globalCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Dépenses Fixes', 'Dépenses Variables'],
+                datasets: [{
+                    data: [{{ $totalFixe }}, {{ $totalVariable }}],
+                    backgroundColor: [colors.primary, colors.secondary],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                let value = context.parsed || 0;
+                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ' + value.toLocaleString() + ' DH (' + percentage + '%)';
+                            }
+                        }
+                    }
                 }
-            });
-            
-            // Hide no-print elements
-            document.querySelectorAll('.no-print').forEach(el => {
-                el.style.display = 'none';
-            });
-            
-            const content = document.querySelector('.py-8');
-            
-            try {
-                const canvas = await html2canvas(content, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false
-                });
-                
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = pdf.internal.pageSize.getHeight();
-                const imgWidth = canvas.width;
-                const imgHeight = canvas.height;
-                const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-                
-                const imgX = (pdfWidth - imgWidth * ratio) / 2;
-                const imgY = 0;
-                
-                pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-                pdf.save('rapport-depenses-{{ $mois }}.pdf');
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'PDF Généré!',
-                    text: 'Le rapport a été téléchargé avec succès',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur',
-                    text: 'Impossible de générer le PDF'
-                });
-            } finally {
-                // Show no-print elements again
-                document.querySelectorAll('.no-print').forEach(el => {
-                    el.style.display = '';
-                });
             }
-        }
+        });
+
+        // Fixes Chart - Bar
+        const fixesCtx = document.getElementById('fixesChart').getContext('2d');
+        const fixesData = @json($rapportFixe);
+        const fixesLabels = fixesData.map(item => item.type);
+        const fixesValues = fixesData.map(item => item.total);
+
+        new Chart(fixesCtx, {
+            type: 'bar',
+            data: {
+                labels: fixesLabels,
+                datasets: [{
+                    label: 'Montant (DH)',
+                    data: fixesValues,
+                    backgroundColor: colors.primary,
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Montant: ' + context.parsed.y.toLocaleString() + ' DH';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString() + ' DH';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Variables Chart - Doughnut
+        const variablesCtx = document.getElementById('variablesChart').getContext('2d');
+        const variablesData = @json($rapportVariable);
+        const variablesLabels = variablesData.map(item => item.categorie.replace('_', ' ').toUpperCase());
+        const variablesValues = variablesData.map(item => item.total);
+
+        new Chart(variablesCtx, {
+            type: 'doughnut',
+            data: {
+                labels: variablesLabels,
+                datasets: [{
+                    data: variablesValues,
+                    backgroundColor: colors.gradients,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 15,
+                            font: { size: 11, weight: 'bold' }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                let value = context.parsed || 0;
+                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': ' + value.toLocaleString() + ' DH (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
     </script>
     @endpush
 </x-app-layout>

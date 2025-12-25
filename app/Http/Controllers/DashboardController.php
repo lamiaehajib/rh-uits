@@ -6,7 +6,8 @@ use App\Models\Dashboard;
 use App\Models\RendezVous;
 use App\Models\User;
 use App\Models\Tache;
-use App\Models\Project;
+use App\Models\Projet;
+use App\Models\Avancement;
 use App\Models\Formation;
 use App\Models\Objectif;
 use App\Models\VenteObjectif;
@@ -20,11 +21,6 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    /**
-     * Display the index page with the necessary data.
-     *
-     * @return \Illuminate\View\View
-     */
     function __construct()
     {
         $this->middleware('check.clocked.in')->except('clientDashboard');
@@ -66,10 +62,10 @@ class DashboardController extends Controller
 
             // Get advanced statistics
             $stats = Cache::remember($cacheKey . '_admin', 300, function () use ($dateFilter) {
-                return $this->getAdvancedStats($dateFilter); // This method will be modified
+                return $this->getAdvancedStats($dateFilter);
             });
 
-            // Apply search and filters for Sup_Admin (these are likely just for the tables on the dashboard, not the charts)
+            // Apply search and filters for Sup_Admin
             $tasks = Tache::with(['users'])
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('description', 'like', '%' . $searchTerm . '%')
@@ -81,20 +77,19 @@ class DashboardController extends Controller
                     return $query->where('status', $statusFilter);
                 })
                 ->when($dateFilter, function ($query, $dateFilter) {
-                    // For the table display, datedebut filter is still applied
                     return $this->applyDateFilter($query, $dateFilter, 'datedebut');
                 })
                 ->orderBy($sortBy, $sortOrder)
                 ->paginate(10);
 
-            $projects = Project::with(['users'])
+            // MODIFICATION: Charger les projets avec avancements et rendez-vous
+            $projects = Projet::with(['users', 'avancements', 'rendezVous'])
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('titre', 'like', '%' . $searchTerm . '%')
-                                 ->orWhere('nomclient', 'like', '%' . $searchTerm . '%')
-                                 ->orWhere('ville', 'like', '%' . $searchTerm . '%');
+                                 ->orWhere('description', 'like', '%' . $searchTerm . '%');
                 })
                 ->when($dateFilter, function ($query, $dateFilter) {
-                    return $this->applyDateFilter($query, $dateFilter, 'date_project');
+                    return $this->applyDateFilter($query, $dateFilter, 'date_debut');
                 })
                 ->orderBy($sortBy, $sortOrder)
                 ->paginate(10);
@@ -133,18 +128,17 @@ class DashboardController extends Controller
                 ->orderBy($sortBy, $sortOrder)
                 ->paginate(10);
 
-            $dashboards = Dashboard::paginate(10); // Assuming this is for a general dashboard view
+            $dashboards = Dashboard::paginate(10);
         } else {
             // Non-Admin data filtering by user ID
             $stats = Cache::remember($cacheKey . '_user', 300, function () use ($user, $dateFilter) {
                 return $this->getUserStats($user->id, $dateFilter);
             });
 
-            // Corrected: Use whereHas for Tache model
             $tasks = Tache::whereHas('users', function ($q) use ($user) {
                 $q->where('users.id', $user->id);
             })
-                ->where('datedebut', '<=', Carbon::now()) // Apply the date debut filter here for regular users
+                ->where('datedebut', '<=', Carbon::now())
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('description', 'like', '%' . $searchTerm . '%');
                 })
@@ -157,7 +151,6 @@ class DashboardController extends Controller
                 ->orderBy($sortBy, $sortOrder)
                 ->paginate(10);
 
-            // Corrected: Use whereHas for Objectif model
             $objectifs = Objectif::whereHas('users', function ($q) use ($user) {
                 $q->where('users.id', $user->id);
             })
@@ -170,16 +163,17 @@ class DashboardController extends Controller
                 ->orderBy($sortBy, $sortOrder)
                 ->paginate(10);
 
-            $projects = Project::with('users')
+            // MODIFICATION: Charger les projets avec avancements et rendez-vous pour utilisateur normal
+            $projects = Projet::with(['users', 'avancements', 'rendezVous'])
                 ->whereHas('users', function ($query) use ($user) {
                     $query->where('users.id', $user->id);
                 })
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('titre', 'like', '%' . $searchTerm . '%')
-                                 ->orWhere('nomclient', 'like', '%' . $searchTerm . '%');
+                                 ->orWhere('description', 'like', '%' . $searchTerm . '%');
                 })
                 ->when($dateFilter, function ($query, $dateFilter) {
-                    return $this->applyDateFilter($query, $dateFilter, 'date_project');
+                    return $this->applyDateFilter($query, $dateFilter, 'date_debut');
                 })
                 ->orderBy($sortBy, $sortOrder)
                 ->paginate(10);
@@ -201,7 +195,7 @@ class DashboardController extends Controller
                 ->orderBy($sortBy, $sortOrder)
                 ->paginate(10);
 
-            $venteObjectifs = VenteObjectif::where('iduser', $user->id) // Assuming VenteObjectif still uses iduser
+            $venteObjectifs = VenteObjectif::where('iduser', $user->id)
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('description', 'like', '%' . $searchTerm . '%');
                 })
@@ -212,7 +206,7 @@ class DashboardController extends Controller
                 ->paginate(10);
 
             $dashboards = Dashboard::with(['user', 'task', 'project', 'formation', 'venteObjectif', 'objectif'])
-                ->where('iduser', $user->id) // Assuming Dashboard model has iduser
+                ->where('iduser', $user->id)
                 ->when($searchTerm, function ($query, $searchTerm) {
                     return $query->where('task', 'like', '%' . $searchTerm . '%')
                                  ->orWhere('project', 'like', '%' . $searchTerm . '%');
@@ -227,153 +221,113 @@ class DashboardController extends Controller
         // Get productivity metrics
         $productivityMetrics = $this->getProductivityMetrics($user);
 
-        // Add pointage punctuality data for the chart (fetched directly for initial load)
+        // Add pointage punctuality data for the chart
         $pointagePunctualityChartData = $this->getPointagePunctualityChartData($user);
 
         // Add reclamations data for dashboard view
         $reclamations = $this->getReclamationsForDashboard($user);
-
 
         return view('dashboard.index', compact(
             'userCount', 'tasks', 'projects', 'formations', 'venteObjectifs',
             'objectifs', 'dashboards', 'stats', 'recentActivities', 'productivityMetrics',
             'pointagePunctualityChartData',
             'reclamations',
-            'hasClockedInToday', // Pass this variable to the view
-            'hasClockedOutToday' // Pass this variable to the view
+            'hasClockedInToday',
+            'hasClockedOutToday'
         ));
     }
 
- 
-    ## Handle User Pointage (Clock-in/Clock-out)
-    
     public function togglePointage(Request $request)
     {
         $user = auth()->user();
         $today = Carbon::today();
 
-        // Get latitude and longitude from the request, default to null if not provided
-        $userLatitude = $request->input('user_latitude', null); // Provide a default null value
-        $userLongitude = $request->input('user_longitude', null); // Provide a default null value
+        $userLatitude = $request->input('user_latitude', null);
+        $userLongitude = $request->input('user_longitude', null);
 
-        // Find today's pointage record for the user
         $pointage = SuivrePointage::where('iduser', $user->id)
             ->whereDate('heure_arrivee', $today)
             ->first();
 
         if ($pointage) {
-            // User has already clocked in today
             if ($pointage->heure_depart === null) {
-                // User needs to clock out
                 $pointage->heure_depart = Carbon::now();
-                // Update location on clock-out as well, if desired
-                $pointage->longitude_depart = $userLongitude; // Assuming column exists
-                $pointage->latitude_depart = $userLatitude;   // Assuming column exists
+                $pointage->longitude_depart = $userLongitude;
+                $pointage->latitude_depart = $userLatitude;
                 $pointage->save();
                 return redirect()->back()->with('success', 'Vous avez pointé votre départ avec succès !');
             } else {
-                // User has already clocked out for today
                 return redirect()->back()->with('info', 'Vous avez déjà pointé votre départ pour aujourd\'hui.');
             }
         } else {
-            // User needs to clock in
             $newPointage = new SuivrePointage();
             $newPointage->iduser = $user->id;
             $newPointage->heure_arrivee = Carbon::now();
-            $newPointage->date_pointage = $today; // Assuming you have a date_pointage column
-            
-            // Store latitude and longitude for arrival
-            $newPointage->longitude_arrivee = $userLongitude; // Assuming column exists
-            $newPointage->latitude_arrivee = $userLatitude;   // Assuming column exists
-
+            $newPointage->date_pointage = $today;
+            $newPointage->longitude_arrivee = $userLongitude;
+            $newPointage->latitude_arrivee = $userLatitude;
             $newPointage->save();
             return redirect()->back()->with('success', 'Vous avez pointé votre arrivée avec succès !');
         }
     }
     
- 
-    /**
-     * Get advanced statistics for admin dashboard
-     */
-   private function getAdvancedStats($dateFilter = null)
-{
-    $query = function($model) use ($dateFilter) {
-        $q = $model::query();
-        if ($dateFilter) {
-            $q = $this->applyDateFilter($q, $dateFilter);
-        }
-        // Remove the datedebut filter for Tache model when calculating overall totals for admins
-        // This line below should be removed or made conditional.
-        // if ($model === Tache::class) {
-        //     $q->where('datedebut', '<=', Carbon::now()); // <-- REMOVE OR MODIFY THIS FOR ADMIN TOTALS
-        // }
-        return $q;
-    };
+    private function getAdvancedStats($dateFilter = null)
+    {
+        $query = function($model) use ($dateFilter) {
+            $q = $model::query();
+            if ($dateFilter) {
+                $q = $this->applyDateFilter($q, $dateFilter);
+            }
+            return $q;
+        };
 
-    // New helper function to get a base query without date debut filter for total tasks
-    $totalTacheQuery = function() use ($dateFilter) {
-        $q = Tache::query();
-        if ($dateFilter) {
-            // Apply general date filters like today, week, month, year if applicable to 'created_at'
-            // For total tasks, we usually want all of them, regardless of datedebut, within the selected period.
-            // If dateFilter is for task creation date, you'd apply it here.
-            // If it's meant to filter by datedebut for *specific* views, then this total should not have it.
-            // Given "Tâches Totales", it implies ALL tasks in the system.
-            // If you want "Total Tasks created today/this week/etc.", then apply dateFilter on 'created_at'.
-            // For now, I'll assume 'Tâches Totales' means all tasks, no datedebut filter.
-            // If $dateFilter should apply to created_at for total tasks for admins, you'd add:
-            // $q = $this->applyDateFilter($q, $dateFilter, 'created_at');
-        }
-        return $q;
-    };
+        $totalTacheQuery = function() use ($dateFilter) {
+            $q = Tache::query();
+            if ($dateFilter) {
+            }
+            return $q;
+        };
 
-    return [
-        // Use $totalTacheQuery for 'total_tasks' to include all tasks regardless of 'datedebut'
-        'total_tasks' => $totalTacheQuery()->count(), 
-        'completed_tasks' => (clone $query(Tache::class))->where('status', 'terminé')->count(),
-        'pending_tasks' => (clone $query(Tache::class))->where('status', 'en cours')->count(),
-        'total_projects' => $query(Project::class)->count(),
-        'active_projects' => (clone $query(Project::class))->whereNotNull('date_project')->count(),
-        'total_formations' => $query(Formation::class)->count(),
-        'completed_formations' => (clone $query(Formation::class))->where('status', 'terminé')->count(),
-        'total_users' => User::count(),
-        'active_users' => User::where('created_at', '>=', now()->subDays(30))->count(),
-        'completion_rate' => $this->getCompletionRate($dateFilter),
-        'productivity_score' => $this->getProductivityScore($dateFilter)
-    ];
-}
+        return [
+            'total_tasks' => $totalTacheQuery()->count(), 
+            'completed_tasks' => (clone $query(Tache::class))->where('status', 'terminé')->count(),
+            'pending_tasks' => (clone $query(Tache::class))->where('status', 'en cours')->count(),
+            'total_projects' => $query(Projet::class)->count(),
+            'active_projects' => (clone $query(Projet::class))->where('statut_projet', 'en cours')->count(),
+            'total_formations' => $query(Formation::class)->count(),
+            'completed_formations' => (clone $query(Formation::class))->where('status', 'terminé')->count(),
+            'total_users' => User::count(),
+            'active_users' => User::where('created_at', '>=', now()->subDays(30))->count(),
+            'completion_rate' => $this->getCompletionRate($dateFilter),
+            'productivity_score' => $this->getProductivityScore($dateFilter)
+        ];
+    }
     
-    /**
-     * Get user-specific statistics
-     */
     private function getUserStats($userId, $dateFilter = null)
     {
         $queryForUser = function($model) use ($userId, $dateFilter) {
-            $q = $model::query(); // Start with a fresh query instance
+            $q = $model::query();
 
-            // Check if the model has a 'users' many-to-many relationship
             if (method_exists($model, 'users')) {
                 $q->whereHas('users', function($q_inner) use ($userId) {
                     $q_inner->where('users.id', $userId);
                 });
             } else {
-                // Fallback for models that still use 'iduser' directly
                 $q->where('iduser', $userId);
             }
 
             if ($dateFilter) {
                 $dateColumn = 'created_at';
-                if ($model === Project::class) {
-                    $dateColumn = 'date_project';
+                if ($model === Projet::class) {
+                    $dateColumn = 'date_debut';
                 } elseif ($model === Formation::class) {
                     $dateColumn = 'date';
-                } elseif ($model === Tache::class) { // Tache uses 'datedebut' for its primary date filter
+                } elseif ($model === Tache::class) {
                     $dateColumn = 'datedebut';
                 }
                 $q = $this->applyDateFilter($q, $dateFilter, $dateColumn);
             }
 
-            // Apply datedebut filter for Tache model specifically, regardless of general dateFilter
             if ($model === Tache::class) {
                 $q->where('datedebut', '<=', Carbon::now());
             }
@@ -384,20 +338,16 @@ class DashboardController extends Controller
         return [
             'my_tasks' => $queryForUser(Tache::class)->count(),
             'completed_tasks' => (clone $queryForUser(Tache::class))->where('status', 'terminé')->count(),
-            'pending_tasks' => (clone $queryForUser(Tache::class))->where('status', 'en cours')->count(), // Use clone
-            'new_tasks' => (clone $queryForUser(Tache::class))->where('status', 'nouveau')->count(), // Use clone
-
-            'my_projects' => $queryForUser(Project::class)->count(),
+            'pending_tasks' => (clone $queryForUser(Tache::class))->where('status', 'en cours')->count(),
+            'new_tasks' => (clone $queryForUser(Tache::class))->where('status', 'nouveau')->count(),
+            'my_projects' => $queryForUser(Projet::class)->count(),
             'my_formations' => $queryForUser(Formation::class)->count(),
             'my_objectifs' => $queryForUser(Objectif::class)->count(),
-            'completion_rate' => $this->getUserCompletionRate($userId, $dateFilter), // This calculation is based on completed tasks vs total tasks
-            'productivity_score' => $this->getUserProductivityScore($userId, $dateFilter) // Call the correct method
+            'completion_rate' => $this->getUserCompletionRate($userId, $dateFilter),
+            'productivity_score' => $this->getUserProductivityScore($userId, $dateFilter)
         ];
     }
     
-    /**
-     * Apply date filter to query
-     */
     private function applyDateFilter($query, $dateFilter, $dateColumn = 'created_at')
     {
         switch ($dateFilter) {
@@ -417,23 +367,17 @@ class DashboardController extends Controller
         }
     }
    
-    /**
-     * Get recent activities
-     */
     private function getRecentActivities($user)
     {
         $activities = collect();
         $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
-        // Recent tasks
         $taskQuery = Tache::query();
         if (!$isAdmin) {
-            // Corrected: Use whereHas for Tache model
             $taskQuery->whereHas('users', function($q) use ($user) {
                 $q->where('users.id', $user->id);
             });
         }
-        // Always apply datedebut filter for tasks
         $taskQuery->where('datedebut', '<=', Carbon::now()); 
 
         $recentTasks = $taskQuery->latest()
@@ -450,8 +394,7 @@ class DashboardController extends Controller
                 ];
             });
 
-        // Recent projects
-        $projectQuery = Project::query();
+        $projectQuery = Projet::query();
         if (!$isAdmin) {
             $projectQuery->whereHas('users', function($q) use ($user) {
                 $q->where('users.id', $user->id);
@@ -465,7 +408,7 @@ class DashboardController extends Controller
                 return [
                     'type' => 'project',
                     'title' => $project->titre,
-                    'status' => 'active', // Assuming projects have a simpler status here, or adapt if needed
+                    'status' => 'active',
                     'date' => $project->created_at,
                     'icon' => 'fas fa-project-diagram',
                     'color' => 'blue'
@@ -475,9 +418,6 @@ class DashboardController extends Controller
         return $activities->merge($recentTasks)->merge($recentProjects)->sortByDesc('date')->take(8);
     }
    
-    /**
-     * Get productivity metrics
-     */
     private function getProductivityMetrics($user)
     {
         $thisMonth = now()->month;
@@ -488,16 +428,13 @@ class DashboardController extends Controller
         $lastMonthTasksQuery = Tache::query();
 
         if (!$isAdmin) {
-            // Corrected: Use whereHas for Tache model
             $thisMonthTasksQuery->whereHas('users', function($q) use ($user) {
                 $q->where('users.id', $user->id);
             });
-            // Corrected: Use whereHas for Tache model
             $lastMonthTasksQuery->whereHas('users', function($q) use ($user) {
                 $q->where('users.id', $user->id);
             });
         }
-        // Always apply datedebut filter for tasks in productivity metrics
         $thisMonthTasksQuery->where('datedebut', '<=', Carbon::now()); 
         $lastMonthTasksQuery->where('datedebut', '<=', Carbon::now());
 
@@ -522,80 +459,45 @@ class DashboardController extends Controller
         ];
     }
    
- 
-    ## Get Completion Rate
-
-    
-    /**
-     * Get completion rate
-     */
     private function getCompletionRate($dateFilter = null)
     {
-        // This method calculates overall completion rate, potentially for Sup_Admin.
-        // If you want even Sup_Admin stats to only count tasks whose datedebut has arrived,
-        // you should add the datedebut filter here.
         $query = Tache::query();
         if ($dateFilter) {
             $query = $this->applyDateFilter($query, $dateFilter);
         }
-        // Apply datedebut filter for completion rate
         $query->where('datedebut', '<=', Carbon::now());
-        // --- NEW ADDITION END ---
 
         $total = $query->count();
-        $completed = (clone $query)->where('status', 'terminé')->count(); // Use clone
+        $completed = (clone $query)->where('status', 'terminé')->count();
 
         return $total > 0 ? round(($completed / $total) * 100, 1) : 0;
     }
     
- 
-    ## Get User Completion Rate
-
-    
-    /**
-     * Get user completion rate
-     */
     private function getUserCompletionRate($userId, $dateFilter = null)
     {
-        // Corrected: Use whereHas for Tache model
         $query = Tache::whereHas('users', function ($q) use ($userId) {
             $q->where('users.id', $userId);
         })
-            ->where('datedebut', '<=', Carbon::now()); // Apply date debut filter for user-specific stats
+            ->where('datedebut', '<=', Carbon::now());
         if ($dateFilter) {
             $query = $this->applyDateFilter($query, $dateFilter);
         }
 
         $total = $query->count();
-        $completed = (clone $query)->where('status', 'terminé')->count(); // Use clone
+        $completed = (clone $query)->where('status', 'terminé')->count();
 
         return $total > 0 ? round(($completed / $total) * 100, 1) : 0;
     }
     
- 
-    ## Get Productivity Score
-
-    
-    /**
-     * Get productivity score
-     */
     private function getProductivityScore($dateFilter = null)
     {
-        // Complex calculation based on tasks completed, time taken, etc.
         $completionRate = $this->getCompletionRate($dateFilter);
-        $efficiency = 85; // This would be calculated based on actual metrics
+        $efficiency = 85;
 
         return round(($completionRate + $efficiency) / 2, 1);
     }
     
- 
-    ## Get User Productivity Score
-
-    
-    /**
-     * Get user productivity score
-     */
-    private function getUserProductivityScore($userId, $dateFilter = null) // Renamed this method
+    private function getUserProductivityScore($userId, $dateFilter = null)
     {
         $completionRate = $this->getUserCompletionRate($userId, $dateFilter);
         $efficiency = $this->getEfficiencyScore($userId);
@@ -603,13 +505,6 @@ class DashboardController extends Controller
         return round(($completionRate + $efficiency) / 2, 1);
     }
     
- 
-    ## Get Status Color
-
-    
-    /**
-     * Get status color
-     */
     private function getStatusColor($status)
     {
         switch (strtolower($status)) {
@@ -623,63 +518,32 @@ class DashboardController extends Controller
             case 'pending':
             case 'nouveau':
             case 'new':
-                return 'gray'; // Assuming 'nouveau' and 'en attente' are similar visually for dashboard
+                return 'gray';
             default:
                 return 'gray';
         }
     }
     
- 
-    ## Get Average Completion Time
-
-    
-    /**
-     * Get average completion time
-     */
     private function getAverageCompletionTime($userId)
     {
-        // This would calculate based on task creation and completion dates
-        return '2.5 jours'; // Placeholder
+        return '2.5 jours';
     }
     
- 
-    ## Get Efficiency Score
-
-    
-    /**
-     * Get efficiency score
-     */
     private function getEfficiencyScore($userId)
     {
-        // Complex calculation based on various factors
-        return 78.5; // Placeholder
+        return 78.5;
     }
     
- 
-    ## Export Dashboard Data
-
-    
-    /**
-     * Export dashboard data
-     */
     public function export(Request $request)
     {
-        // Implementation for exporting dashboard data to Excel/PDF
-        // This would use packages like maatwebsite/excel or dompdf
+        // Implementation for exporting dashboard data
     }
     
- 
-    ## Get Dashboard Analytics API
-
-    
-    /**
-     * Get dashboard analytics API
-     */
     public function analytics(Request $request)
     {
         $user = auth()->user();
-        $period = $request->get('period', 'month'); // Default to 'month'
-        $punctualityPeriod = $request->get('punctuality_period', 'all'); // New parameter for punctuality chart period
+        $period = $request->get('period', 'month');
+        $punctualityPeriod = $request->get('punctuality_period', 'all');
 
         return response()->json([
             'tasks_chart' => $this->getTasksChartData($user, $period),
@@ -691,215 +555,85 @@ class DashboardController extends Controller
         ]);
     }
     
- 
-    ## Get Tasks Chart Data
-
-    
-    /**
-     * Get tasks chart data
-     */
     private function getTasksChartData($user, $period)
-{
-    $query = Tache::query();
-    $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
-
-    if (!$isAdmin) {
-        $query->whereHas('users', function($q) use ($user) {
-            $q->where('users.id', $user->id);
-        });
-    }
-    // Kolchi yban men bdat l'application - ma kaynch filter 3la datedebut
-
-    switch ($period) {
-        case 'week':
-            $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-            break;
-        case 'month':
-            $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year);
-            break;
-        case 'year':
-            $query->whereYear('created_at', now()->year);
-            break;
-        // case 'all' or default - ma kayn 7ta filter, kolchi men bdat application
-    }
-
-    $newTasks = (clone $query)->where('status', 'nouveau')->count();
-    $completedTasks = (clone $query)->where('status', 'terminé')->count();
-    $inProgressTasks = (clone $query)->where('status', 'en cours')->count();
-
-    return [
-        'labels' => ['Nouveau', 'En Cours', 'Terminé'],
-        'data' => [$newTasks, $inProgressTasks, $completedTasks],
-        'colors' => [
-            $this->getStatusColor('nouveau'),
-            $this->getStatusColor('en cours'),
-            $this->getStatusColor('terminé')
-        ]
-    ];
-}
- 
-    ## Get Projects Chart Data
-
-    
-    /**
-     * Get projects chart data (static data - consider making it dynamic)
-     */
-    private function getProjectsChartData($user, $period)
     {
-        // This remains static for now, you might want to make it dynamic based on your Project model statuses
-        return [
-            'labels' => ['Active', 'Completed', 'On Hold'],
-            'data' => [45, 32, 8]
-        ];
-    }
-    
- 
-    ## Get Productivity Chart Data
-
-    
-    /**
-     * Get productivity chart data
-     */
-    private function getProductivityChartData($user, $period)
-{
-    $labels = [];
-    $productivityData = [];
-
-    $now = Carbon::now();
-    $startOfThisWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
-    $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
-
-    for ($i = 3; $i >= 0; $i--) {
-        $currentWeekStart = $startOfThisWeek->copy()->subWeeks($i);
-        $currentWeekEnd = $currentWeekStart->copy()->endOfWeek(Carbon::SUNDAY);
-
-        $query = Tache::where('status', 'terminé')
-                        ->whereBetween('updated_at', [$currentWeekStart, $currentWeekEnd]);
+        $query = Tache::query();
+        $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
         if (!$isAdmin) {
             $query->whereHas('users', function($q) use ($user) {
                 $q->where('users.id', $user->id);
             });
         }
-        // Kolchi yban men bdat l'application - ma kaynch filter 3la datedebut
 
-        $count = $query->count();
+        switch ($period) {
+            case 'week':
+                $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+                break;
+            case 'month':
+                $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year);
+                break;
+            case 'year':
+                $query->whereYear('created_at', now()->year);
+                break;
+        }
 
-        $labels[] = 'Semaine du ' . $currentWeekStart->format('d/m');
-        $productivityData[] = $count;
+        $newTasks = (clone $query)->where('status', 'nouveau')->count();
+        $completedTasks = (clone $query)->where('status', 'terminé')->count();
+        $inProgressTasks = (clone $query)->where('status', 'en cours')->count();
+
+        return [
+            'labels' => ['Nouveau', 'En Cours', 'Terminé'],
+            'data' => [$newTasks, $inProgressTasks, $completedTasks],
+            'colors' => [
+                $this->getStatusColor('nouveau'),
+                $this->getStatusColor('en cours'),
+                $this->getStatusColor('terminé')
+            ]
+        ];
     }
-
-    return [
-        'labels' => $labels,
-        'productivity' => $productivityData
-    ];
-}
-    
  
-    ## Get Pointage Chart Data (Time Worked)
-
+    private function getProjectsChartData($user, $period)
+    {
+        return [
+            'labels' => ['Active', 'Completed', 'On Hold'],
+            'data' => [45, 32, 8]
+        ];
+    }
     
-    /**
-     * Get pointage chart data (time worked per day/week/month)
-     */
-    private function getPointageChartData($user, $period)
-{
-    $labels = [];
-    $totalHoursData = [];
+    private function getProductivityChartData($user, $period)
+    {
+        $labels = [];
+        $productivityData = [];
 
-    $query = SuivrePointage::query();
+        $now = Carbon::now();
+        $startOfThisWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
+        $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
-    if (!$user->hasRole('Sup_Admin') && !$user->hasRole('Custom_Admin')) {
-        $query->where('iduser', $user->id);
+        for ($i = 3; $i >= 0; $i--) {
+            $currentWeekStart = $startOfThisWeek->copy()->subWeeks($i);
+            $currentWeekEnd = $currentWeekStart->copy()->endOfWeek(Carbon::SUNDAY);
+
+            $query = Tache::where('status', 'terminé')
+                            ->whereBetween('updated_at', [$currentWeekStart, $currentWeekEnd]);
+
+            if (!$isAdmin) {
+                $query->whereHas('users', function($q) use ($user) {
+                    $q->where('users.id', $user->id);
+                });
+            }
+
+            $count = $query->count();
+
+            $labels[] = 'Semaine du ' . $currentWeekStart->format('d/m');
+            $productivityData[] = $count;
+        }
+
+        return [
+            'labels' => $labels,
+            'productivity' => $productivityData
+        ];
     }
-
-    $query->whereNotNull('heure_arrivee')
-          ->whereNotNull('heure_depart');
-
-    // Ma kayn 7ta limite - kolchi men bdat application
-
-    switch ($period) {
-        case 'week':
-            for ($i = 6; $i >= 0; $i--) {
-                $date = Carbon::now()->subDays($i);
-                $dayTotalMinutes = (clone $query)
-                    ->whereDate('heure_arrivee', $date->toDateString())
-                    ->get()
-                    ->sum(function($pointage) {
-                        return Carbon::parse($pointage->heure_arrivee)->diffInMinutes(Carbon::parse($pointage->heure_depart));
-                    });
-                $labels[] = $date->format('D d/m');
-                $totalHoursData[] = round($dayTotalMinutes / 60, 1);
-            }
-            break;
-        case 'month':
-            $startOfMonth = Carbon::now()->startOfMonth();
-            $endOfMonth = Carbon::now()->endOfMonth();
-
-            $currentWeek = $startOfMonth->copy()->startOfWeek(Carbon::MONDAY);
-            $weekCount = 0;
-
-            while ($currentWeek->lessThanOrEqualTo($endOfMonth) && $weekCount < 4) {
-                $weekEnd = $currentWeek->copy()->endOfWeek(Carbon::SUNDAY);
-                if ($weekEnd->greaterThan($endOfMonth)) {
-                    $weekEnd = $endOfMonth;
-                }
-
-                $weekTotalMinutes = (clone $query)
-                    ->whereBetween('heure_arrivee', [$currentWeek, $weekEnd])
-                    ->get()
-                    ->sum(function($pointage) {
-                        return Carbon::parse($pointage->heure_arrivee)->diffInMinutes(Carbon::parse($pointage->heure_depart));
-                    });
-
-                $labels[] = 'Sem. ' . $currentWeek->format('W') . ' (' . $currentWeek->format('d/m') . ')';
-                $totalHoursData[] = round($weekTotalMinutes / 60, 1);
-
-                $currentWeek->addWeek();
-                $weekCount++;
-            }
-            break;
-        case 'year':
-            for ($i = 11; $i >= 0; $i--) {
-                $month = Carbon::now()->subMonths($i);
-                $monthTotalMinutes = (clone $query)
-                    ->whereMonth('heure_arrivee', $month->month)
-                    ->whereYear('heure_arrivee', $month->year)
-                    ->get()
-                    ->sum(function($pointage) {
-                        return Carbon::parse($pointage->heure_arrivee)->diffInMinutes(Carbon::parse($pointage->heure_depart));
-                    });
-                $labels[] = $month->format('M Y');
-                $totalHoursData[] = round($monthTotalMinutes / 60, 1);
-            }
-            break;
-        default: // Default to last 4 weeks
-            $now = Carbon::now();
-            $startOfThisWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
-
-            for ($i = 3; $i >= 0; $i--) {
-                $currentWeekStart = $startOfThisWeek->copy()->subWeeks($i);
-                $currentWeekEnd = $currentWeekStart->copy()->endOfWeek(Carbon::SUNDAY);
-
-                $weekTotalMinutes = (clone $query)
-                    ->whereBetween('heure_arrivee', [$currentWeekStart, $currentWeekEnd])
-                    ->get()
-                    ->sum(function($pointage) {
-                        return Carbon::parse($pointage->heure_arrivee)->diffInMinutes(Carbon::parse($pointage->heure_depart));
-                    });
-
-                $labels[] = 'Semaine du ' . $currentWeekStart->format('d/m');
-                $totalHoursData[] = round($weekTotalMinutes / 60, 1);
-            }
-            break;
-    }
-
-    return [
-        'labels' => $labels,
-        'data' => $totalHoursData,
-        'title' => 'Temps Travaillé (Heures)'
-    ];
-}
    
  
     ## Get Pointage Punctuality Chart Data

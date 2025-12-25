@@ -4,20 +4,18 @@
         <title>{{ __('Dashboard') }}</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        {{-- Using unpkg for Tailwind CSS directly for quick setup --}}
         <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     </head>
     <style>
-        /* Define CSS Variables for theming */
         :root {
-            --primary-color: #D32F2F; /* Red-700, plus sombre pour le primaire */
-            --accent-color: #C2185B; /* Rose foncé pour l'accent */
-            --success-color: #10b981; /* Green-500 */
-            --warning-color: #f59e0b; /* Yellow-500 */
-            --danger-color: #ef4444; /* Red-500 */
-            --dark-color: #1f2937; /* Gray-800 */
-            --text-light: #f9fafb; /* Gray-50 */
-            --bg-light: #f3f4f6; /* Gray-100 */
+            --primary-color: #D32F2F;
+            --accent-color: #C2185B;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-color: #1f2937;
+            --text-light: #f9fafb;
+            --bg-light: #f3f4f6;
             --bg-card: rgba(255, 255, 255, 0.95);
             --border-color: rgba(255, 255, 255, 0.2);
             --box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
@@ -27,10 +25,10 @@
 
         body {
             background-color: var(--bg-light);
-            font-family: 'Inter', sans-serif; /* A modern, clean font */
+            font-family: 'Inter', sans-serif;
         }
 
-        .header-card, .stats-card, .section-header, .table-container, .chart-card, .activity-card, .pointage-card {
+        .header-card, .stats-card, .section-header, .table-container, .chart-card, .activity-card, .pointage-card, .project-card {
             background: var(--bg-card);
             backdrop-filter: blur(20px);
             border-radius: var(--border-radius);
@@ -38,7 +36,7 @@
             border: 1px solid var(--border-color);
             overflow: hidden;
             position: relative;
-            z-index: 1; /* Ensure content is above pseudo-elements */
+            z-index: 1;
         }
 
         .header-card::before {
@@ -50,7 +48,7 @@
             height: 100%;
             background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
             transition: left 1.5s ease-in-out;
-            z-index: -1; /* Place behind content */
+            z-index: -1;
         }
 
         .header-card:hover::before {
@@ -79,7 +77,7 @@
         }
 
         .modern-table {
-            border-collapse: separate; /* Allows border-radius on table cells */
+            border-collapse: separate;
             border-spacing: 0;
         }
 
@@ -92,7 +90,7 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 1.25rem 1rem; /* More padding for better spacing */
+            padding: 1.25rem 1rem;
         }
 
         .modern-table th:first-child {
@@ -106,8 +104,8 @@
             color: var(--dark-color);
             font-weight: 500;
             transition: var(--transition);
-            padding: 1rem; /* Consistent padding */
-            border-bottom: 1px solid rgba(0,0,0,0.05); /* Lighter border */
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
 
         .modern-table tbody tr:last-child td {
@@ -116,7 +114,7 @@
 
         .modern-table tbody tr:hover {
             background-color: rgba(59, 130, 246, 0.05);
-            transform: scale(1.005); /* Subtle scale effect */
+            transform: scale(1.005);
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
@@ -130,33 +128,38 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            min-width: 100px; /* Ensure badges have a minimum width */
+            min-width: 100px;
             justify-content: center;
         }
 
         .status-active, .status-en-cours {
-            background: rgba(59, 130, 246, 0.1); /* Blue background */
+            background: rgba(59, 130, 246, 0.1);
             color: var(--primary-color);
             border: 1px solid rgba(59, 130, 246, 0.2);
         }
 
         .status-pending, .status-en-attente {
-            background: rgba(245, 158, 11, 0.1); /* Yellow background */
+            background: rgba(245, 158, 11, 0.1);
             color: var(--warning-color);
             border: 1px solid rgba(245, 158, 11, 0.2);
         }
 
         .status-completed, .status-terminé {
-            background: rgba(16, 185, 129, 0.1); /* Green background */
+            background: rgba(16, 185, 129, 0.1);
             color: var(--success-color);
             border: 1px solid rgba(16, 185, 129, 0.2);
         }
 
-        /* New status for tasks (Nouveau/New) */
         .status-nouveau, .status-new {
-            background: rgba(107, 114, 128, 0.1); /* Gray background */
-            color: #6b7280; /* Gray-500 */
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
             border: 1px solid rgba(107, 114, 128, 0.2);
+        }
+
+        .status-annulé {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
         .pagination-modern .page-link {
@@ -199,7 +202,6 @@
             transform: translateY(0);
         }
 
-        /* Ripple effect for buttons */
         .ripple-btn {
             position: relative;
             overflow: hidden;
@@ -229,7 +231,6 @@
             transition: 0s;
         }
 
-        /* Loading spinner for search button */
         .loading-spinner {
             border: 4px solid rgba(255, 255, 255, 0.3);
             border-top: 4px solid #fff;
@@ -244,7 +245,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Productivity metrics cards */
         .metric-card {
             background: var(--bg-card);
             backdrop-filter: blur(15px);
@@ -269,12 +269,11 @@
         }
         .metric-card .label {
             font-size: 1rem;
-            color: #6b7280; /* Gray-500 */
+            color: #6b7280;
         }
         .trend-up { color: var(--success-color); }
         .trend-down { color: var(--danger-color); }
 
-        /* Recent Activities */
         .activity-item {
             border-bottom: 1px solid rgba(0,0,0,0.05);
             padding-bottom: 1rem;
@@ -296,14 +295,58 @@
         .activity-icon.blue { background-color: var(--primary-color); }
         .activity-icon.green { background-color: var(--success-color); }
         .activity-icon.yellow { background-color: var(--warning-color); }
-        .activity-icon.gray { background-color: #6b7280; } /* For 'Nouveau' status */
+        .activity-icon.gray { background-color: #6b7280; }
 
-        /* Styles for reclamation status badges */
-        .reclamation-status-pending { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; } /* Yellowish */
-        .reclamation-status-in_progress { background-color: #cfe2ff; color: #084298; border: 1px solid #b6d4fe; } /* Blueish */
-        .reclamation-status-resolved { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; } /* Greenish */
-        .reclamation-status-closed { background-color: #e2e3e5; color: #495057; border: 1px solid #d3d6db; } /* Grayish */
+        .reclamation-status-pending { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
+        .reclamation-status-in_progress { background-color: #cfe2ff; color: #084298; border: 1px solid #b6d4fe; }
+        .reclamation-status-resolved { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .reclamation-status-closed { background-color: #e2e3e5; color: #495057; border: 1px solid #d3d6db; }
 
+        /* Project Card Styles */
+        .project-card {
+            transition: var(--transition);
+        }
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.12);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 10px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .rdv-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .rdv-upcoming {
+            background: rgba(59, 130, 246, 0.1);
+            color: #2563eb;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .rdv-today {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
 
         @media (max-width: 768px) {
             .modern-table {
@@ -337,21 +380,21 @@
             box-shadow: var(--box-shadow);
             border: 1px solid var(--border-color);
             overflow-x: auto;
-            overflow-y: auto; /* Enable vertical scrolling */
-            max-height: 400px; /* Fixed height, adjust as needed */
+            overflow-y: auto;
+            max-height: 400px;
         }
 
         .modern-table {
             border-collapse: separate;
             border-spacing: 0;
             width: 100%;
-            min-width: 600px; /* Ensure table doesn't shrink too much */
+            min-width: 600px;
         }
 
         .modern-table thead {
             background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
             position: sticky;
-            top: 0; /* Keep header fixed while scrolling */
+            top: 0;
             z-index: 1;
         }
 
@@ -370,7 +413,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
-        /* Modal specific styles */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -398,14 +440,14 @@
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
             border: 1px solid var(--border-color);
-            padding: 0; /* Important: remove padding here as the inner card provides it */
-            max-width: 600px; /* Adjusted to fit the pointage card better */
+            padding: 0;
+            max-width: 600px;
             width: 90%;
             transform: translateY(-50px);
             opacity: 0;
             transition: transform 0.3s ease-out, opacity 0.3s ease-out;
             position: relative;
-            overflow: hidden; /* Ensures inner card's rounded corners and shadows are contained */
+            overflow: hidden;
         }
 
         .modal-overlay.show .modal-content {
@@ -423,7 +465,7 @@
             color: var(--dark-color);
             cursor: pointer;
             transition: color 0.2s ease-in-out;
-            z-index: 10; /* Ensure it's above the content */
+            z-index: 10;
         }
 
         .modal-close-button:hover {
@@ -465,12 +507,6 @@
             animation: fade-in 0.5s ease-out;
         }
 
-        .pointage-card {
-            /* No fade-in animation here if it's always in a modal */
-            /* animation: fade-in 0.8s ease-out; */
-        }
-
-        /* Enhanced ripple effect */
         .group:active .absolute {
             animation: ripple 0.6s linear;
         }
@@ -506,14 +542,12 @@
                 </div>
             </div>
 
-            {{-- NEW SMALL BUTTON TO OPEN POINTAGE MODAL --}}
             <div class="text-center mt-6">
                 <button id="openPointageModalBtn" class="flex items-center justify-center mx-auto px-6 py-3 bg-gradient-to-r from-red-600 to-red-400 text-white rounded-full shadow-lg hover:from-red-700 hover:to-red-500 transition duration-300 transform hover:scale-105 text-lg font-semibold">
                     <i class="fas fa-clock mr-3 text-2xl"></i> Gérer mon Pointage
                 </button>
             </div>
 
-            {{-- Welcome Modal (Your original welcome modal, kept separate) --}}
             <div id="welcomeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
                 <div class="bg-white rounded-2xl p-8 max-w-md mx-4 transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
                     <div class="text-center">
@@ -534,8 +568,6 @@
                 </div>
             </div>
 
-            {{-- Main Content (excluding the pointage card which is now in a modal) --}}
-            {{-- Applied space-y-6 here for consistent spacing between major sections --}}
             <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 space-y-6"> 
                 <div class="container mx-auto px-4 py-8">
 
@@ -544,7 +576,7 @@
                             <div class="metric-card fade-in p-6 text-center">
                                 <div class="icon bg-gradient-to-r from-green-500 to-green-600"><i class="fas fa-users"></i></div>
                                 <div class="value bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">{{ $userCount }}</div>
-                                <div class="label text-gray-800 mt-2">Effectif de l’équipe UITS</div>
+                                <div class="label text-gray-800 mt-2">Effectif de l'équipe UITS</div>
                             </div>
                             <div class="metric-card fade-in p-6 text-center">
                                 <div class="icon bg-gradient-to-r from-blue-500 to-blue-600"><i class="fas fa-tasks"></i></div>
@@ -585,8 +617,7 @@
                         @endif
                     </div>
 
-                    {{-- This container now holds the two chart cards and has its own gap --}}
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6"> {{-- Added mt-6 here for spacing from the metric cards --}}
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
                         <div class="chart-card fade-in p-6">
                             <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800 mb-6">
                               <div class="section-icon w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-400 rounded-full flex items-center justify-center text-white">
@@ -599,7 +630,6 @@
                             </div>
                         </div>
 
-                        {{-- NEW:   Chart (Doughnut) --}}
                         <div class="chart-card fade-in p-6">
                             <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800 mb-6">
                                 <div class="section-icon w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-400 rounded-full flex items-center justify-center text-white">
@@ -607,7 +637,6 @@
                                 </div>
                                 Ponctualité des Arrivées
                             </h3>
-                            {{-- Add dropdown for period selection, visible only to Admin and Custom_Admin --}}
                             @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
                             <div class="flex justify-end mb-4">
                                 <select id="punctualityPeriodSelect" class="form-select border-gray-300 rounded-md shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50">
@@ -633,12 +662,100 @@
                                 </div>
                             @endif
                         </div>
-
                     </div>
-                    
-                    
 
-                    <div class="activity-card fade-in p-6 mt-6"> {{-- Added mt-6 here for spacing from the previous chart --}}
+                    {{-- NOUVELLE SECTION: PROJETS --}}
+                    @can("project-list")
+                        <div class="section-header fade-in p-6 mt-6 mb-4">
+                            <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800">
+                                <div class="section-icon w-10 h-10 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full flex items-center justify-center text-white">
+                                    <i class="fas fa-project-diagram"></i>
+                                </div>
+                                Projets & Avancements
+                            </h3>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                            @forelse($projects->take(4) as $project)
+                                <div class="project-card fade-in p-6">
+                                    <div class="flex items-start justify-between mb-4">
+                                        <div>
+                                            <h4 class="text-lg font-bold text-gray-800 mb-1">{{ $project->titre }}</h4>
+                                            <p class="text-sm text-gray-600">{{ Str::limit($project->description, 60) }}</p>
+                                        </div>
+                                        <span class="status-badge status-{{ strtolower(str_replace(' ', '-', $project->statut_projet)) }}">
+                                            {{ $project->statut_projet }}
+                                        </span>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <div class="flex justify-between text-sm text-gray-600 mb-2">
+                                            <span>Progression</span>
+                                            <span class="font-semibold">{{ $project->avancements->sum('pourcentage') > 100 ? 100 : $project->avancements->sum('pourcentage') }}%</span>
+                                        </div>
+                                        <div class="progress-bar-container">
+                                            <div class="progress-bar" style="width: {{ $project->avancements->sum('pourcentage') > 100 ? 100 : $project->avancements->sum('pourcentage') }}%"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4 mb-4">
+                                        <div class="text-center p-3 bg-blue-50 rounded-lg">
+                                            <div class="text-2xl font-bold text-blue-600">{{ $project->avancements->count() }}</div>
+                                            <div class="text-xs text-gray-600">Avancements</div>
+                                        </div>
+                                        <div class="text-center p-3 bg-green-50 rounded-lg">
+                                            <div class="text-2xl font-bold text-green-600">{{ $project->rendezVous->count() }}</div>
+                                            <div class="text-xs text-gray-600">Rendez-vous</div>
+                                        </div>
+                                    </div>
+
+                                    @if($project->rendezVous->where('date_heure', '>', now())->first())
+                                        @php
+                                            $nextRdv = $project->rendezVous->where('date_heure', '>', now())->sortBy('date_heure')->first();
+                                            $isToday = $nextRdv->date_heure->isToday();
+                                        @endphp
+                                        <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                                            <div class="flex items-center gap-2">
+                                                <i class="fas fa-calendar-alt text-blue-500"></i>
+                                                <span class="text-sm font-semibold text-gray-700">Prochain RDV:</span>
+                                            </div>
+                                            <div class="mt-2 flex items-center justify-between">
+                                                <span class="text-sm text-gray-600">{{ $nextRdv->date_heure->format('d/m/Y H:i') }}</span>
+                                                <span class="rdv-badge {{ $isToday ? 'rdv-today' : 'rdv-upcoming' }}">
+                                                    <i class="fas fa-clock"></i>
+                                                    {{ $isToday ? 'Aujourd\'hui' : $nextRdv->date_heure->diffForHumans() }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                                        <div class="flex -space-x-2">
+                                            @foreach($project->users->take(3) as $user)
+                                                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold border-2 border-white" title="{{ $user->name }}">
+                                                    {{ strtoupper(substr($user->name, 0, 1)) }}
+                                                </div>
+                                            @endforeach
+                                            @if($project->users->count() > 3)
+                                                <div class="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-bold border-2 border-white">
+                                                    +{{ $project->users->count() - 3 }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <a href="{{ route('admin.projets.show', $project) }}" class="text-blue-600 hover:text-blue-800 font-semibold text-sm flex items-center gap-1">
+                                            Voir détails <i class="fas fa-arrow-right"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="col-span-2 text-center text-gray-500 py-8">
+                                    Aucun projet trouvé.
+                                </div>
+                            @endforelse
+                        </div>
+                    @endcan
+
+                    <div class="activity-card fade-in p-6 mt-6">
                         <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800 mb-6">
                             <div class="section-icon w-10 h-10 bg-gradient-to-r from-red-600 to-red-400 rounded-full flex items-center justify-center text-white">
                                 <i class="fas fa-history"></i>
@@ -663,8 +780,7 @@
                         </div>
                     </div>
 
-                    {{-- NEW BLOCK FOR RECLAMATIONS --}}
-                    <div class="table-container fade-in p-6 mt-6 mb-6"> {{-- Added mt-6 here for spacing from recent activities --}}
+                    <div class="table-container fade-in p-6 mt-6 mb-6">
                         <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800 mb-6">
                             <div class="section-icon w-10 h-10 bg-gradient-to-r from-red-600 to-yellow-400 rounded-full flex items-center justify-center text-white">
                                 <i class="fas fa-exclamation-triangle"></i>
@@ -712,11 +828,9 @@
                             </p>
                         @endif
                     </div>
-                    {{-- END OF NEW BLOCK --}}
-
 
                     @can("tache-list")
-                        <div class="section-header fade-in p-6 mt-6 mb-4"> {{-- Added mt-6 here for spacing from previous section --}}
+                        <div class="section-header fade-in p-6 mt-6 mb-4">
                             <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800">
                                 <div class="section-icon w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-400 rounded-full flex items-center justify-center text-white">
                                     <i class="fas fa-tasks"></i>
@@ -766,7 +880,7 @@
                                     @forelse ($tasks as $tache)
                                         <tr class="border-b last:border-none hover:bg-gray-50">
                                            <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">
-                                                    {{ Str::words($tache->titre, 5, '...') }} {{-- Display titre --}}
+                                                    {{ Str::words($tache->titre, 5, '...') }}
                                                 </td>
                                             <td class="p-4 text-center">
                                                 <span class="status-badge status-{{ strtolower(str_replace(' ', '-', $tache->status)) }}">
@@ -795,7 +909,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="p-4 text-center text-gray-500">Aucune tâche trouvée.</td>
+                                            <td colspan="6" class="p-4 text-center text-gray-500">Aucune tâche trouvée.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -809,12 +923,12 @@
                     @endcan
 
                     @can("project-list")
-                        <div class="section-header fade-in p-4 mt-6 mb-4"> {{-- Added mt-6 here for spacing from previous section --}}
+                        <div class="section-header fade-in p-4 mt-6 mb-4">
                             <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800">
                                 <div class="section-icon w-10 h-10 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full flex items-center justify-center text-white">
                                     <i class="fas fa-project-diagram"></i>
                                 </div>
-                                Liste des Projets
+                                Liste Complète des Projets
                             </h3>
                         </div>
                         <div class="table-container fade-in mb-6 overflow-x-auto shadow-lg">
@@ -822,32 +936,60 @@
                                 <thead>
                                     <tr>
                                         <th class="p-4 text-left rounded-tl-xl">Titre</th>
-                                        <th class="p-4 text-center">Nom du Client</th>
-                                        <th class="p-4 text-center">Ville</th>
-                                        <th class="p-4 text-center">Besoins</th>
+                                        <th class="p-4 text-center">Statut</th>
+                                        <th class="p-4 text-center">Progression</th>
+                                        <th class="p-4 text-center">Avancements</th>
+                                        <th class="p-4 text-center">RDV</th>
                                         <th class="p-4 text-center">Assignées</th>
-                                        <th class="p-4 text-center rounded-tr-xl">Date de Création</th>
+                                        <th class="p-4 text-center rounded-tr-xl">Date Début</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($projects as $project)
                                         <tr class="border-b last:border-none hover:bg-gray-50">
-                                            <td class="p-4 text-left">{{ $project->titre }}</td>
-                                            <td class="p-4 text-center">{{ $project->nomclient }}</td>
-                                            <td class="p-4 text-center">{{ $project->ville }}</td>
-                                            <td class="p-4 text-center">{{ $project->bessoins }}</td>
+                                            <td class="p-4 text-left font-semibold">{{ $project->titre }}</td>
                                             <td class="p-4 text-center">
-                                                @forelse($project->users as $user)
-                                                    <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">{{ $user->name }}</span>{{ !$loop->last ? ' ' : '' }}
-                                                @empty
-                                                    N/A
-                                                @endforelse
+                                                <span class="status-badge status-{{ strtolower(str_replace(' ', '-', $project->statut_projet)) }}">
+                                                    {{ $project->statut_projet }}
+                                                </span>
                                             </td>
-                                            <td class="p-4 text-center">{{ \Carbon\Carbon::parse($project->date_project)->format('d/m/Y') }}</td>
+                                            <td class="p-4 text-center">
+                                                <div class="flex items-center justify-center gap-2">
+                                                    <div class="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                        <div class="h-full bg-gradient-to-r from-blue-500 to-purple-600" style="width: {{ $project->avancements->sum('pourcentage') > 100 ? 100 : $project->avancements->sum('pourcentage') }}%"></div>
+                                                    </div>
+                                                    <span class="text-sm font-semibold">{{ $project->avancements->sum('pourcentage') > 100 ? 100 : $project->avancements->sum('pourcentage') }}%</span>
+                                                </div>
+                                            </td>
+                                            <td class="p-4 text-center">
+                                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">
+                                                    {{ $project->avancements->count() }}
+                                                </span>
+                                            </td>
+                                            <td class="p-4 text-center">
+                                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-800 font-semibold">
+                                                    {{ $project->rendezVous->count() }}
+                                                </span>
+                                            </td>
+                                            <td class="p-4 text-center">
+                                                <div class="flex justify-center -space-x-2">
+                                                    @foreach($project->users->take(3) as $user)
+                                                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold border-2 border-white" title="{{ $user->name }}">
+                                                            {{ strtoupper(substr($user->name, 0, 1)) }}
+                                                        </div>
+                                                    @endforeach
+                                                    @if($project->users->count() > 3)
+                                                        <div class="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-bold border-2 border-white">
+                                                            +{{ $project->users->count() - 3 }}
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td class="p-4 text-center">{{ \Carbon\Carbon::parse($project->date_debut)->format('d/m/Y') }}</td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="p-4 text-center text-gray-500">Aucun projet trouvé.</td>
+                                            <td colspan="7" class="p-4 text-center text-gray-500">Aucun projet trouvé.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -861,7 +1003,7 @@
                     @endcan
 
                     @can("formation-list")
-                        <div class="section-header fade-in p-4 mt-6 mb-4"> {{-- Added mt-6 here for spacing from previous section --}}
+                        <div class="section-header fade-in p-4 mt-6 mb-4">
                             <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800">
                                 <div class="section-icon w-10 h-10 bg-gradient-to-r from-red-600 to-red-400 rounded-full flex items-center justify-center text-white">
                                     <i class="fas fa-graduation-cap"></i>
