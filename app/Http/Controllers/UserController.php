@@ -366,7 +366,7 @@ class UserController extends Controller
 
         // Convertir la chaîne 'repos' de l'utilisateur en tableau pour les cases à cocher
         // Si $user->repos est vide ou null, on initialise à un tableau vide.
-        $userRepos = $user->repos ? explode(',', $user->repos) : [];
+        // $userRepos = $user->repos ? explode(separator: ',', $user->repos) : [];
 
         return view('users.edit',compact('user','roles','userRole', 'userRepos'));
     }
@@ -384,8 +384,8 @@ class UserController extends Controller
             'salaire' => 'nullable|numeric|min:0',
             'adresse' => 'required|string|max:500',
             // VALIDATION: Expect an array for 'repos' with 1 or 2 items
-           'repos' => 'required|array|min:1|max:2', // Permet 1 ou 2 jours
-            'repos.*' => 'in:Lundi,Mardi,Mercredi,Jeudi,Vendredi,Samedi,Dimanche', // Valide chaque jour
+            'repos' => 'required|array|min:1|max:2', 
+            'repos.*' => 'in:Lundi,Mardi,Mercredi,Jeudi,Vendredi,Samedi,Dimanche', 
         ]);
 
         $input = $request->all();
