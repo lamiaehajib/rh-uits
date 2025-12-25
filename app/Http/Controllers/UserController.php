@@ -390,7 +390,19 @@ class UserController extends Controller
     $user = User::findOrFail($id);
     $input = $request->all();
 
-    // التعامل مع كلمة المرور
+    // Sauvegarder les anciennes valeurs AVANT la modification
+    $oldData = [
+        'name' => $user->name,
+        'email' => $user->email,
+        'tele' => $user->tele,
+        'code' => $user->code,
+        'poste' => $user->poste,
+        'salaire' => $user->salaire,
+        'adresse' => $user->adresse,
+        'repos' => $user->repos, // Déjà un array grâce au cast
+    ];
+
+    // Gérer le mot de passe
     if (!empty($input['password'])) {
         $input['password'] = Hash::make($input['password']);
         $input['password_changed_at'] = now();
@@ -398,22 +410,48 @@ class UserController extends Controller
         $input = Arr::except($input, ['password']);
     }
 
-    // حفظ البيانات القديمة للمقارنة (قبل التحديث)
-    $oldData = $user->toArray();
-
-    // التحديث (Laravel سيتكفل بتحويل repos لـ JSON بسبب الـ Casting)
+    // Mettre à jour l'utilisateur
     $user->update($input);
 
-    // تحديث الأدوار (Roles)
+    // Mettre à jour les rôles
     $user->syncRoles($request->input('roles'));
 
-    // --- الحل ديال مشكل الـ Log ---
-    // كانديرو serialize للبيانات باش ما يوقعش خطأ Array to string
-    Log::info("Utilisateur modifié", [
-        'user_id' => $user->id,
-        'modified_by' => auth()->id(),
-        'changes' => json_encode(array_diff_assoc($input, $oldData)) 
-    ]);
+    // --- LOG CORRIGÉ ---
+    // Préparer les changements pour le log
+    $changes = [];
+    foreach ($oldData as $key => $oldValue) {
+        $newValue = $input[$key] ?? $oldValue;
+        
+        // Comparer les valeurs (gérer les arrays)
+        if (is_array($oldValue) || is_array($newValue)) {
+            // Convertir en JSON pour comparer
+            if (json_encode($oldValue) !== json_encode($newValue)) {
+                $changes[$key] = [
+                    'old' => $oldValue,
+                    'new' => $newValue
+                ];
+            }
+        } else {
+            // Comparaison simple pour les autres types
+            if ($oldValue != $newValue) {
+                $changes[$key] = [
+                    'old' => $oldValue,
+                    'new' => $newValue
+                ];
+            }
+        }
+    }
+
+    // Logger les modifications
+    if (!empty($changes)) {
+        Log::info("Utilisateur modifié", [
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'modified_by' => auth()->id(),
+            'modified_by_name' => auth()->user()->name,
+            'changes' => $changes
+        ]);
+    }
 
     Cache::forget('users_list_*');
 
