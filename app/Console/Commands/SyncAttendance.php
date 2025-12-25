@@ -28,21 +28,21 @@ class SyncAttendance extends Command
             // 2. نجيبو كاع البصمات اللي في الماكينة
             $attendance = $zk->getAttendance();
 
-          foreach ($attendance as $log) {
-    // 1. البحث عن الموظف بالكود
+         foreach ($attendance as $log) {
     $user = User::where('code', $log['id'])->first();
 
     if ($user) {
         $fullTimestamp = \Carbon\Carbon::parse($log['timestamp']);
-        $dateOnly = $fullTimestamp->toDateString(); // YYYY-MM-DD
+        $dateOnly = $fullTimestamp->toDateString();
 
-        // 2. البحث عن سجل لهذا الموظف في هذا اليوم
-        $pointage = SuivrePointage::where('iduser', $user->id)
-                                  ->whereDate('date_pointage', $dateOnly)
-                                  ->first();
+        // كنقلبو على آخر بوانتاج ديال هاد الموظف لي باقي "مفتوح" (مافيهش heure_depart)
+        $lastPointage = SuivrePointage::where('iduser', $user->id)
+                                     ->whereDate('date_pointage', $dateOnly)
+                                     ->whereNull('heure_depart')
+                                     ->first();
 
-        if (!$pointage) {
-            // أول مرة يبصم اليوم -> نعتبرها وقت وصول
+        if (!$lastPointage) {
+            // إلا مالقينا حتى بوانتاج مفتوح، كنفتحو واحد جديد (Arrivée)
             SuivrePointage::create([
                 'iduser'         => $user->id,
                 'date_pointage'  => $dateOnly,
@@ -50,22 +50,18 @@ class SyncAttendance extends Command
                 'description'    => 'Pointage via Machine F18',
                 'localisation'   => 'Office (Titre Mellil)'
             ]);
-            $this->info("✔ تسجيل وصول جديد: " . $user->name);
+            $this->info("✔ Arrivée: " . $user->name . " à " . $fullTimestamp);
         } else {
-            // بصم مرة أخرى في نفس اليوم -> نحدث وقت المغادرة
-            // (بشرط أن يكون الوقت الجديد أحدث من وقت الوصول)
-            if ($fullTimestamp->gt($pointage->heure_arrivee)) {
-                $pointage->update([
+            // إلا لقينا واحد مفتوح، ودازت على الأقل 5 دقائق (باش نفاداو التكرار الخطأ)
+            if ($fullTimestamp->diffInMinutes($lastPointage->heure_arrivee) > 5) {
+                $lastPointage->update([
                     'heure_depart' => $fullTimestamp
                 ]);
-                $this->line("⏳ تحديث مغادرة: " . $user->name);
+                $this->line("⏳ Départ: " . $user->name . " à " . $fullTimestamp);
             }
         }
-    } else {
-        $this->warn("⚠ كود (" . $log['id'] . ") غير مرتبط بموظف.");
     }
 }
-
             $zk->disconnect();
             $this->info("✅ تمت العملية بنجاح.");
         } else {
