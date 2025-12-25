@@ -368,7 +368,7 @@ class UserController extends Controller
         // Si $user->repos est vide ou null, on initialise à un tableau vide.
         // $userRepos = $user->repos ? explode(separator: ',', $user->repos) : [];
 
-        return view('users.edit',compact('user','roles','userRole', 'userRepos'));
+        return view('users.edit',compact('user','roles','userRole'));
     }
 
     public function update(Request $request, $id)
