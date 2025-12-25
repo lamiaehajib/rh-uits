@@ -35,29 +35,38 @@ class SyncAttendance extends Command
         $fullTimestamp = \Carbon\Carbon::parse($log['timestamp']);
         $dateOnly = $fullTimestamp->toDateString();
 
-        // كنقلبو على آخر بوانتاج ديال هاد الموظف لي باقي "مفتوح" (مافيهش heure_depart)
+        // 1. أول حاجة: واش هاد البصمة ديجا كاين فالداتابيز؟ (باش ما نعاودوش نسجلوها)
+        $alreadyExists = SuivrePointage::where('iduser', $user->id)
+                            ->where(function($query) use ($fullTimestamp) {
+                                $query->where('heure_arrivee', $fullTimestamp)
+                                      ->orWhere('heure_depart', $fullTimestamp);
+                            })->exists();
+
+        if ($alreadyExists) continue; // إلا كانت ديجا كاين، دوز للبصمة الموالية بلا ما تدير والو
+
+        // 2. إلا ما كانتش، دابا نشوفو واش نفتحو سطر جديد ولا نسدو سطر قديم
         $lastPointage = SuivrePointage::where('iduser', $user->id)
                                      ->whereDate('date_pointage', $dateOnly)
                                      ->whereNull('heure_depart')
                                      ->first();
 
         if (!$lastPointage) {
-            // إلا مالقينا حتى بوانتاج مفتوح، كنفتحو واحد جديد (Arrivée)
+            // فتح سطر جديد (دخول)
             SuivrePointage::create([
                 'iduser'         => $user->id,
                 'date_pointage'  => $dateOnly,
                 'heure_arrivee'  => $fullTimestamp,
                 'description'    => 'Pointage via Machine F18',
-                'localisation'   => 'Office (Titre Mellil)'
+                'localisation'   => 'Office (Titre Mellil)',
+                'statut'         => 'En cours'
             ]);
-            $this->info("✔ Arrivée: " . $user->name . " à " . $fullTimestamp);
         } else {
-            // إلا لقينا واحد مفتوح، ودازت على الأقل 5 دقائق (باش نفاداو التكرار الخطأ)
+            // تحديث سطر قديم (خروج) - بشرط يكون الوقت أحدث من الدخول بـ 5 دقايق
             if ($fullTimestamp->diffInMinutes($lastPointage->heure_arrivee) > 5) {
                 $lastPointage->update([
-                    'heure_depart' => $fullTimestamp
+                    'heure_depart' => $fullTimestamp,
+                    'statut'       => 'Terminé'
                 ]);
-                $this->line("⏳ Départ: " . $user->name . " à " . $fullTimestamp);
             }
         }
     }
