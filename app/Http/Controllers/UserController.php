@@ -358,18 +358,18 @@ class UserController extends Controller
         return view('users.show', compact('user', 'userStats'));
     }
 
-      public function edit($id)
-    {
-        $user = User::findOrFail($id);
-        $roles = Role::pluck('name','name')->all();
-        $userRole = $user->roles->pluck('name','name')->all();
+     public function edit($id)
+{
+    $user = User::findOrFail($id);
+    $roles = Role::pluck('name','name')->all();
+    $userRole = $user->roles->pluck('name','name')->all();
 
-        // Convertir la chaîne 'repos' de l'utilisateur en tableau pour les cases à cocher
-        // Si $user->repos est vide ou null, on initialise à un tableau vide.
-        $userRepos = $user->repos ? explode(',', $user->repos) : [];
+    // بما أن repos ديجا Casted as array في الموديل
+    // فما محتاجش تدير explode. إلا كان خاوي غادي يرجع []
+    $userRepos = $user->repos ?? []; 
 
-        return view('users.edit',compact('user','roles','userRole', 'userRepos'));
-    }
+    return view('users.edit', compact('user','roles','userRole', 'userRepos'));
+}
 
     public function update(Request $request, $id)
     {

@@ -183,7 +183,7 @@
 
 
                         {{-- Salaire --}}
-{{-- <div class="col-md-6">
+<div class="col-md-6">
     <label for="salaire" class="form-label">Salaire (MAD)</label>
     <div class="input-group">
         <span class="input-group-text"><i class="fas fa-money-bill-wave"></i></span>
@@ -195,7 +195,7 @@
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
     </div>
-</div> --}}
+</div>
                         ---
 
                         {{-- Jours de Repos avec des cases à cocher --}}
