@@ -118,7 +118,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
-       
+        'repos' => 'array', // IMPORTANT: Cast le champ repos en array pour faciliter la manipulation
     ];
     
 }

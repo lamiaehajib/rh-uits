@@ -326,7 +326,7 @@ class UserController extends Controller
         $input['password_changed_at'] = now();
 
         // Convertir le tableau de jours de repos en une chaîne séparée par des virgules
-        $input['repos'] = implode(',', $request->input('repos'));
+        // $input['repos'] = implode(',', array: $request->input('repos'));
 
         $user = User::create($input);
         $user->assignRole($request->input('roles'));
@@ -399,7 +399,7 @@ class UserController extends Controller
         }
         
         // Convert the array of 'repos' back to a comma-separated string before updating
-        $input['repos'] = implode(',', $request->input('repos'));
+        // $input['repos'] = implode(',', $request->input('repos'));
 
 
         $user = User::findOrFail($id);
