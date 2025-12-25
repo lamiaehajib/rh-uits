@@ -366,9 +366,9 @@ class UserController extends Controller
 
         // Convertir la chaîne 'repos' de l'utilisateur en tableau pour les cases à cocher
         // Si $user->repos est vide ou null, on initialise à un tableau vide.
-        // $userRepos = $user->repos ? explode(separator: ',', $user->repos) : [];
+        $userRepos = $user->repos ? explode(',', $user->repos) : [];
 
-        return view('users.edit',compact('user','roles','userRole'));
+        return view('users.edit',compact('user','roles','userRole', 'userRepos'));
     }
 
     public function update(Request $request, $id)
