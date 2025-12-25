@@ -20,6 +20,8 @@ class Kernel extends ConsoleKernel
         
         // ** هذا هو أمر الباك اب الأسبوعي الجديد **
         $schedule->command('backup:run --only-db')->weekly()->at('02:00');
+
+        $schedule->command('attendance:sync')->everyFifteenMinutes();
     }
 
     /**
