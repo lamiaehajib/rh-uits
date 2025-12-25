@@ -372,60 +372,54 @@ class UserController extends Controller
 }
 
     public function update(Request $request, $id)
-    {
-        $this->validate($request, [
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,'.$id,
-            'password' => ['nullable', 'same:confirm-password', Password::min(8)->letters()->numbers()],
-            'roles' => 'required',
-            'tele' => 'required|string|max:20',
-            'code' => 'required|integer|unique:users,code,'.$id,
-            'poste' => 'required|string|max:255',
-            'salaire' => 'nullable|numeric|min:0',
-            'adresse' => 'required|string|max:500',
-            // VALIDATION: Expect an array for 'repos' with 1 or 2 items
-            'repos' => 'required|array|min:1|max:2', 
-            'repos.*' => 'in:Lundi,Mardi,Mercredi,Jeudi,Vendredi,Samedi,Dimanche', 
-        ]);
+{
+    $this->validate($request, [
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email,'.$id,
+        'password' => ['nullable', 'same:confirm-password', Password::min(8)->letters()->numbers()],
+        'roles' => 'required',
+        'tele' => 'required|string|max:20',
+        'code' => 'required|integer|unique:users,code,'.$id,
+        'poste' => 'required|string|max:255',
+        'salaire' => 'nullable|numeric|min:0',
+        'adresse' => 'required|string|max:500',
+        'repos' => 'required|array|min:1|max:2', 
+        'repos.*' => 'in:Lundi,Mardi,Mercredi,Jeudi,Vendredi,Samedi,Dimanche', 
+    ]);
 
-        $input = $request->all();
+    $user = User::findOrFail($id);
+    $input = $request->all();
 
-        if (!empty($input['password'])) {
-            $input['password'] = Hash::make($input['password']);
-            $input['password_changed_at'] = now();
-        } else {
-            // Remove password from input if it's empty, so it's not updated with a null value
-            $input = Arr::except($input, ['password']);
-        }
-        
-        // Convert the array of 'repos' back to a comma-separated string before updating
-        // $input['repos'] = implode(',', $request->input('repos'));
-
-
-        $user = User::findOrFail($id);
-        $oldData = $user->toArray();
-        
-        $user->update($input);
-
-        // Sync roles (assuming 'model_has_roles' is handled by spatie/laravel-permission package directly)
-        // If you're manually deleting and re-assigning, ensure this is correct for your setup.
-        // A simpler way with Spatie is often: $user->syncRoles($request->input('roles'));
-        DB::table('model_has_roles')->where('model_id', $id)->delete();
-        $user->assignRole($request->input('roles'));
-
-        // Log des modifications
-        Log::info("Utilisateur modifié", [
-            'user_id' => $user->id,
-            'modified_by' => auth()->id(),
-            'changes' => array_diff_assoc($input, $oldData)
-        ]);
-
-        // Vider le cache
-        Cache::forget('users_list_*');
-
-        return redirect()->route('users.index')
-                         ->with('success', 'Utilisateur mis à jour avec succès.');
+    // التعامل مع كلمة المرور
+    if (!empty($input['password'])) {
+        $input['password'] = Hash::make($input['password']);
+        $input['password_changed_at'] = now();
+    } else {
+        $input = Arr::except($input, ['password']);
     }
+
+    // حفظ البيانات القديمة للمقارنة (قبل التحديث)
+    $oldData = $user->toArray();
+
+    // التحديث (Laravel سيتكفل بتحويل repos لـ JSON بسبب الـ Casting)
+    $user->update($input);
+
+    // تحديث الأدوار (Roles)
+    $user->syncRoles($request->input('roles'));
+
+    // --- الحل ديال مشكل الـ Log ---
+    // كانديرو serialize للبيانات باش ما يوقعش خطأ Array to string
+    Log::info("Utilisateur modifié", [
+        'user_id' => $user->id,
+        'modified_by' => auth()->id(),
+        'changes' => json_encode(array_diff_assoc($input, $oldData)) 
+    ]);
+
+    Cache::forget('users_list_*');
+
+    return redirect()->route('users.index')
+                     ->with('success', 'Utilisateur mis à jour avec succès.');
+}
 
     public function destroy($id)
     {
