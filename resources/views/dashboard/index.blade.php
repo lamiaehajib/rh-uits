@@ -84,6 +84,27 @@
             .chart-container { padding: 16px; }
             .performer-card { flex-direction: column; text-align: center; }
         }
+        .chart-wrapper {
+            position: relative;
+            margin: auto;
+            height: 300px; /* Ghadi i-koun hada houwa l-kabr l-max dial chart */
+            width: 100%;
+        }
+
+        .chart-container { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 20px; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07); 
+            animation: fadeInUp 0.8s ease; 
+            margin-bottom: 24px; 
+        }
+        
+        /* Special height for the performance chart (horizontal) */
+        .performance-wrapper {
+            height: 400px;
+        }
+        
     </style>
 
     <div class="container-fluid py-4">
@@ -293,28 +314,34 @@
 
         <!-- Charts -->
         <div class="row mb-4">
-            <div class="col-12">
+           <div class="col-12">
                 <h4 class="section-title mb-3"><i class="fas fa-chart-bar"></i> Statistiques Visuelles</h4>
             </div>
 
             <div class="col-lg-6 mb-4">
                 <div class="chart-container">
-                    <div class="chart-title"><i class="fas fa-calendar-alt"></i> <span>Évolution Pointages (6 mois)</span></div>
-                    <canvas id="pointagesMonthlyChart" height="250"></canvas>
+                    <div class="chart-title"><i class="fas fa-calendar-alt"></i> <span>Évolution Pointages</span></div>
+                    <div class="chart-wrapper">
+                        <canvas id="pointagesMonthlyChart"></canvas>
+                    </div>
                 </div>
             </div>
 
             <div class="col-lg-6 mb-4">
                 <div class="chart-container">
                     <div class="chart-title"><i class="fas fa-tasks"></i> <span>Répartition des Tâches</span></div>
-                    <canvas id="tachesStatusChart" height="250"></canvas>
+                    <div class="chart-wrapper">
+                        <canvas id="tachesStatusChart"></canvas>
+                    </div>
                 </div>
             </div>
 
             <div class="col-lg-6 mb-4">
                 <div class="chart-container">
                     <div class="chart-title"><i class="fas fa-bullseye"></i> <span>Progression Objectifs</span></div>
-                    <canvas id="objectifsProgressChart" height="250"></canvas>
+                    <div class="chart-wrapper">
+                        <canvas id="objectifsProgressChart"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -322,23 +349,29 @@
             <div class="col-lg-6 mb-4">
                 <div class="chart-container">
                     <div class="chart-title"><i class="fas fa-project-diagram"></i> <span>Statut des Projets</span></div>
-                    <canvas id="projetsStatusChart" height="250"></canvas>
+                    <div class="chart-wrapper">
+                        <canvas id="projetsStatusChart"></canvas>
+                    </div>
                 </div>
             </div>
             @endif
 
             <div class="col-lg-6 mb-4">
                 <div class="chart-container">
-                    <div class="chart-title"><i class="fas fa-chart-line"></i> <span>Tendance Retards (4 semaines)</span></div>
-                    <canvas id="retardsTrendChart" height="250"></canvas>
+                    <div class="chart-title"><i class="fas fa-chart-line"></i> <span>Tendance Retards</span></div>
+                    <div class="chart-wrapper">
+                        <canvas id="retardsTrendChart"></canvas>
+                    </div>
                 </div>
             </div>
 
             @if($isAdmin && $chartData['users_performance'])
             <div class="col-lg-12 mb-4">
                 <div class="chart-container">
-                    <div class="chart-title"><i class="fas fa-trophy"></i> <span>Top 10 Performers (Tâches terminées ce mois)</span></div>
-                    <canvas id="usersPerformanceChart" height="120"></canvas>
+                    <div class="chart-title"><i class="fas fa-trophy"></i> <span>Top 10 Performers</span></div>
+                    <div class="chart-wrapper performance-wrapper">
+                        <canvas id="usersPerformanceChart"></canvas>
+                    </div>
                 </div>
             </div>
             @endif
@@ -455,30 +488,111 @@
         </div>
     </div>
 
-   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const ctx1 = document.getElementById('pointagesMonthlyChart').getContext('2d');
-        new Chart(ctx1, {
-            type: 'bar',
-            data: {
-                // Wrap the array in collect()
-                labels: @json(collect($chartData['pointages_monthly'])->pluck('month')),
-                datasets: [
-                    { 
-                        label: 'Ponctuels', 
-                        data: @json(collect($chartData['pointages_monthly'])->pluck('ponctuel')), 
-                        backgroundColor: '#4CAF50' 
-                    },
-                    { 
-                        label: 'Retards', 
-                        data: @json(collect($chartData['pointages_monthly'])->pluck('retards')), 
-                        backgroundColor: '#F44336' 
-                    }
-                ]
-            },
-            options: { responsive: true, plugins: { legend: { position: 'top' } } }
+ <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Options standards bach nsaghro l-charts
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false, // Darouri bach i-htarem l-height li f-CSS
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                }
+            };
+
+            // 1. Pointages Monthly
+            new Chart(document.getElementById('pointagesMonthlyChart'), {
+                type: 'bar',
+                data: {
+                    labels: @json(collect($chartData['pointages_monthly'])->pluck('month')),
+                    datasets: [
+                        { label: 'Ponctuels', data: @json(collect($chartData['pointages_monthly'])->pluck('ponctuel')), backgroundColor: '#4CAF50' },
+                        { label: 'Retards', data: @json(collect($chartData['pointages_monthly'])->pluck('retards')), backgroundColor: '#F44336' }
+                    ]
+                },
+                options: { ...commonOptions, scales: { y: { beginAtZero: true } } }
+            });
+
+            // 2. Tâches Status
+            new Chart(document.getElementById('tachesStatusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: @json($chartData['taches_status']['labels'] ?? []),
+                    datasets: [{
+                        data: @json($chartData['taches_status']['data'] ?? []),
+                        backgroundColor: @json($chartData['taches_status']['colors'] ?? []),
+                        borderWidth: 2
+                    }]
+                },
+                options: commonOptions
+            });
+
+            // 3. Objectifs Progress
+            new Chart(document.getElementById('objectifsProgressChart'), {
+                type: 'pie',
+                data: {
+                    labels: @json($chartData['objectifs_progress']['labels'] ?? []),
+                    datasets: [{
+                        data: @json($chartData['objectifs_progress']['data'] ?? []),
+                        backgroundColor: @json($chartData['objectifs_progress']['colors'] ?? []),
+                        borderWidth: 2
+                    }]
+                },
+                options: commonOptions
+            });
+
+            // 4. Projets Status
+            @if($isAdmin && isset($chartData['projets_status']))
+            new Chart(document.getElementById('projetsStatusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: @json($chartData['projets_status']['labels'] ?? []),
+                    datasets: [{
+                        data: @json($chartData['projets_status']['data'] ?? []),
+                        backgroundColor: @json($chartData['projets_status']['colors'] ?? []),
+                        borderWidth: 2
+                    }]
+                },
+                options: commonOptions
+            });
+            @endif
+
+            // 5. Retards Trend
+            new Chart(document.getElementById('retardsTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: @json(collect($chartData['retards_trend'])->pluck('week')),
+                    datasets: [{
+                        label: 'Retards',
+                        data: @json(collect($chartData['retards_trend'])->pluck('retards')),
+                        borderColor: '#F44336',
+                        backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: { ...commonOptions, scales: { y: { beginAtZero: true } } }
+            });
+
+            // 6. Users Performance
+            @if($isAdmin && isset($chartData['users_performance']))
+            new Chart(document.getElementById('usersPerformanceChart'), {
+                type: 'bar',
+                data: {
+                    labels: @json($chartData['users_performance']['labels'] ?? []),
+                    datasets: [{
+                        label: 'Tâches terminées',
+                        data: @json($chartData['users_performance']['data'] ?? []),
+                        backgroundColor: '#2196F3'
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    indexAxis: 'y',
+                    scales: { x: { beginAtZero: true } }
+                }
+            });
+            @endif
         });
-    });
-</script>
+    </script>
 </x-app-layout>
