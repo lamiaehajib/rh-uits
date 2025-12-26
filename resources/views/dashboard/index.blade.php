@@ -1,1591 +1,760 @@
 <x-app-layout>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{{ __('Dashboard') }}</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
-    </head>
     <style>
+        /* Variables de couleurs */
         :root {
-            --primary-color: #D32F2F;
-            --accent-color: #C2185B;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --dark-color: #1f2937;
-            --text-light: #f9fafb;
-            --bg-light: #f3f4f6;
-            --bg-card: rgba(255, 255, 255, 0.95);
-            --border-color: rgba(255, 255, 255, 0.2);
-            --box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
-            --border-radius: 1rem;
-            --transition: all 0.3s ease-in-out;
+            --primary-gradient: linear-gradient(135deg, #C2185B, #D32F2F);
+            --primary-pink: #C2185B;
+            --primary-red: #D32F2F;
+            --success-green: #4CAF50;
+            --warning-orange: #FF9800;
+            --info-blue: #2196F3;
+            --dark-text: #2C3E50;
+            --light-bg: #f8f9fa;
         }
 
-        body {
-            background-color: var(--bg-light);
-            font-family: 'Inter', sans-serif;
+        /* Container principal */
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
-        .header-card, .stats-card, .section-header, .table-container, .chart-card, .activity-card, .pointage-card, .project-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(20px);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            border: 1px solid var(--border-color);
-            overflow: hidden;
+        /* Cards modernes avec gradient subtil */
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
             position: relative;
-            z-index: 1;
+            overflow: hidden;
         }
 
-        .header-card::before {
+        .stat-card::before {
             content: '';
             position: absolute;
             top: 0;
-            left: -100%;
-            width: 100%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(211, 47, 47, 0.15);
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        /* Icônes avec gradient */
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: var(--primary-gradient);
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .stat-icon.success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+
+        .stat-icon.warning {
+            background: linear-gradient(135deg, #FF9800, #F57C00);
+        }
+
+        .stat-icon.info {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+        }
+
+        /* Titres et textes */
+        .stat-title {
+            font-size: 14px;
+            color: #6c757d;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .stat-subtitle {
+            font-size: 13px;
+            color: #95a5a6;
+        }
+
+        /* Section headers */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .section-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--primary-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        /* Charts container */
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            transition: left 1.5s ease-in-out;
-            z-index: -1;
         }
 
-        .header-card:hover::before {
-            left: 100%;
+        /* Progress bars */
+        .progress-modern {
+            height: 8px;
+            border-radius: 10px;
+            background: #e9ecef;
+            overflow: hidden;
         }
 
-        .search-wrapper {
-            background: rgba(255,255,255,0.9);
-            border-radius: 50px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            transition: var(--transition);
+        .progress-bar-gradient {
+            background: var(--primary-gradient);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.6s ease;
         }
 
-        .search-wrapper:focus-within {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        /* Badges modernes */
+        .badge-gradient {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .search-input {
-            background: transparent;
-            color: var(--dark-color);
+        .badge-success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
         }
 
-        .search-input::placeholder {
-            color: #94a3b8;
+        .badge-warning {
+            background: linear-gradient(135deg, #FF9800, #F57C00);
         }
 
+        .badge-info {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+        }
+
+        /* Tables modernes */
         .modern-table {
-            border-collapse: separate;
-            border-spacing: 0;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
         }
 
         .modern-table thead {
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            background: var(--primary-gradient);
         }
 
-        .modern-table th {
+        .modern-table thead th {
             color: white;
             font-weight: 600;
+            padding: 16px;
             text-transform: uppercase;
+            font-size: 12px;
             letter-spacing: 0.5px;
-            padding: 1.25rem 1rem;
         }
 
-        .modern-table th:first-child {
-            border-top-left-radius: var(--border-radius);
-        }
-        .modern-table th:last-child {
-            border-top-right-radius: var(--border-radius);
-        }
-
-        .modern-table td {
-            color: var(--dark-color);
-            font-weight: 500;
-            transition: var(--transition);
-            padding: 1rem;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .modern-table tbody tr:last-child td {
-            border-bottom: none;
+        .modern-table tbody tr {
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
         }
 
         .modern-table tbody tr:hover {
-            background-color: rgba(59, 130, 246, 0.05);
-            transform: scale(1.005);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            background: #f8f9fa;
+            transform: scale(1.01);
         }
 
-        .status-badge {
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            min-width: 100px;
-            justify-content: center;
+        .modern-table tbody td {
+            padding: 16px;
+            color: #2C3E50;
         }
 
-        .status-active, .status-en-cours {
-            background: rgba(59, 130, 246, 0.1);
-            color: var(--primary-color);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-        }
-
-        .status-pending, .status-en-attente {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--warning-color);
-            border: 1px solid rgba(245, 158, 11, 0.2);
-        }
-
-        .status-completed, .status-terminé {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success-color);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-
-        .status-nouveau, .status-new {
-            background: rgba(107, 114, 128, 0.1);
-            color: #6b7280;
-            border: 1px solid rgba(107, 114, 128, 0.2);
-        }
-
-        .status-annulé {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger-color);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .pagination-modern .page-link {
-            background: rgba(255,255,255,0.9);
-            color: var(--primary-color);
-            font-weight: 600;
-            border: 2px solid transparent;
-            transition: var(--transition);
-            border-radius: 0.5rem;
-            padding: 0.75rem 1rem;
-            min-width: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .pagination-modern .page-item.active .page-link {
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        /* Buttons */
+        .btn-gradient {
+            background: var(--primary-gradient);
             color: white;
-            transform: scale(1.05);
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
-            border-color: var(--primary-color);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
 
-        .pagination-modern .page-link:hover:not(.page-item.active .page-link) {
-            background: var(--primary-color);
-            color: white;
+        .btn-gradient:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.3);
         }
 
-        .fade-in {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.6s ease-out;
+        /* Quick actions */
+        .quick-action {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
 
-        .fade-in.visible {
-            opacity: 1;
-            transform: translateY(0);
+        .quick-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.15);
         }
 
-        .ripple-btn {
-            position: relative;
-            overflow: hidden;
-            transform: translate3d(0, 0, 0);
+        .quick-action-icon {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 12px;
+            border-radius: 12px;
+            background: var(--primary-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
         }
 
-        .ripple-btn:after {
-            content: "";
-            display: block;
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
-            background-repeat: no-repeat;
-            background-position: 50%;
-            transform: scale(10, 10);
-            opacity: 0;
-            transition: transform .5s, opacity 1s;
+        /* User list */
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
         }
 
-        .ripple-btn:active:after {
-            transform: scale(0, 0);
-            opacity: .2;
-            transition: 0s;
+        .user-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
         }
 
-        .loading-spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #fff;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .metric-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(15px);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            border: 1px solid var(--border-color);
-            transition: var(--transition);
-        }
-        .metric-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.12);
-        }
-        .metric-card .icon {
-            font-size: 2.5rem;
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-        }
-        .metric-card .value {
-            font-size: 2.25rem;
-            font-weight: 700;
-        }
-        .metric-card .label {
-            font-size: 1rem;
-            color: #6b7280;
-        }
-        .trend-up { color: var(--success-color); }
-        .trend-down { color: var(--danger-color); }
-
-        .activity-item {
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            padding-bottom: 1rem;
-            margin-bottom: 1rem;
-        }
-        .activity-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-        .activity-icon {
+        .user-avatar {
             width: 40px;
             height: 40px;
             border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-        }
-        .activity-icon.blue { background-color: var(--primary-color); }
-        .activity-icon.green { background-color: var(--success-color); }
-        .activity-icon.yellow { background-color: var(--warning-color); }
-        .activity-icon.gray { background-color: #6b7280; }
-
-        .reclamation-status-pending { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
-        .reclamation-status-in_progress { background-color: #cfe2ff; color: #084298; border: 1px solid #b6d4fe; }
-        .reclamation-status-resolved { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
-        .reclamation-status-closed { background-color: #e2e3e5; color: #495057; border: 1px solid #d3d6db; }
-
-        /* Project Card Styles */
-        .project-card {
-            transition: var(--transition);
-        }
-        .project-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.12);
-        }
-
-        .progress-bar-container {
-            width: 100%;
-            height: 8px;
-            background-color: #e5e7eb;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-            border-radius: 10px;
-            transition: width 0.5s ease-in-out;
-        }
-
-        .rdv-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
             font-weight: 600;
         }
 
-        .rdv-upcoming {
-            background: rgba(59, 130, 246, 0.1);
-            color: #2563eb;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-        }
-
-        .rdv-today {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success-color);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-
+        /* Responsive */
         @media (max-width: 768px) {
-            .modern-table {
-                min-width: 600px;
+            .stat-card {
+                margin-bottom: 16px;
             }
-            .modern-table th, .modern-table td {
-                padding: 0.8rem 0.5rem;
-                font-size: 0.85rem;
+            
+            .stat-value {
+                font-size: 24px;
             }
-            .stats-grid {
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            }
-        }
-
-        @media (max-width: 480px) {
-            .modern-table th, .modern-table td {
-                padding: 0.6rem 0.4rem;
-                font-size: 0.8rem;
-            }
-            .metric-card .value {
-                font-size: 1.75rem;
-            }
-            .metric-card .label {
-                font-size: 0.9rem;
-            }
-        }
-        .table-container {
-            background: var(--bg-card);
-            backdrop-filter: blur(20px);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            border: 1px solid var(--border-color);
-            overflow-x: auto;
-            overflow-y: auto;
-            max-height: 400px;
-        }
-
-        .modern-table {
-            border-collapse: separate;
-            border-spacing: 0;
-            width: 100%;
-            min-width: 600px;
-        }
-
-        .modern-table thead {
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            position: sticky;
-            top: 0;
-            z-index: 1;
-        }
-
-        .modern-table th, .modern-table td {
-            padding: 1rem;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .modern-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .modern-table tbody tr:hover {
-            background-color: rgba(59, 130, 246, 0.05);
-            transform: scale(1.005);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-        }
-
-        .modal-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-content {
-            background: var(--bg-card);
-            backdrop-filter: blur(20px);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            border: 1px solid var(--border-color);
-            padding: 0;
-            max-width: 600px;
-            width: 90%;
-            transform: translateY(-50px);
-            opacity: 0;
-            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .modal-overlay.show .modal-content {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        .modal-close-button {
-            position: absolute;
-            top: 1rem;
-            right: 1.5rem;
-            background: none;
-            border: none;
-            font-size: 1.8rem;
-            color: var(--dark-color);
-            cursor: pointer;
-            transition: color 0.2s ease-in-out;
-            z-index: 10;
-        }
-
-        .modal-close-button:hover {
-            color: var(--danger-color);
-        }
-
-        .modal-pointage-button {
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-            color: white;
-            padding: 1rem 2rem;
-            font-size: 1.5rem;
-            font-weight: bold;
-            border-radius: 0.75rem;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease-in-out;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .modal-pointage-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-        }
-
-        .modal-pointage-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        @keyframes fade-in {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-fade-in {
-            animation: fade-in 0.5s ease-out;
-        }
-
-        .group:active .absolute {
-            animation: ripple 0.6s linear;
-        }
-
-        @keyframes ripple {
-            0% { transform: scale(0); opacity: 1; }
-            100% { transform: scale(1); opacity: 0; }
         }
     </style>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="header-card fade-in p-8 text-center relative z-10">
-                <h1 class="text-3xl sm:text-4xl font-extrabold bg-gradient-to-r from-red-600 to-red-400 bg-clip-text text-transparent mb-2">
-                    <?php
-                        $hour = \Carbon\Carbon::now()->format('H');
-                        $greeting = ($hour >= 6 && $hour < 19) ? 'Bonjour' : 'Bonsoir';
-                    ?>
-                    {{ $greeting }}, {{ Auth::user()->name }}
-                </h1>
-                @php
-                    \Carbon\Carbon::setLocale('fr');
-                @endphp
-                <p class="text-gray-600 text-lg mt-2">{{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}</p>
-
-                <div class="search-container mt-8 max-w-xl mx-auto">
-                    <form action="{{ route('dashboard') }}" method="GET" class="flex items-center search-wrapper rounded-full shadow-lg">
-                        <input class="search-input flex-1 border-none outline-none py-4 px-6 text-lg rounded-l-full" type="text" name="search" placeholder="Rechercher dans le système..." value="{{ request()->get('search') }}">
-                        <button class="search-btn bg-gradient-to-r from-red-600 to-red-400 text-white p-4 flex items-center justify-center rounded-r-full hover:from-blue-700 hover:to-red-500 transition duration-300 ripple-btn text-xl" type="submit">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="text-center mt-6">
-                <button id="openPointageModalBtn" class="flex items-center justify-center mx-auto px-6 py-3 bg-gradient-to-r from-red-600 to-red-400 text-white rounded-full shadow-lg hover:from-red-700 hover:to-red-500 transition duration-300 transform hover:scale-105 text-lg font-semibold">
-                    <i class="fas fa-clock mr-3 text-2xl"></i> Gérer mon Pointage
-                </button>
-            </div>
-
-            <div id="welcomeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-                <div class="bg-white rounded-2xl p-8 max-w-md mx-4 transform transition-all duration-300 scale-95 opacity-0" id="modalContent">
-                    <div class="text-center">
-                        <div class="w-20 h-20 mx-auto mb-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                            <i class="fas fa-rocket text-white text-2xl"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Bienvenue sur votre Dashboard!</h2>
-                        <p class="text-gray-600 mb-6">C'est votre première visite. Nous sommes ravis de vous accueillir dans notre système de gestion.</p>
-                        <div class="flex gap-3">
-                            <button onclick="closeModal()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">
-                                Fermer
-                            </button>
-                            <button onclick="closeModal()" class="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all">
-                                Commencer
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 space-y-6"> 
-                <div class="container mx-auto px-4 py-8">
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 stats-grid">
-                        @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
-                            <div class="metric-card fade-in p-6 text-center">
-                                <div class="icon bg-gradient-to-r from-green-500 to-green-600"><i class="fas fa-users"></i></div>
-                                <div class="value bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">{{ $userCount }}</div>
-                                <div class="label text-gray-800 mt-2">Effectif de l'équipe UITS</div>
-                            </div>
-                            <div class="metric-card fade-in p-6 text-center">
-                                <div class="icon bg-gradient-to-r from-blue-500 to-blue-600"><i class="fas fa-tasks"></i></div>
-                                <div class="value bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">{{ $stats['total_tasks'] ?? 0 }}</div>
-                                <div class="label text-gray-800 mt-2">Tâches Totales</div>
-                            </div>
-                            <div class="metric-card fade-in p-6 text-center">
-                                <div class="icon bg-gradient-to-r from-purple-500 to-purple-600"><i class="fas fa-project-diagram"></i></div>
-                                <div class="value bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-transparent">{{ $stats['total_projects'] ?? 0 }}</div>
-                                <div class="label text-gray-800 mt-2">Projets Totaux</div>
-                            </div>
-                            <div class="metric-card fade-in p-6 text-center">
-                                <div class="icon bg-gradient-to-r from-red-500 to-red-600"><i class="fas fa-graduation-cap"></i></div>
-                                <div class="value bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent">{{ $stats['total_formations'] ?? 0 }}</div>
-                                <div class="label text-gray-800 mt-2">Formations Totales</div>
-                            </div>
-                        @else
-                            <div class="metric-card fade-in p-6 text-center">
-                                <div class="icon bg-gradient-to-r from-blue-500 to-blue-600"><i class="fas fa-tasks"></i></div>
-                                <div class="value bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">{{ $stats['my_tasks'] ?? 0 }}</div>
-                                <div class="label text-gray-800 mt-2">Mes Tâches</div>
-                            </div>
-                            <div class="metric-card fade-in p-6 text-center">
-                                <div class="icon bg-gradient-to-r from-green-500 to-green-600"><i class="fas fa-check-circle"></i></div>
-                                <div class="value bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">{{ $stats['completed_tasks'] ?? 0 }}</div>
-                                <div class="label text-gray-800 mt-2">Tâches Terminées</div>
-                            </div>
-                            <div class="metric-card fade-in p-6 text-center">
-                                <div class="icon bg-gradient-to-r from-red-500 to-red-600"><i class="fas fa-hourglass-half"></i></div>
-                                <div class="value bg-gradient-to-r from-red-500 to-red-600 bg-clip-text text-transparent">{{ $stats['pending_tasks'] ?? 0 }}</div>
-                                <div class="label text-gray-800 mt-2">Tâches en Cours</div>
-                            </div>
-                            <div class="metric-card fade-in p-6 text-center">
-                                <div class="icon bg-gradient-to-r from-gray-500 to-gray-600"><i class="fas fa-plus-circle"></i></div>
-                                <div class="value bg-gradient-to-r from-gray-500 to-gray-600 bg-clip-text text-transparent">{{ $stats['new_tasks'] ?? 0 }}</div>
-                                <div class="label text-gray-800 mt-2">Nouvelles Tâches</div>
-                            </div>
-                        @endif
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                        <div class="chart-card fade-in p-6">
-                            <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800 mb-6">
-                              <div class="section-icon w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-400 rounded-full flex items-center justify-center text-white">
-                                    <i class="fas fa-tasks"></i>
-                                </div>
-                                Statut des Tâches
-                            </h3>
-                            <div class="flex justify-center items-center h-80">
-                                <canvas id="tasksStatusChart"></canvas>
-                            </div>
-                        </div>
-
-                        <div class="chart-card fade-in p-6">
-                            <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800 mb-6">
-                                <div class="section-icon w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-400 rounded-full flex items-center justify-center text-white">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                                Ponctualité des Arrivées
-                            </h3>
-                            @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
-                            <div class="flex justify-end mb-4">
-                                <select id="punctualityPeriodSelect" class="form-select border-gray-300 rounded-md shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50">
-                                    <option value="all">Tout</option>
-                                    <option value="today">Aujourd'hui</option>
-                                    <option value="week">Cette semaine</option>
-                                    <option value="month" selected>Ce mois</option>
-                                    <option value="year">Cette année</option>
-                                </select>
-                            </div>
-                            @endif
-
-                            @if ($pointagePunctualityChartData['total'] > 0)
-                                <div class="flex justify-center items-center h-80">
-                                    <canvas id="pointagePunctualityChart"></canvas>
-                                </div>
-                                <div class="text-center text-sm text-gray-600 mt-4">
-                                    Nombre total d'arrivées : <span id="totalPunctualityArrivals">{{ $pointagePunctualityChartData['total'] }}</span>
-                                </div>
-                            @else
-                                <div class="text-center text-gray-500 py-8" id="noPunctualityDataMessage">
-                                    Aucune donnée de pointage disponible pour l'analyse de ponctualité.
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    {{-- NOUVELLE SECTION: PROJETS --}}
-                    @can("project-list")
-                        <div class="section-header fade-in p-6 mt-6 mb-4">
-                            <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800">
-                                <div class="section-icon w-10 h-10 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full flex items-center justify-center text-white">
-                                    <i class="fas fa-project-diagram"></i>
-                                </div>
-                                Projets & Avancements
-                            </h3>
-                        </div>
-
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                            @forelse($projects->take(4) as $project)
-                                <div class="project-card fade-in p-6">
-                                    <div class="flex items-start justify-between mb-4">
-                                        <div>
-                                            <h4 class="text-lg font-bold text-gray-800 mb-1">{{ $project->titre }}</h4>
-                                            <p class="text-sm text-gray-600">{{ Str::limit($project->description, 60) }}</p>
-                                        </div>
-                                        <span class="status-badge status-{{ strtolower(str_replace(' ', '-', $project->statut_projet)) }}">
-                                            {{ $project->statut_projet }}
-                                        </span>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <div class="flex justify-between text-sm text-gray-600 mb-2">
-                                            <span>Progression</span>
-                                            <span class="font-semibold">{{ $project->avancements->sum('pourcentage') > 100 ? 100 : $project->avancements->sum('pourcentage') }}%</span>
-                                        </div>
-                                        <div class="progress-bar-container">
-                                            <div class="progress-bar" style="width: {{ $project->avancements->sum('pourcentage') > 100 ? 100 : $project->avancements->sum('pourcentage') }}%"></div>
-                                        </div>
-                                    </div>
-
-                                    <div class="grid grid-cols-2 gap-4 mb-4">
-                                        <div class="text-center p-3 bg-blue-50 rounded-lg">
-                                            <div class="text-2xl font-bold text-blue-600">{{ $project->avancements->count() }}</div>
-                                            <div class="text-xs text-gray-600">Avancements</div>
-                                        </div>
-                                        <div class="text-center p-3 bg-green-50 rounded-lg">
-                                            <div class="text-2xl font-bold text-green-600">{{ $project->rendezVous->count() }}</div>
-                                            <div class="text-xs text-gray-600">Rendez-vous</div>
-                                        </div>
-                                    </div>
-
-                                    @if($project->rendezVous->where('date_heure', '>', now())->first())
-                                        @php
-                                            $nextRdv = $project->rendezVous->where('date_heure', '>', now())->sortBy('date_heure')->first();
-                                            $isToday = $nextRdv->date_heure->isToday();
-                                        @endphp
-                                        <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-                                            <div class="flex items-center gap-2">
-                                                <i class="fas fa-calendar-alt text-blue-500"></i>
-                                                <span class="text-sm font-semibold text-gray-700">Prochain RDV:</span>
-                                            </div>
-                                            <div class="mt-2 flex items-center justify-between">
-                                                <span class="text-sm text-gray-600">{{ $nextRdv->date_heure->format('d/m/Y H:i') }}</span>
-                                                <span class="rdv-badge {{ $isToday ? 'rdv-today' : 'rdv-upcoming' }}">
-                                                    <i class="fas fa-clock"></i>
-                                                    {{ $isToday ? 'Aujourd\'hui' : $nextRdv->date_heure->diffForHumans() }}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    @endif
-
-                                    <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                                        <div class="flex -space-x-2">
-                                            @foreach($project->users->take(3) as $user)
-                                                <div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold border-2 border-white" title="{{ $user->name }}">
-                                                    {{ strtoupper(substr($user->name, 0, 1)) }}
-                                                </div>
-                                            @endforeach
-                                            @if($project->users->count() > 3)
-                                                <div class="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-bold border-2 border-white">
-                                                    +{{ $project->users->count() - 3 }}
-                                                </div>
-                                            @endif
-                                        </div>
-                                        <a href="{{ route('admin.projets.show', $project) }}" class="text-blue-600 hover:text-blue-800 font-semibold text-sm flex items-center gap-1">
-                                            Voir détails <i class="fas fa-arrow-right"></i>
-                                        </a>
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="col-span-2 text-center text-gray-500 py-8">
-                                    Aucun projet trouvé.
-                                </div>
-                            @endforelse
-                        </div>
-                    @endcan
-
-                    <div class="activity-card fade-in p-6 mt-6">
-                        <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800 mb-6">
-                            <div class="section-icon w-10 h-10 bg-gradient-to-r from-red-600 to-red-400 rounded-full flex items-center justify-center text-white">
-                                <i class="fas fa-history"></i>
-                            </div>
-                            Activités Récentes
-                        </h3>
-                        <div class="space-y-4">
-                            @forelse($recentActivities as $activity)
-                                <div class="activity-item flex items-start gap-4">
-                                    <div class="activity-icon {{ $activity['color'] }}">
-                                        <i class="{{ $activity['icon'] }} text-lg"></i>
-                                    </div>
-                                    <div>
-                                        <p class="font-semibold text-gray-800">{{ $activity['title'] }}</p>
-                                        <p class="text-sm text-gray-600">{{ $activity['type'] === 'task' ? 'Tâche' : 'Projet' }} - {{ $activity['status'] }}</p>
-                                        <p class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($activity['date'])->diffForHumans() }}</p>
-                                    </div>
-                                </div>
-                            @empty
-                                <p class="text-center text-gray-500">Aucune activité récente.</p>
-                            @endforelse
-                        </div>
-                    </div>
-
-                    <div class="table-container fade-in p-6 mt-6 mb-6">
-                        <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800 mb-6">
-                            <div class="section-icon w-10 h-10 bg-gradient-to-r from-red-600 to-yellow-400 rounded-full flex items-center justify-center text-white">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            {{ (auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin')) ? __('Réclamations Non Résolues') : __('Mes Réclamations Résolues') }}
-                        </h3>
-                        @if($reclamations->count())
-                            <div class="overflow-x-auto">
-                                <table class="modern-table w-full whitespace-nowrap">
-                                    <thead>
-                                        <tr>
-                                            <th class="p-4 text-left rounded-tl-xl">Référence</th>
-                                            <th class="p-4 text-left">Titre</th>
-                                            @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
-                                            <th class="p-4 text-center">Utilisateur</th>
-                                            @endif
-                                            <th class="p-4 text-center">Priorité</th>
-                                            <th class="p-4 text-center">Statut</th>
-                                            <th class="p-4 text-center rounded-tr-xl">Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($reclamations as $reclamation)
-                                        <tr>
-                                            <td class="p-4 text-left">{{ $reclamation->reference }}</td>
-                                            <td class="p-4 text-left">{{ $reclamation->titre }}</td>
-                                            @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
-                                            <td class="p-4 text-center">{{ $reclamation->user->name ?? 'N/A' }}</td>
-                                            @endif
-                                            <td class="p-4 text-center">{{ ucfirst($reclamation->priority) }}</td>
-                                            <td class="p-4 text-center">
-                                                <span class="status-badge reclamation-status-{{ strtolower(str_replace(' ', '_', $reclamation->status)) }}">
-                                                    {{ ucfirst($reclamation->status) }}
-                                                </span>
-                                            </td>
-                                            <td class="p-4 text-center">{{ \Carbon\Carbon::parse($reclamation->created_at)->format('d/m/Y') }}</td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <p class="text-center text-gray-500 py-8">
-                                {{ (auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin')) ? __('Aucune réclamation non résolue.') : __('Aucune de vos réclamations n\'a été résolue.') }}
-                            </p>
-                        @endif
-                    </div>
-
-                    @can("tache-list")
-                        <div class="section-header fade-in p-6 mt-6 mb-4">
-                            <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800">
-                                <div class="section-icon w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-400 rounded-full flex items-center justify-center text-white">
-                                    <i class="fas fa-tasks"></i>
-                                </div>
-                                Liste des Tâches
-                            </h3>
-                        </div>
-                        <div class="table-container fade-in mb-6 overflow-x-auto shadow-lg">
-                            <table class="modern-table w-full whitespace-nowrap">
-                                <thead>
-                                    <tr>
-                                        <th scope="col" class="py-3 px-6">
-                                                <a href="{{ route('taches.index', array_merge(request()->query(), ['sort_by' => 'titre', 'sort_direction' => request('sort_by') == 'titre' && request('sort_direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
-                                                    {{ __('Titre') }}
-                                                    @if (request('sort_by') == 'titre')
-                                                        @if (request('sort_direction') == 'asc')
-                                                            <i class="fas fa-sort-alpha-down ml-1"></i>
-                                                        @else
-                                                            <i class="fas fa-sort-alpha-up-alt ml-1"></i>
-                                                        @endif
-                                                    @else
-                                                        <i class="fas fa-sort ml-1 text-gray-400"></i>
-                                                    @endif
-                                                </a>
-                                            </th>
-                                        <th class="p-4 text-center">Statut</th>
-                                        <th class="p-4 text-center">Date Début</th>
-                                        <th class="p-4 text-center">Durée</th>
-                                        <th scope="col" class="py-3 px-6">
-                                                <a href="{{ route('taches.index', array_merge(request()->query(), ['sort_by' => 'priorite', 'sort_direction' => request('sort_by') == 'priorite' && request('sort_direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center">
-                                                    {{ __('Priorité') }}
-                                                    @if (request('sort_by') == 'priorite')
-                                                        @if (request('sort_direction') == 'asc')
-                                                            <i class="fas fa-sort-amount-down-alt ml-1"></i>
-                                                        @else
-                                                            <i class="fas fa-sort-amount-up-alt ml-1"></i>
-                                                        @endif
-                                                    @else
-                                                        <i class="fas fa-sort ml-1 text-gray-400"></i>
-                                                    @endif
-                                                </a>
-                                            </th>
-                                        <th class="p-4 text-center rounded-tr-xl">Assigné(e)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($tasks as $tache)
-                                        <tr class="border-b last:border-none hover:bg-gray-50">
-                                           <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">
-                                                    {{ Str::words($tache->titre, 5, '...') }}
-                                                </td>
-                                            <td class="p-4 text-center">
-                                                <span class="status-badge status-{{ strtolower(str_replace(' ', '-', $tache->status)) }}">
-                                                    {{ $tache->status }}
-                                                </span>
-                                            </td>
-                                            <td class="p-4 text-center">{{ \Carbon\Carbon::parse($tache->datedebut)->format('d/m/Y') }}</td>
-                                            <td class="p-4 text-center">{{ $tache->duree }}</td>
-                                            <td class="py-4 px-6">
-                                                    <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                                        @if($tache->priorite == 'faible') bg-blue-200 text-blue-800
-                                                        @elseif($tache->priorite == 'moyen') bg-orange-200 text-orange-800
-                                                        @elseif($tache->priorite == 'élevé') bg-red-200 text-red-800
-                                                        @endif">
-                                                        {{ ucfirst($tache->priorite) }}
-                                                    </span>
-                                                </td>
-                                                   <td class="py-4 px-6">
-        <div class="flex items-center">
-        <i class="fas fa-user-circle text-gray-400 mr-2"></i>
-        @foreach ($tache->users as $assignedUser)
-            {{ $assignedUser->name }}{{ !$loop->last ? ', ' : '' }}
-        @endforeach
-    </div>
-</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="6" class="p-4 text-center text-gray-500">Aucune tâche trouvée.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="pagination-container flex justify-center mb-6">
-                            <ul class="pagination-modern flex gap-2 list-none">
-                                {{ $tasks->links('pagination::tailwind') }}
-                            </ul>
-                        </div>
-                    @endcan
-
-                    @can("project-list")
-                        <div class="section-header fade-in p-4 mt-6 mb-4">
-                            <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800">
-                                <div class="section-icon w-10 h-10 bg-gradient-to-r from-purple-600 to-purple-400 rounded-full flex items-center justify-center text-white">
-                                    <i class="fas fa-project-diagram"></i>
-                                </div>
-                                Liste Complète des Projets
-                            </h3>
-                        </div>
-                        <div class="table-container fade-in mb-6 overflow-x-auto shadow-lg">
-                            <table class="modern-table w-full whitespace-nowrap">
-                                <thead>
-                                    <tr>
-                                        <th class="p-4 text-left rounded-tl-xl">Titre</th>
-                                        <th class="p-4 text-center">Statut</th>
-                                        <th class="p-4 text-center">Progression</th>
-                                        <th class="p-4 text-center">Avancements</th>
-                                        <th class="p-4 text-center">RDV</th>
-                                        <th class="p-4 text-center">Assignées</th>
-                                        <th class="p-4 text-center rounded-tr-xl">Date Début</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($projects as $project)
-                                        <tr class="border-b last:border-none hover:bg-gray-50">
-                                            <td class="p-4 text-left font-semibold">{{ $project->titre }}</td>
-                                            <td class="p-4 text-center">
-                                                <span class="status-badge status-{{ strtolower(str_replace(' ', '-', $project->statut_projet)) }}">
-                                                    {{ $project->statut_projet }}
-                                                </span>
-                                            </td>
-                                            <td class="p-4 text-center">
-                                                <div class="flex items-center justify-center gap-2">
-                                                    <div class="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                        <div class="h-full bg-gradient-to-r from-blue-500 to-purple-600" style="width: {{ $project->avancements->sum('pourcentage') > 100 ? 100 : $project->avancements->sum('pourcentage') }}%"></div>
-                                                    </div>
-                                                    <span class="text-sm font-semibold">{{ $project->avancements->sum('pourcentage') > 100 ? 100 : $project->avancements->sum('pourcentage') }}%</span>
-                                                </div>
-                                            </td>
-                                            <td class="p-4 text-center">
-                                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-800 font-semibold">
-                                                    {{ $project->avancements->count() }}
-                                                </span>
-                                            </td>
-                                            <td class="p-4 text-center">
-                                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-800 font-semibold">
-                                                    {{ $project->rendezVous->count() }}
-                                                </span>
-                                            </td>
-                                            <td class="p-4 text-center">
-                                                <div class="flex justify-center -space-x-2">
-                                                    @foreach($project->users->take(3) as $user)
-                                                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold border-2 border-white" title="{{ $user->name }}">
-                                                            {{ strtoupper(substr($user->name, 0, 1)) }}
-                                                        </div>
-                                                    @endforeach
-                                                    @if($project->users->count() > 3)
-                                                        <div class="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs font-bold border-2 border-white">
-                                                            +{{ $project->users->count() - 3 }}
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                            <td class="p-4 text-center">{{ \Carbon\Carbon::parse($project->date_debut)->format('d/m/Y') }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="7" class="p-4 text-center text-gray-500">Aucun projet trouvé.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="pagination-container flex justify-center mb-6">
-                            <ul class="pagination-modern flex gap-2 list-none">
-                                {{ $projects->links('pagination::tailwind') }}
-                            </ul>
-                        </div>
-                    @endcan
-
-                    @can("formation-list")
-                        <div class="section-header fade-in p-4 mt-6 mb-4">
-                            <h3 class="section-title flex items-center gap-3 text-xl font-bold text-gray-800">
-                                <div class="section-icon w-10 h-10 bg-gradient-to-r from-red-600 to-red-400 rounded-full flex items-center justify-center text-white">
-                                    <i class="fas fa-graduation-cap"></i>
-                                </div>
-                                Liste des Formations
-                            </h3>
-                        </div>
-                        <div class="table-container fade-in mb-6 overflow-x-auto shadow-lg">
-                            <table class="modern-table w-full whitespace-nowrap">
-                                <thead>
-                                    <tr>
-                                        <th class="p-4 text-left rounded-tl-xl">Nom</th>
-                                        <th class="p-4 text-center">Statut</th>
-                                        <th class="p-4 text-center">Formateur</th>
-                                        <th class="p-4 text-center">Date</th>
-                                        <th class="p-4 text-center">Fichier</th>
-                                        <th class="p-4 text-center rounded-tr-xl">Assigné(e)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($formations as $formation)
-                                        <tr class="border-b last:border-none hover:bg-gray-50">
-                                            <td class="p-4 text-left">{{ $formation->name }}</td>
-                                            <td class="p-4 text-center">
-                                                <span class="status-badge status-{{ strtolower(str_replace(' ', '-', $formation->status)) }}">
-                                                    {{ $formation->status }}
-                                                </span>
-                                            </td>
-                                            <td class="p-4 text-center">{{ $formation->nomformateur }}</td>
-                                            <td class="p-4 text-center">{{ \Carbon\Carbon::parse($formation->date)->format('d/m/Y') }}</td>
-                                            <td class="p-4 text-center">
-                                                @if($formation->file_path)
-                                                   <a href="{{ Storage::disk('public')->url($formation->file_path) }}" title="Télécharger" target="_blank" class="text-blue-500 hover:text-blue-700">
-                                                        <i class="fas fa-download text-lg"></i>
-                                                    </a>
-                                                @else
-                                                    <span class="text-gray-500">Pas de fichier</span>
-                                                @endif
-                                            </td>
-                                            <td class="p-4 text-center">
-                                                @forelse($formation->users as $user)
-                                                    <span class="inline-block bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">{{ $user->name }}</span>{{ !$loop->last ? ' ' : '' }}
-                                                @empty
-                                                    N/A
-                                                @endforelse
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="6" class="p-4 text-center text-gray-500">Aucune formation trouvée.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="pagination-container flex justify-center mb-6">
-                            <ul class="pagination-modern flex gap-2 list-none">
-                                {{ $formations->links('pagination::tailwind') }}
-                            </ul>
-                        </div>
-                    @endcan
-                </div>
-            </div>
+    <div class="dashboard-container">
+        <!-- Welcome Section -->
+        <div class="mb-5">
+            <h1 class="text-4xl font-bold mb-2" style="color: var(--dark-text);">
+                Bonjour, <span class="hight">{{ auth()->user()->name }}</span> 👋
+            </h1>
+            <p class="text-gray-600">Bienvenue sur votre tableau de bord</p>
         </div>
-    </div>
 
-    {{-- MODAL STRUCTURE FOR POINTAGE - NOW CONTAINS THE FULL POINTAGE CARD --}}
-    <div id="pointageModalOverlay" class="modal-overlay">
-        <div class="modal-content">
-            <button id="closePointageModalButton" class="modal-close-button">&times;</button>
-            {{-- Content of the original pointage-card goes here --}}
-            <div class="pointage-card bg-white rounded-3xl shadow-2xl overflow-hidden transform transition-all duration-300">
-                {{-- Gradient Header --}}
-                <div class="bg-gradient-to-r from-red-700 to-red-500 p-8 text-white relative overflow-hidden shadow-inner">
-                    <div class="absolute inset-0 bg-black opacity-10"></div>
-                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-white opacity-10 rounded-full"></div>
-                    <div class="absolute -bottom-10 -left-10 w-24 h-24 bg-white opacity-10 rounded-full"></div>
-
-                    <div class="relative z-10 text-center">
-                        <div class="w-16 h-16 mx-auto mb-4 bg-white bg-opacity-30 rounded-full flex items-center justify-center backdrop-blur-sm">
-                            <i class="fas fa-clock text-3xl"></i> {{-- Made icon larger --}}
-                        </div>
-                        <h3 class="text-2xl font-bold mb-2">Gestion du Pointage</h3>
-                        <div class="w-16 h-1 bg-white bg-opacity-50 mx-auto rounded-full"></div>
+        <!-- Pointage Section -->
+        @if(!auth()->user()->hasRole('Client'))
+        <div class="mb-5">
+            <div class="stat-card">
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                        <h4 class="text-lg font-semibold mb-2" style="color: var(--dark-text);">
+                            <i class="fas fa-clock mr-2"></i> Pointage du jour
+                        </h4>
+                        <p class="text-gray-600 text-sm">
+                            {{ \Carbon\Carbon::now()->isoFormat('dddd D MMMM YYYY') }}
+                        </p>
                     </div>
-                </div>
-
-                {{-- Content Body --}}
-                <div class="p-8">
-                    {{-- Status Message --}}
-                    <div class="text-center mb-8">
-                        @if($hasClockedInToday && !$hasClockedOutToday)
-                            <div class="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-full font-semibold">
-                                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                                Vous êtes actuellement pointé(e)
-                            </div>
-                        @elseif($hasClockedInToday && $hasClockedOutToday)
-                            <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-full font-semibold">
-                                <i class="fas fa-check-circle"></i>
-                                Votre journée de travail est terminée
-                            </div>
+                    
+                    <div class="flex gap-3">
+                        @if(!$hasClockedInToday)
+                            <button onclick="clockIn()" class="btn-gradient">
+                                <i class="fas fa-sign-in-alt mr-2"></i> Pointer l'arrivée
+                            </button>
+                        @elseif(!$hasClockedOutToday)
+                            <button onclick="clockOut()" class="btn-gradient">
+                                <i class="fas fa-sign-out-alt mr-2"></i> Pointer le départ
+                            </button>
                         @else
-                            <div class="inline-flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-full font-semibold">
-                                <i class="fas fa-clock"></i>
-                                Cliquez pour pointer votre arrivée
-                            </div>
-                        @endif
-                    </div>
-
-                    {{-- Pointage Form --}}
-                    <form action="{{ route('pointage.pointer') }}" method="POST" class="text-center" id="pointageFormInModal">
-                        @csrf
-                        <button type="submit"
-                                class="group relative w-full py-4 px-8 rounded-2xl text-xl font-bold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-opacity-50
-                                {{ ($hasClockedInToday && !$hasClockedOutToday) ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:ring-red-300' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:ring-green-300' }}
-                                {{ ($hasClockedInToday && $hasClockedOutToday) ? 'opacity-70 cursor-not-allowed bg-gray-400' : 'text-white shadow-lg hover:shadow-xl' }}"
-                                {{ ($hasClockedInToday && $hasClockedOutToday) ? 'disabled' : '' }}>
-
-                            {{-- Button Content --}}
-                            <div class="flex items-center justify-center gap-3">
-                                @if($hasClockedInToday && !$hasClockedOutToday)
-                                    <i class="fas fa-sign-out-alt text-3xl group-hover:animate-bounce"></i> {{-- Made icon larger --}}
-                                    <span>Pointer Départ</span>
-                                @elseif($hasClockedInToday && $hasClockedOutToday)
-                                    <i class="fas fa-calendar-check text-3xl"></i> {{-- Made icon larger --}}
-                                    <span>Journée Terminée</span>
-                                @else
-                                    <i class="fas fa-sign-in-alt text-3xl group-hover:animate-bounce"></i> {{-- Made icon larger --}}
-                                    <span>Pointer Arrivée</span>
-                                @endif
-                            </div>
-
-                            {{-- Ripple Effect --}}
-                            <div class="absolute inset-0 rounded-2xl overflow-hidden">
-                                <div class="absolute inset-0 transform scale-0 group-active:scale-100 transition-transform duration-300 bg-white opacity-20 rounded-2xl"></div>
-                            </div>
-                        </button>
-                    </form>
-
-                    {{-- Alert Messages --}}
-                    <div class="mt-6 space-y-4">
-                        @if(session('success'))
-                            <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded-r-lg animate-fade-in">
-                                <div class="flex items-center">
-                                    <i class="fas fa-check-circle text-green-400 mr-3 text-xl"></i> {{-- Icon size increased --}}
-                                    <p class="text-green-800 font-medium">{{ session('success') }}</p>
-                                </div>
-                            </div>
-                        @endif
-
-                        @if(session('info'))
-                            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg animate-fade-in">
-                                <div class="flex items-center">
-                                    <i class="fas fa-info-circle text-blue-400 mr-3 text-xl"></i> {{-- Icon size increased --}}
-                                    <p class="text-blue-800 font-medium">{{ session('info') }}</p>
-                                </div>
-                            </div>
-                        @endif
-
-                        @if(session('error'))
-                            <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg animate-fade-in">
-                                <div class="flex items-center">
-                                    <i class="fas fa-exclamation-circle text-red-400 mr-3 text-xl"></i> {{-- Icon size increased --}}
-                                    <p class="text-red-800 font-medium">{{ session('error') }}</p>
-                                </div>
-                            </div>
+                            <span class="badge-success">
+                                <i class="fas fa-check-circle"></i> Pointage complet
+                            </span>
                         @endif
                     </div>
                 </div>
             </div>
         </div>
+        @endif
+
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Stat Card 1 -->
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="stat-title">Total Tâches</div>
+                <div class="stat-value">{{ $stats['total_tasks'] ?? 0 }}</div>
+                <div class="stat-subtitle">
+                    <span class="badge-success">
+                        <i class="fas fa-check"></i> {{ $stats['completed_tasks'] ?? 0 }} Terminées
+                    </span>
+                </div>
+            </div>
+
+            <!-- Stat Card 2 -->
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <div class="stat-title">Projets Actifs</div>
+                <div class="stat-value">{{ $stats['active_projects'] ?? 0 }}</div>
+                <div class="stat-subtitle">
+                    Sur {{ $stats['total_projects'] ?? 0 }} projets
+                </div>
+            </div>
+
+            <!-- Stat Card 3 -->
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-title">Taux de Complétion</div>
+                <div class="stat-value">{{ $stats['completion_rate'] ?? 0 }}%</div>
+                <div class="progress-modern mt-3">
+                    <div class="progress-bar-gradient" style="width: {{ $stats['completion_rate'] ?? 0 }}%"></div>
+                </div>
+            </div>
+
+            <!-- Stat Card 4 -->
+            <div class="stat-card">
+                <div class="stat-icon info">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="stat-title">Score Productivité</div>
+                <div class="stat-value">{{ $stats['productivity_score'] ?? 0 }}</div>
+                <div class="stat-subtitle">
+                    Excellent performance! 🎉
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Équipes (Admin Only) -->
+        @if($equipeStats)
+        <div class="mb-8">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Gestion des Équipes</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-title">Total Utilisateurs</div>
+                    <div class="stat-value">{{ $equipeStats['total_users'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon success">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="stat-title">Utilisateurs Actifs</div>
+                    <div class="stat-value">{{ $equipeStats['active_users'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-user-slash"></i>
+                    </div>
+                    <div class="stat-title">Utilisateurs Inactifs</div>
+                    <div class="stat-value">{{ $equipeStats['inactive_users'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon info">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="stat-title">Nouveaux ce mois</div>
+                    <div class="stat-value">{{ $equipeStats['new_users_this_month'] }}</div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- Section Pointage -->
+        @if($pointageStats)
+        <div class="mb-8">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3>Statistiques de Pointage</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <div class="stat-title">Total Pointages</div>
+                    <div class="stat-value">{{ $pointageStats['total_pointages'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-title">Complets</div>
+                    <div class="stat-value">{{ $pointageStats['pointages_complets'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-title">Retards</div>
+                    <div class="stat-value">{{ $pointageStats['retards'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-door-open"></i>
+                    </div>
+                    <div class="stat-title">Départs Anticipés</div>
+                    <div class="stat-value">{{ $pointageStats['departs_anticipes'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon info">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="stat-title">Taux Ponctualité</div>
+                    <div class="stat-value">{{ $pointageStats['taux_ponctualite'] }}%</div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- Section Tâches -->
+        @if($tachesStats)
+        <div class="mb-8">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h3>Suivi des Tâches</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <div class="stat-title">Total</div>
+                    <div class="stat-value">{{ $tachesStats['total_taches'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon success">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                    <div class="stat-title">Terminées</div>
+                    <div class="stat-value">{{ $tachesStats['taches_terminees'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon info">
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                    <div class="stat-title">En Cours</div>
+                    <div class="stat-value">{{ $tachesStats['taches_en_cours'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <div class="stat-title">Nouvelles</div>
+                    <div class="stat-value">{{ $tachesStats['taches_nouveau'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-title">En Retard</div>
+                    <div class="stat-value">{{ $tachesStats['taches_en_retard'] }}</div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- Section Objectifs -->
+        @if($objectifsStats)
+        <div class="mb-8">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <h3>Objectifs</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-target"></i>
+                    </div>
+                    <div class="stat-title">Total Objectifs</div>
+                    <div class="stat-value">{{ $objectifsStats['total_objectifs'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon success">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-title">Complétés</div>
+                    <div class="stat-value">{{ $objectifsStats['objectifs_completes'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon info">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div class="stat-title">En Cours</div>
+                    <div class="stat-value">{{ $objectifsStats['objectifs_en_cours'] }}</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-title">En Retard</div>
+                    <div class="stat-value">{{ $objectifsStats['objectifs_en_retard'] }}</div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- Section Clients & Projets (Admin Only) -->
+        @if($clientsProjectsStats)
+        <div class="mb-8">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <h3>Clients & Projets</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Clients Stats -->
+                <div class="chart-card">
+                    <h4 class="font-semibold mb-4" style="color: var(--dark-text);">
+                        <i class="fas fa-users mr-2"></i> Statistiques Clients
+                    </h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <div class="stat-value">{{ $clientsProjectsStats['total_clients'] }}</div>
+                            <div class="stat-title">Total Clients</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="stat-value">{{ $clientsProjectsStats['clients_actifs'] }}</div>
+                            <div class="stat-title">Clients Actifs</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projets Stats -->
+                <div class="chart-card">
+                    <h4 class="font-semibold mb-4" style="color: var(--dark-text);">
+                        <i class="fas fa-project-diagram mr-2"></i> Statistiques Projets
+                    </h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <div class="stat-value">{{ $clientsProjectsStats['projets_en_cours'] }}</div>
+                            <div class="stat-title">En Cours</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="stat-value">{{ $clientsProjectsStats['projets_termines'] }}</div>
+                            <div class="stat-title">Terminés</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- Quick Actions -->
+        <div class="mb-8">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3>Actions Rapides</h3>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <a href="{{ route('taches.create') }}" class="quick-action">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="text-sm font-semibold">Nouvelle Tâche</div>
+                </a>
+
+                <a href="{{ route('admin.projets.create') }}" class="quick-action">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-folder-plus"></i>
+                    </div>
+                    <div class="text-sm font-semibold">Nouveau Projet</div>
+                </a>
+
+                <a href="{{ route('formations.index') }}" class="quick-action">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="text-sm font-semibold">Formations</div>
+                </a>
+
+                <a href="{{ route('objectifs.index') }}" class="quick-action">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="text-sm font-semibold">Objectifs</div>
+                </a>
+
+                <a href="{{ route('pointage.index') }}" class="quick-action">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="text-sm font-semibold">Pointages</div>
+                </a>
+
+                <a href="{{ route('reclamations.index') }}" class="quick-action">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="text-sm font-semibold">Réclamations</div>
+                </a>
+            </div>
+        </div>
     </div>
-    {{-- END MODAL STRUCTURE --}}
 
     <script>
-        // Fade-in animation
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -100px 0px'
-        };
-
-        const observer = new IntersectionObserver(function(entries) {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    observer.unobserve(entry.target); // Stop observing once visible
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.fade-in').forEach(el => {
-            observer.observe(el);
-        });
-
-        // Search button loading state
-        document.querySelectorAll('.search-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const originalContent = btn.innerHTML;
-                btn.innerHTML = '<div class="loading-spinner"></div>';
-                btn.disabled = true;
-                setTimeout(() => {
-                    btn.closest('form').submit();
-                }, 800); // Shorter loading simulation
-            });
-        });
-
-        // Table row interaction (visual feedback on click)
-        document.querySelectorAll('.modern-table tbody tr').forEach(row => {
-            row.addEventListener('click', function() {
-                this.classList.add('scale-1005', 'shadow-md');
-                setTimeout(() => {
-                    this.classList.remove('scale-1005', 'shadow-md');
-                }, 200);
-            });
-        });
-
-        // Chart.js instances
-        let tasksStatusChart;
-        let pointageChart;
-        let pointagePunctualityChart; // Declare new chart instance globally
-
-        async function fetchAndRenderCharts(periodForWorkTime = 'all', periodForPunctuality = 'all') {
-            try {
-                // Fetch all chart data from the analytics endpoint
-                const response = await fetch("{{ route('dashboard.analytics') }}?period=" + periodForWorkTime + "&punctuality_period=" + periodForPunctuality);
-                const data = await response.json();
-
-                // Tasks Status Chart (Doughnut chart)
-                const tasksStatusCtx = document.getElementById('tasksStatusChart');
-                if (tasksStatusCtx) {
-                    if (tasksStatusChart) {
-                        tasksStatusChart.destroy();
-                    }
-                    tasksStatusChart = new Chart(tasksStatusCtx.getContext('2d'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: data.tasks_chart.labels, // Correctly use data from fetched JSON
-                            datasets: [{
-                                label: 'Nombre de tâches',
-                                data: data.tasks_chart.data, // Correctly use data from fetched JSON
-                                backgroundColor: data.tasks_chart.colors.map(colorName => {
-                                    switch(colorName) {
-                                        case 'green': return 'rgba(16, 185, 129, 0.8)';
-                                        case 'blue': return 'rgba(59, 130, 246, 0.8)';
-                                        case 'yellow': return 'rgba(245, 158, 11, 0.8)';
-                                        case 'gray': return 'rgba(107, 114, 128, 0.8)';
-                                        default: return 'rgba(150, 150, 150, 0.8)';
-                                    }
-                                }),
-                                borderColor: 'white',
-                                borderWidth: 2,
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'right',
-                                    labels: {
-                                        font: {
-                                            size: 14,
-                                            weight: 'bold'
-                                        },
-                                        color: 'var(--dark-color)'
-                                    }
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'Répartition des Tâches par Statut',
-                                    font: {
-                                        size: 18,
-                                        weight: 'bold'
-                                    },
-                                    color: 'var(--dark-color)'
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            let label = context.label || '';
-                                            if (label) {
-                                                label += ': ';
-                                            }
-                                            if (context.parsed !== null) {
-                                                label += context.parsed + ' tâches';
-                                            }
-                                            return label;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // Pointage Chart (Bar chart)
-                const pointageCtx = document.getElementById('pointageChart');
-                if (pointageCtx) {
-                    if (pointageChart) {
-                        pointageChart.destroy();
-                    }
-                    pointageChart = new Chart(pointageCtx.getContext('2d'), {
-                        type: 'bar', // Bar chart for time worked
-                        data: {
-                            labels: data.pointage_chart.labels,
-                            datasets: [{
-                                label: data.pointage_chart.title,
-                                data: data.pointage_chart.data,
-                                backgroundColor: 'rgba(194, 24, 91, 0.8)', // A nice pink/purple color
-                                borderColor: 'rgba(194, 24, 91, 1)',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    title: {
-                                        display: true,
-                                        text: 'Heures Travaillées',
-                                        font: {
-                                            size: 14,
-                                            weight: 'bold'
-                                        },
-                                        color: 'var(--dark-color)'
-                                    }
-                                },
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: 'Période',
-                                        font: {
-                                            size: 14,
-                                            weight: 'bold'
-                                        },
-                                        color: 'var(--dark-color)'
-                                    }
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    display: false
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'Temps de Travail par Période',
-                                    font: {
-                                        size: 18,
-                                        weight: 'bold'
-                                    },
-                                    color: 'var(--dark-color)'
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(context) {
-                                            let label = context.dataset.label || '';
-                                            if (label) {
-                                                label += ': ';
-                                            }
-                                            if (context.parsed.y !== null) {
-                                                label += context.parsed.y + 'h';
-                                            }
-                                            return label;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // NEW CHART: Pointage Punctuality Chart (Doughnut)
-                const pointagePunctualityCtx = document.getElementById('pointagePunctualityChart');
-                const totalPunctualityArrivalsSpan = document.getElementById('totalPunctualityArrivals');
-                const noPunctualityDataMessageDiv = document.getElementById('noPunctualityDataMessage');
-
-                if (data.pointage_punctuality_chart.total > 0) {
-                    // Show canvas and total, hide no data message
-                    if (pointagePunctualityCtx) pointagePunctualityCtx.style.display = 'block';
-                    if (totalPunctualityArrivalsSpan) totalPunctualityArrivalsSpan.closest('div').style.display = 'block';
-                    if (noPunctualityDataMessageDiv) noPunctualityDataMessageDiv.style.display = 'none';
-
-                    if (pointagePunctualityChart) {
-                        pointagePunctualityChart.destroy();
-                    }
-                    pointagePunctualityChart = new Chart(pointagePunctualityCtx.getContext('2d'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: data.pointage_punctuality_chart.labels, // ['En Retard', 'À l\'heure']
-                            datasets: [{
-                                data: data.pointage_punctuality_chart.data, // [% Late, % On Time]
-                                backgroundColor: data.pointage_punctuality_chart.colors, // ['#D32F2F', '#4CAF50']
-                                borderColor: 'white',
-                                borderWidth: 2
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'right',
-                                    labels: {
-                                        font: {
-                                            size: 14,
-                                            weight: 'bold'
-                                        },
-                                        color: 'var(--dark-color)'
-                                    }
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'Pourcentage de Ponctualité des Arrivées',
-                                    font: {
-                                        size: 18,
-                                        weight: 'bold'
-                                    },
-                                    color: 'var(--dark-color)'
-                                },
-                                tooltip: {
-                                    callbacks: {
-                                        label: function(tooltipItem) {
-                                            const label = tooltipItem.label || '';
-                                            const value = tooltipItem.raw;
-                                            return `${label}: ${value}%`;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                    // Update total arrivals count
-                    if (totalPunctualityArrivalsSpan) {
-                        totalPunctualityArrivalsSpan.textContent = data.pointage_punctuality_chart.total;
-                    }
-                } else {
-                    // Hide canvas and total, show no data message
-                    if (pointagePunctualityCtx) pointagePunctualityCtx.style.display = 'none';
-                    if (totalPunctualityArrivalsSpan) totalPunctualityArrivalsSpan.closest('div').style.display = 'none';
-                    if (noPunctualityDataMessageDiv) noPunctualityDataMessageDiv.style.display = 'block';
-
-                    if (pointagePunctualityChart) {
-                        pointagePunctualityChart.destroy();
-                        pointagePunctualityChart = null; // Clear the instance
-                    }
-                }
-
-            } catch (error) {
-                console.error("Error fetching chart data:", error);
+        function clockIn() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    submitPointage(position.coords.latitude, position.coords.longitude);
+                }, function() {
+                    submitPointage(null, null);
+                });
+            } else {
+                submitPointage(null, null);
             }
         }
 
-        // MODAL JAVASCRIPT LOGIC
-        document.addEventListener('DOMContentLoaded', () => {
-            const pointageModalOverlay = document.getElementById('pointageModalOverlay');
-            const closePointageModalButton = document.getElementById('closePointageModalButton'); // Corrected ID
-            const openPointageModalBtn = document.getElementById('openPointageModalBtn');
-            const pointageFormInModal = document.getElementById('pointageFormInModal');
-
-            // Function to show the pointage modal
-            function showPointageModal() {
-                pointageModalOverlay.classList.add('show');
-                document.body.style.overflow = 'hidden'; // Disable scrolling on the body
-            }
-
-            // Function to hide the pointage modal
-            function hidePointageModal() {
-                pointageModalOverlay.classList.remove('show');
-                document.body.style.overflow = ''; // Re-enable scrolling
-            }
-
-            // Event listener for the new small button to open the pointage modal
-            if (openPointageModalBtn) {
-                openPointageModalBtn.addEventListener('click', showPointageModal);
-            }
-
-            // Event listeners for pointage modal close button and overlay click
-            if (closePointageModalButton) {
-                closePointageModalButton.addEventListener('click', hidePointageModal);
-            }
-            if (pointageModalOverlay) {
-                pointageModalOverlay.addEventListener('click', (e) => {
-                    if (e.target === pointageModalOverlay) {
-                        hidePointageModal();
-                    }
+        function clockOut() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    submitPointage(position.coords.latitude, position.coords.longitude);
+                }, function() {
+                    submitPointage(null, null);
                 });
+            } else {
+                submitPointage(null, null);
             }
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && pointageModalOverlay.classList.contains('show')) {
-                    hidePointageModal();
-                }
-            });
+        }
 
-            // Handle pointage modal form submission
-            if (pointageFormInModal) {
-                pointageFormInModal.addEventListener('submit', function() {
-                    const submitButton = this.querySelector('button[type="submit"]');
-                    submitButton.innerHTML = '<div class="loading-spinner"></div>';
-                    submitButton.disabled = true;
-                });
-            }
+        function submitPointage(lat, lng) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
 
-            // ORIGINAL Welcome Modal Logic
-            function checkFirstVisit() {
-                const hasVisited = localStorage.getItem('hasVisitedDashboard');
-                if (!hasVisited) {
-                    const welcomeModal = document.getElementById('welcomeModal');
-                    const welcomeModalContent = document.getElementById('modalContent');
+            if (lat && lng) {
+                const latInput = document.createElement('input');
+                latInput.type = 'hidden';
+                latInput.name = 'user_latitude';
+                latInput.value = lat;
+                form.appendChild(latInput);
 
-                    if (welcomeModal && welcomeModalContent) {
-                        welcomeModal.classList.remove('hidden');
-                        setTimeout(() => {
-                            welcomeModalContent.classList.remove('scale-95', 'opacity-0');
-                            welcomeModalContent.classList.add('scale-100', 'opacity-100');
-                        }, 50);
-                    }
-                    localStorage.setItem('hasVisitedDashboard', 'true');
-                }
+                const lngInput = document.createElement('input');
+                lngInput.type = 'hidden';
+                lngInput.name = 'user_longitude';
+                lngInput.value = lng;
+                form.appendChild(lngInput);
             }
 
-            // Function for the welcome modal's close button (made global for onclick)
-            window.closeModal = function() {
-                const welcomeModal = document.getElementById('welcomeModal');
-                const welcomeModalContent = document.getElementById('modalContent');
-                if (welcomeModalContent) {
-                    welcomeModalContent.classList.add('scale-95', 'opacity-0');
-                    welcomeModalContent.classList.remove('scale-100', 'opacity-100');
-                    setTimeout(() => {
-                        if (welcomeModal) welcomeModal.classList.add('hidden');
-                    }, 300);
-                }
-            };
-
-            // Close welcome modal when clicking outside
-            const welcomeModalOverlay = document.getElementById('welcomeModal');
-            if (welcomeModalOverlay) {
-                welcomeModalOverlay.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        window.closeModal();
-                    }
-                });
-            }
-
-            // Logic to automatically show pointage modal on first visit for non-admins
-            const isUserAdmin = {{ Auth::user()->hasRole('Sup_Admin') || Auth::user()->hasRole('Custom_Admin') ? 'true' : 'false' }};
-            const hasClockedInToday = {{ $hasClockedInToday ? 'true' : 'false' }};
-            const hasClockedOutToday = {{ $hasClockedOutToday ? 'true' : 'false' }};
-            const today = new Date().toDateString();
-            const lastPointageModalShownDate = localStorage.getItem('pointageModalShownDate');
-
-            if (!isUserAdmin && !hasClockedInToday && !hasClockedOutToday && lastPointageModalShownDate !== today) {
-                showPointageModal(); // Show the pointage modal automatically
-                localStorage.setItem('pointageModalShownDate', today);
-            }
-
-            // Initial render of all charts on page load
-            // Default to 'all' to show everything from the beginning of the application
-            const initialPointagePeriod = document.getElementById('pointagePeriodSelect')?.value || 'all';
-            const initialPunctualityPeriod = 'all'; // Always 'all' by default for everyone
-
-            fetchAndRenderCharts(initialPointagePeriod, initialPunctualityPeriod);
-
-            // Event listener for "Temps de Travail" period select
-            const pointagePeriodSelect = document.getElementById('pointagePeriodSelect');
-            if (pointagePeriodSelect) {
-                pointagePeriodSelect.addEventListener('change', (event) => {
-                    const currentPunctualityPeriod = document.getElementById('punctualityPeriodSelect') ? document.getElementById('punctualityPeriodSelect').value : 'all';
-                    fetchAndRenderCharts(event.target.value, currentPunctualityPeriod);
-                });
-            }
-
-            // Event listener for "Ponctualité des Arrivées" period select
-            const punctualityPeriodSelect = document.getElementById('punctualityPeriodSelect');
-            if (punctualityPeriodSelect) {
-                punctualityPeriodSelect.addEventListener('change', (event) => {
-                    const currentPointagePeriod = document.getElementById('pointagePeriodSelect')?.value || 'all';
-                    fetchAndRenderCharts(currentPointagePeriod, event.target.value);
-                });
-            }
-        });
+            document.body.appendChild(form);
+            form.submit();
+        }
     </script>
 </x-app-layout>

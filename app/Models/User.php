@@ -44,10 +44,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Projet::class, 'projet_user', 'user_id', 'projet_id');
     }
 
-    public function taches()
-    {
-        return $this->hasMany(Tache::class, 'iduser');
-    }
+   public function taches()
+{
+    // كنقولو لـ User بلي عندو بزاف د الطاشات عبر الجدول الوسيط tache_users
+    return $this->belongsToMany(Tache::class, 'tache_users', 'user_id', 'tache_id');
+}
 
     public function formations()
     {
