@@ -157,6 +157,8 @@
                 padding: 1.5rem;
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
             }
+
+            
         </style>
     </head>
     <body>
@@ -173,7 +175,7 @@
         </h2>
 
         <div class="py-6">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="max-w-10xl mx-auto sm:px-6 lg:px-8">
                 @if(session('success'))
                     <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg relative mb-4 shadow-md animate-fade-in animate-pulse-subtle" role="alert">
                         <strong class="font-bold">Succès!</strong>
@@ -388,7 +390,6 @@
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Départ') }}</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Durée') }}</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Statut') }}</th>
-                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Localisation') }}</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Actions') }}</th>
                                     </tr>
                                 </thead>
@@ -485,27 +486,13 @@
                                                     </span>
                                                 @endif
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {{ $pointage->localisation ?? 'Non spécifiée' }}
-                                            </td>
+                                            
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 flex items-center">
                                                 <a href="{{ route('pointage.show', $pointage->id) }}"
                                                     class="text-blue-600 hover:text-blue-800 transition duration-200 transform hover:scale-110" title="{{ __('Voir') }}">
                                                     <i class="fas fa-eye text-lg"></i>
                                                 </a>
-                                                @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
-                                                    <button type="button" onclick="ouvrirModalCorrection(
-                                                        {{ $pointage->id }},
-                                                        '{{ \Carbon\Carbon::parse($pointage->heure_arrivee)->format('Y-m-d\TH:i') }}',
-                                                        '{{ $pointage->heure_depart ? \Carbon\Carbon::parse($pointage->heure_depart)->format('Y-m-d\TH:i') : '' }}',
-                                                        '{{ addslashes($pointage->description ?? '') }}',
-                                                        '{{ addslashes($pointage->localisation ?? '') }}',
-                                                        '{{ addslashes($pointage->user_latitude ?? '') }}',
-                                                        '{{ addslashes($pointage->user_longitude ?? '') }}'
-                                                    )" class="text-indigo-600 hover:text-indigo-800 transition duration-200 transform hover:scale-110" title="{{ __('Corriger') }}">
-                                                        <i class="fas fa-edit text-lg"></i>
-                                                    </button>
-                                                @endif
+                                                
                                             </td>
                                         </tr>
                                     @endforeach

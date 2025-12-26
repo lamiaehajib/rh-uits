@@ -241,7 +241,7 @@ class SuivrePointageController extends Controller
                 'Statut',
                 'Retard',
                 'Départ Anticipé',
-                'Localisation',
+                
                 'Description'
             ], ';');
 
@@ -281,7 +281,7 @@ class SuivrePointageController extends Controller
                     $pointage->heure_depart ? 'Terminé' : 'En cours',
                     $retard,
                     $departAnticipe,
-                    $pointage->localisation ?? '',
+                    
                     $pointage->description ?? ''
                 ], ';');
             }

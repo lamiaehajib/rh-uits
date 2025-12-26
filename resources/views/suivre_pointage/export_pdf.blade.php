@@ -181,7 +181,7 @@
                 <th>Départ</th>
                 <th>Durée</th>
                 <th>Statut</th>
-                <th>Localisation</th>
+                
             </tr>
         </thead>
         <tbody>
@@ -225,7 +225,7 @@
                             <span class="badge badge-warning">En cours</span>
                         @endif
                     </td>
-                    <td>{{ $pointage->localisation ?? 'Non spécifiée' }}</td>
+                    
                 </tr>
             @empty
                 <tr>
