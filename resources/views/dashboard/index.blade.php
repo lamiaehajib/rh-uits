@@ -1,760 +1,484 @@
 <x-app-layout>
     <style>
-        /* Variables de couleurs */
-        :root {
-            --primary-gradient: linear-gradient(135deg, #C2185B, #D32F2F);
-            --primary-pink: #C2185B;
-            --primary-red: #D32F2F;
-            --success-green: #4CAF50;
-            --warning-orange: #FF9800;
-            --info-blue: #2196F3;
-            --dark-text: #2C3E50;
-            --light-bg: #f8f9fa;
+        /* الكود CSS اللي عندك بالضبط (ما غيرتش فيه شي حاجة) */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        /* Container principal */
-        .dashboard-container {
-            max-width: 1400px;
-            margin: 0 auto;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .gradient-red { background: linear-gradient(135deg, #C2185B, #D32F2F); }
+        .gradient-blue { background: linear-gradient(135deg, #1976D2, #2196F3); }
+        .gradient-green { background: linear-gradient(135deg, #388E3C, #4CAF50); }
+        .gradient-orange { background: linear-gradient(135deg, #F57C00, #FF9800); }
+        .gradient-purple { background: linear-gradient(135deg, #7B1FA2, #9C27B0); }
+        .gradient-teal { background: linear-gradient(135deg, #00796B, #009688); }
 
-        /* Cards modernes avec gradient subtil */
         .stat-card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            transition: all 0.3s ease;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            position: relative;
-            overflow: hidden;
+            background: white; border-radius: 12px; padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07); transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease; position: relative; overflow: hidden;
         }
-
         .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--primary-gradient);
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
+            content: ''; position: absolute; top: 0; right: 0; width: 100px; height: 100px;
+            background: rgba(255, 255, 255, 0.1); border-radius: 50%;
+            transform: translate(30%, -30%);
         }
+        .stat-card:hover { transform: translateY(-8px); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15); }
+        .stat-card-icon { width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: white; margin-bottom: 16px; }
+        .stat-card-value { font-size: 32px; font-weight: bold; margin: 12px 0 8px 0; color: #2c3e50; }
+        .stat-card-label { color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-top: 8px; }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-danger { background: #f8d7da; color: #721c24; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(211, 47, 47, 0.15);
-        }
+        .chart-container { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07); animation: fadeInUp 0.8s ease; margin-bottom: 24px; }
+        .chart-title { font-size: 18px; font-weight: 600; color: #2c3e50; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .chart-title i { background: linear-gradient(135deg, #C2185B, #D32F2F); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        .stat-card:hover::before {
-            transform: scaleX(1);
-        }
+        .activity-list { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07); animation: slideInRight 0.8s ease; }
+        .activity-item { padding: 16px; border-bottom: 1px solid #ecf0f1; transition: all 0.3s ease; }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-item:hover { background: #f8f9fa; padding-left: 20px; }
+        .activity-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: white; }
+        .activity-time { color: #95a5a6; font-size: 12px; }
 
-        /* Icônes avec gradient */
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            background: var(--primary-gradient);
-            color: white;
-            margin-bottom: 16px;
-        }
+        .alert-box { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07); margin-bottom: 24px; border-left: 4px solid; animation: fadeInUp 1s ease; }
+        .alert-box.alert-danger { border-color: #D32F2F; }
+        .alert-box.alert-warning { border-color: #FF9800; }
+        .alert-box.alert-info { border-color: #2196F3; }
+        .alert-item { padding: 12px; margin-bottom: 8px; background: #f8f9fa; border-radius: 6px; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease; }
+        .alert-item:hover { background: #e9ecef; transform: translateX(5px); }
 
-        .stat-icon.success {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-        }
+        .performer-card { background: white; border-radius: 8px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); display: flex; align-items: center; gap: 16px; transition: all 0.3s ease; }
+        .performer-card:hover { transform: translateX(10px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+        .performer-rank { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 18px; }
+        .rank-1 { background: linear-gradient(135deg, #FFD700, #FFA500); }
+        .rank-2 { background: linear-gradient(135deg, #C0C0C0, #808080); }
+        .rank-3 { background: linear-gradient(135deg, #CD7F32, #8B4513); }
+        .rank-other { background: linear-gradient(135deg, #7B1FA2, #9C27B0); }
 
-        .stat-icon.warning {
-            background: linear-gradient(135deg, #FF9800, #F57C00);
-        }
+        .progress-bar-custom { height: 8px; background: #ecf0f1; border-radius: 4px; overflow: hidden; margin-top: 8px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #C2185B, #D32F2F); border-radius: 4px; transition: width 1s ease; }
 
-        .stat-icon.info {
-            background: linear-gradient(135deg, #2196F3, #1976D2);
-        }
+        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(211, 47, 47, 0.1); border-radius: 50%; border-top-color: #D32F2F; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Titres et textes */
-        .stat-title {
-            font-size: 14px;
-            color: #6c757d;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
+        .section-header { margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid #ecf0f1; }
+        .section-title { font-size: 24px; font-weight: bold; background: linear-gradient(135deg, #C2185B, #D32F2F); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; }
 
-        .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
-        }
+        .quick-action-btn { background: white; border: 2px solid #ecf0f1; border-radius: 8px; padding: 16px; text-align: center; transition: all 0.3s ease; cursor: pointer; }
+        .quick-action-btn:hover { border-color: #D32F2F; transform: translateY(-4px); box-shadow: 0 8px 16px rgba(211, 47, 47, 0.2); }
+        .quick-action-icon { font-size: 32px; background: linear-gradient(135deg, #C2185B, #D32F2F); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
 
-        .stat-subtitle {
-            font-size: 13px;
-            color: #95a5a6;
-        }
-
-        /* Section headers */
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #e9ecef;
-        }
-
-        .section-header h3 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 700;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .section-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: var(--primary-gradient);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-        }
-
-        /* Charts container */
-        .chart-card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            height: 100%;
-        }
-
-        /* Progress bars */
-        .progress-modern {
-            height: 8px;
-            border-radius: 10px;
-            background: #e9ecef;
-            overflow: hidden;
-        }
-
-        .progress-bar-gradient {
-            background: var(--primary-gradient);
-            height: 100%;
-            border-radius: 10px;
-            transition: width 0.6s ease;
-        }
-
-        /* Badges modernes */
-        .badge-gradient {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .badge-success {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-        }
-
-        .badge-warning {
-            background: linear-gradient(135deg, #FF9800, #F57C00);
-        }
-
-        .badge-info {
-            background: linear-gradient(135deg, #2196F3, #1976D2);
-        }
-
-        /* Tables modernes */
-        .modern-table {
-            width: 100%;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .modern-table thead {
-            background: var(--primary-gradient);
-        }
-
-        .modern-table thead th {
-            color: white;
-            font-weight: 600;
-            padding: 16px;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 0.5px;
-        }
-
-        .modern-table tbody tr {
-            border-bottom: 1px solid #f0f0f0;
-            transition: all 0.2s ease;
-        }
-
-        .modern-table tbody tr:hover {
-            background: #f8f9fa;
-            transform: scale(1.01);
-        }
-
-        .modern-table tbody td {
-            padding: 16px;
-            color: #2C3E50;
-        }
-
-        /* Buttons */
-        .btn-gradient {
-            background: var(--primary-gradient);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .btn-gradient:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.3);
-        }
-
-        /* Quick actions */
-        .quick-action {
-            background: white;
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .quick-action:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(211, 47, 47, 0.15);
-        }
-
-        .quick-action-icon {
-            width: 50px;
-            height: 50px;
-            margin: 0 auto 12px;
-            border-radius: 12px;
-            background: var(--primary-gradient);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
-
-        /* User list */
-        .user-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            background: white;
-            border-radius: 10px;
-            margin-bottom: 8px;
-            transition: all 0.2s ease;
-        }
-
-        .user-item:hover {
-            background: #f8f9fa;
-            transform: translateX(5px);
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary-gradient);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-        }
-
-        /* Responsive */
         @media (max-width: 768px) {
-            .stat-card {
-                margin-bottom: 16px;
-            }
-            
-            .stat-value {
-                font-size: 24px;
-            }
+            .stat-card-value { font-size: 24px; }
+            .chart-container { padding: 16px; }
+            .performer-card { flex-direction: column; text-align: center; }
         }
     </style>
 
-    <div class="dashboard-container">
-        <!-- Welcome Section -->
-        <div class="mb-5">
-            <h1 class="text-4xl font-bold mb-2" style="color: var(--dark-text);">
-                Bonjour, <span class="hight">{{ auth()->user()->name }}</span> 👋
-            </h1>
-            <p class="text-gray-600">Bienvenue sur votre tableau de bord</p>
-        </div>
-
-        <!-- Pointage Section -->
-        @if(!auth()->user()->hasRole('Client'))
-        <div class="mb-5">
-            <div class="stat-card">
-                <div class="flex items-center justify-between flex-wrap gap-4">
-                    <div>
-                        <h4 class="text-lg font-semibold mb-2" style="color: var(--dark-text);">
-                            <i class="fas fa-clock mr-2"></i> Pointage du jour
-                        </h4>
-                        <p class="text-gray-600 text-sm">
-                            {{ \Carbon\Carbon::now()->isoFormat('dddd D MMMM YYYY') }}
-                        </p>
-                    </div>
-                    
-                    <div class="flex gap-3">
-                        @if(!$hasClockedInToday)
-                            <button onclick="clockIn()" class="btn-gradient">
-                                <i class="fas fa-sign-in-alt mr-2"></i> Pointer l'arrivée
-                            </button>
-                        @elseif(!$hasClockedOutToday)
-                            <button onclick="clockOut()" class="btn-gradient">
-                                <i class="fas fa-sign-out-alt mr-2"></i> Pointer le départ
-                            </button>
-                        @else
-                            <span class="badge-success">
-                                <i class="fas fa-check-circle"></i> Pointage complet
-                            </span>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-        @endif
-
-        <!-- Stats Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <!-- Stat Card 1 -->
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-tasks"></i>
-                </div>
-                <div class="stat-title">Total Tâches</div>
-                <div class="stat-value">{{ $stats['total_tasks'] ?? 0 }}</div>
-                <div class="stat-subtitle">
-                    <span class="badge-success">
-                        <i class="fas fa-check"></i> {{ $stats['completed_tasks'] ?? 0 }} Terminées
-                    </span>
-                </div>
-            </div>
-
-            <!-- Stat Card 2 -->
-            <div class="stat-card">
-                <div class="stat-icon success">
-                    <i class="fas fa-project-diagram"></i>
-                </div>
-                <div class="stat-title">Projets Actifs</div>
-                <div class="stat-value">{{ $stats['active_projects'] ?? 0 }}</div>
-                <div class="stat-subtitle">
-                    Sur {{ $stats['total_projects'] ?? 0 }} projets
-                </div>
-            </div>
-
-            <!-- Stat Card 3 -->
-            <div class="stat-card">
-                <div class="stat-icon warning">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <div class="stat-title">Taux de Complétion</div>
-                <div class="stat-value">{{ $stats['completion_rate'] ?? 0 }}%</div>
-                <div class="progress-modern mt-3">
-                    <div class="progress-bar-gradient" style="width: {{ $stats['completion_rate'] ?? 0 }}%"></div>
-                </div>
-            </div>
-
-            <!-- Stat Card 4 -->
-            <div class="stat-card">
-                <div class="stat-icon info">
-                    <i class="fas fa-trophy"></i>
-                </div>
-                <div class="stat-title">Score Productivité</div>
-                <div class="stat-value">{{ $stats['productivity_score'] ?? 0 }}</div>
-                <div class="stat-subtitle">
-                    Excellent performance! 🎉
-                </div>
+    <div class="container-fluid py-4">
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="section-title mb-2">
+                    <i class="fas fa-chart-line"></i> Dashboard
+                </h1>
+                <p style="color: #7f8c8d; font-size: 14px;">
+                    <i class="far fa-calendar"></i> {{ now()->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
+                </p>
             </div>
         </div>
 
-        <!-- Section Équipes (Admin Only) -->
-        @if($equipeStats)
-        <div class="mb-8">
-            <div class="section-header">
-                <div class="section-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <h3>Gestion des Équipes</h3>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-title">Total Utilisateurs</div>
-                    <div class="stat-value">{{ $equipeStats['total_users'] }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon success">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <div class="stat-title">Utilisateurs Actifs</div>
-                    <div class="stat-value">{{ $equipeStats['active_users'] }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon warning">
-                        <i class="fas fa-user-slash"></i>
-                    </div>
-                    <div class="stat-title">Utilisateurs Inactifs</div>
-                    <div class="stat-value">{{ $equipeStats['inactive_users'] }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon info">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                    <div class="stat-title">Nouveaux ce mois</div>
-                    <div class="stat-value">{{ $equipeStats['new_users_this_month'] }}</div>
+        <!-- Quick Actions (اختياري لكن يعطي لمسة حلوة) -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="quick-action-btn" onclick="location.href='{{ route('taches.create') }}'">
+                    <div class="quick-action-icon"><i class="fas fa-plus-circle"></i></div>
+                    <div>Nouvelle Tâche</div>
                 </div>
             </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="quick-action-btn" onclick="location.href='{{ route('admin.projets.create') }}'">
+                    <div class="quick-action-icon"><i class="fas fa-project-diagram"></i></div>
+                    <div>Nouveau Projet</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="quick-action-btn" onclick="location.href='{{ route('admin.rendez-vous.create') }}'">
+                    <div class="quick-action-icon"><i class="fas fa-calendar-plus"></i></div>
+                    <div>Rendez-vous</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <a href="{{ route('dashboard.export') }}" class="quick-action-btn d-block text-decoration-none text-dark">
+                    <div class="quick-action-icon"><i class="fas fa-file-export"></i></div>
+                    <div>Exporter Stats</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Admin Stats -->
+        @if($isAdmin)
+        <div class="row mb-4">
+            @if($stats['users'])
+            <div class="col-xl-3 col-lg-6 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-card-icon gradient-red"><i class="fas fa-users"></i></div>
+                    <div class="stat-card-value">{{ $stats['users']['total'] }}</div>
+                    <div class="stat-card-label">Total Utilisateurs</div>
+                    <div class="mt-3">
+                        <span class="badge-success stat-card-badge"><i class="fas fa-check-circle"></i> {{ $stats['users']['active'] }} Actifs</span>
+                        <span class="badge-danger stat-card-badge ms-2"><i class="fas fa-times-circle"></i> {{ $stats['users']['inactive'] }} Inactifs</span>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            @if($stats['clients'])
+            <div class="col-xl-3 col-lg-6 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-card-icon gradient-blue"><i class="fas fa-user-tie"></i></div>
+                    <div class="stat-card-value">{{ $stats['clients']['total'] }}</div>
+                    <div class="stat-card-label">Total Clients</div>
+                    <div class="mt-3">
+                        <span class="badge-info stat-card-badge"><i class="fas fa-user"></i> {{ $stats['clients']['particuliers'] }} Particuliers</span>
+                        <span class="badge-warning stat-card-badge ms-2"><i class="fas fa-building"></i> {{ $stats['clients']['entreprises'] }} Entreprises</span>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            @if($stats['projets'])
+            <div class="col-xl-3 col-lg-6 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-card-icon gradient-purple"><i class="fas fa-project-diagram"></i></div>
+                    <div class="stat-card-value">{{ $stats['projets']['total'] }}</div>
+                    <div class="stat-card-label">Total Projets</div>
+                    <div class="mt-3">
+                        <span class="badge-warning stat-card-badge"><i class="fas fa-spinner"></i> {{ $stats['projets']['en_cours'] }} En cours</span>
+                        <span class="badge-success stat-card-badge ms-2"><i class="fas fa-check"></i> {{ $stats['projets']['termine'] }} Terminés</span>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
         @endif
 
-        <!-- Section Pointage -->
-        @if($pointageStats)
-        <div class="mb-8">
-            <div class="section-header">
-                <div class="section-icon">
-                    <i class="fas fa-clock"></i>
+        <!-- Pointages, Tâches, Objectifs -->
+        <div class="row mb-4">
+            <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
+                <div class="stat-card">
+                    <div class="stat-card-icon gradient-green"><i class="fas fa-clock"></i></div>
+                    <div class="stat-card-value">{{ $stats['pointages']['total_this_month'] }}</div>
+                    <div class="stat-card-label">Pointages ce mois</div>
+                    <div class="mt-3">
+                        <span class="badge-danger stat-card-badge"><i class="fas fa-exclamation-triangle"></i> {{ $stats['pointages']['retards'] }} Retards</span>
+                        <span class="badge-success stat-card-badge ms-2">{{ $stats['pointages']['taux_ponctualite'] }}% Ponctuel</span>
+                    </div>
+                    <div class="mt-2"><small style="color: #7f8c8d;"><i class="far fa-clock"></i> Temps moyen: {{ $stats['pointages']['temps_moyen_heures'] }}h</small></div>
                 </div>
-                <h3>Statistiques de Pointage</h3>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
                 <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-clipboard-check"></i>
+                    <div class="stat-card-icon gradient-orange"><i class="fas fa-tasks"></i></div>
+                    <div class="stat-card-value">{{ $stats['taches']['total'] }}</div>
+                    <div class="stat-card-label">Total Tâches</div>
+                    <div class="mt-3">
+                        <span class="badge-info stat-card-badge"><i class="fas fa-hourglass-start"></i> {{ $stats['taches']['nouveau'] }} Nouveau</span>
+                        <span class="badge-warning stat-card-badge ms-2"><i class="fas fa-spinner"></i> {{ $stats['taches']['en_cours'] }} En cours</span>
+                        <span class="badge-success stat-card-badge ms-2"><i class="fas fa-check"></i> {{ $stats['taches']['termine'] }} Terminé</span>
                     </div>
-                    <div class="stat-title">Total Pointages</div>
-                    <div class="stat-value">{{ $pointageStats['total_pointages'] }}</div>
+                    <div class="progress-bar-custom mt-3">
+                        <div class="progress-fill" style="width: {{ $stats['taches']['taux_completion'] }}%"></div>
+                    </div>
+                    <small style="color: #7f8c8d;">{{ $stats['taches']['taux_completion'] }}% Complété</small>
                 </div>
+            </div>
 
+            <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
                 <div class="stat-card">
-                    <div class="stat-icon success">
-                        <i class="fas fa-check-circle"></i>
+                    <div class="stat-card-icon gradient-teal"><i class="fas fa-bullseye"></i></div>
+                    <div class="stat-card-value">{{ $stats['objectifs']['total'] }}</div>
+                    <div class="stat-card-label">Total Objectifs</div>
+                    <div class="mt-3">
+                        <span class="badge-warning stat-card-badge"><i class="fas fa-hourglass-half"></i> {{ $stats['objectifs']['in_progress'] }} En cours</span>
+                        <span class="badge-success stat-card-badge ms-2"><i class="fas fa-trophy"></i> {{ $stats['objectifs']['completed'] }} Complétés</span>
                     </div>
-                    <div class="stat-title">Complets</div>
-                    <div class="stat-value">{{ $pointageStats['pointages_complets'] }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon warning">
-                        <i class="fas fa-clock"></i>
+                    <div class="progress-bar-custom mt-3">
+                        <div class="progress-fill" style="width: {{ $stats['objectifs']['avg_progress'] }}%"></div>
                     </div>
-                    <div class="stat-title">Retards</div>
-                    <div class="stat-value">{{ $pointageStats['retards'] }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon warning">
-                        <i class="fas fa-door-open"></i>
-                    </div>
-                    <div class="stat-title">Départs Anticipés</div>
-                    <div class="stat-value">{{ $pointageStats['departs_anticipes'] }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon info">
-                        <i class="fas fa-percentage"></i>
-                    </div>
-                    <div class="stat-title">Taux Ponctualité</div>
-                    <div class="stat-value">{{ $pointageStats['taux_ponctualite'] }}%</div>
+                    <small style="color: #7f8c8d;">Progression moyenne: {{ $stats['objectifs']['avg_progress'] }}%</small>
                 </div>
             </div>
         </div>
-        @endif
 
-        <!-- Section Tâches -->
-        @if($tachesStats)
-        <div class="mb-8">
-            <div class="section-header">
-                <div class="section-icon">
-                    <i class="fas fa-tasks"></i>
-                </div>
-                <h3>Suivi des Tâches</h3>
+        <!-- Alerts -->
+        @if($alerts['retards']->count() > 0 || $alerts['taches_overdue']->count() > 0 || $alerts['objectifs_incomplets']->count() > 0)
+        <div class="row mb-4">
+            <div class="col-12">
+                <h4 class="section-title mb-3"><i class="fas fa-exclamation-triangle"></i> Alertes</h4>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-list"></i>
-                    </div>
-                    <div class="stat-title">Total</div>
-                    <div class="stat-value">{{ $tachesStats['total_taches'] }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon success">
-                        <i class="fas fa-check-double"></i>
-                    </div>
-                    <div class="stat-title">Terminées</div>
-                    <div class="stat-value">{{ $tachesStats['taches_terminees'] }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon info">
-                        <i class="fas fa-spinner"></i>
-                    </div>
-                    <div class="stat-title">En Cours</div>
-                    <div class="stat-value">{{ $tachesStats['taches_en_cours'] }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-plus-circle"></i>
-                    </div>
-                    <div class="stat-title">Nouvelles</div>
-                    <div class="stat-value">{{ $tachesStats['taches_nouveau'] }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <div class="stat-title">En Retard</div>
-                    <div class="stat-value">{{ $tachesStats['taches_en_retard'] }}</div>
-                </div>
-            </div>
-        </div>
-        @endif
-
-        <!-- Section Objectifs -->
-        @if($objectifsStats)
-        <div class="mb-8">
-            <div class="section-header">
-                <div class="section-icon">
-                    <i class="fas fa-bullseye"></i>
-                </div>
-                <h3>Objectifs</h3>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-target"></i>
-                    </div>
-                    <div class="stat-title">Total Objectifs</div>
-                    <div class="stat-value">{{ $objectifsStats['total_objectifs'] }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon success">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <div class="stat-title">Complétés</div>
-                    <div class="stat-value">{{ $objectifsStats['objectifs_completes'] }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon info">
-                        <i class="fas fa-hourglass-half"></i>
-                    </div>
-                    <div class="stat-title">En Cours</div>
-                    <div class="stat-value">{{ $objectifsStats['objectifs_en_cours'] }}</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon warning">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stat-title">En Retard</div>
-                    <div class="stat-value">{{ $objectifsStats['objectifs_en_retard'] }}</div>
-                </div>
-            </div>
-        </div>
-        @endif
-
-        <!-- Section Clients & Projets (Admin Only) -->
-        @if($clientsProjectsStats)
-        <div class="mb-8">
-            <div class="section-header">
-                <div class="section-icon">
-                    <i class="fas fa-briefcase"></i>
-                </div>
-                <h3>Clients & Projets</h3>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Clients Stats -->
-                <div class="chart-card">
-                    <h4 class="font-semibold mb-4" style="color: var(--dark-text);">
-                        <i class="fas fa-users mr-2"></i> Statistiques Clients
-                    </h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="text-center">
-                            <div class="stat-value">{{ $clientsProjectsStats['total_clients'] }}</div>
-                            <div class="stat-title">Total Clients</div>
+            @if($alerts['retards']->count() > 0)
+            <div class="col-lg-4 mb-4">
+                <div class="alert-box alert-danger">
+                    <h6 style="color: #D32F2F; font-weight: 600; margin-bottom: 16px;">
+                        <i class="fas fa-user-clock"></i> Retards fréquents (>3)
+                    </h6>
+                    @foreach($alerts['retards']->take(5) as $retard)
+                    <div class="alert-item">
+                        <div class="activity-icon gradient-red"><i class="fas fa-user"></i></div>
+                        <div class="flex-grow-1">
+                            <strong>{{ $retard->user->name ?? 'N/A' }}</strong><br>
+                            <small style="color: #7f8c8d;">{{ $retard->retards_count }} retards</small>
                         </div>
-                        <div class="text-center">
-                            <div class="stat-value">{{ $clientsProjectsStats['clients_actifs'] }}</div>
-                            <div class="stat-title">Clients Actifs</div>
+                        <span class="badge-danger stat-card-badge">{{ $retard->retards_count }}</span>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            @if($alerts['taches_overdue']->count() > 0)
+            <div class="col-lg-4 mb-4">
+                <div class="alert-box alert-warning">
+                    <h6 style="color: #FF9800; font-weight: 600; margin-bottom: 16px;">
+                        <i class="fas fa-exclamation-circle"></i> Tâches en retard
+                    </h6>
+                    @foreach($alerts['taches_overdue']->take(5) as $tache)
+                    <div class="alert-item">
+                        <div class="activity-icon gradient-orange"><i class="fas fa-tasks"></i></div>
+                        <div class="flex-grow-1">
+                            <strong>{{ Str::limit($tache->titre, 40) }}</strong><br>
+                            <small style="color: #7f8c8d;">Deadline: {{ $tache->date_fin_prevue ? \Carbon\Carbon::parse($tache->date_fin_prevue)->format('d/m/Y') : 'N/A' }}</small>
+                        </div>
+                        <a href="{{ route('taches.show', $tache->id) }}" class="btn btn-sm btn-outline-warning"><i class="fas fa-eye"></i></a>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            @if($alerts['objectifs_incomplets']->count() > 0)
+            <div class="col-lg-4 mb-4">
+                <div class="alert-box alert-info">
+                    <h6 style="color: #2196F3; font-weight: 600; margin-bottom: 16px;">
+                        <i class="fas fa-bullseye"></i> Objectifs en retard
+                    </h6>
+                    @foreach($alerts['objectifs_incomplets']->take(5) as $objectif)
+                    <div class="alert-item">
+                        <div class="activity-icon gradient-teal"><i class="fas fa-bullseye"></i></div>
+                        <div class="flex-grow-1">
+                            <strong>{{ Str::limit($objectif->titre, 40) }}</strong><br>
+                            <small style="color: #7f8c8d;">Échéance: {{ \Carbon\Carbon::parse($objectif->date)->format('d/m/Y') }}</small>
                         </div>
                     </div>
-                </div>
-
-                <!-- Projets Stats -->
-                <div class="chart-card">
-                    <h4 class="font-semibold mb-4" style="color: var(--dark-text);">
-                        <i class="fas fa-project-diagram mr-2"></i> Statistiques Projets
-                    </h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="text-center">
-                            <div class="stat-value">{{ $clientsProjectsStats['projets_en_cours'] }}</div>
-                            <div class="stat-title">En Cours</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="stat-value">{{ $clientsProjectsStats['projets_termines'] }}</div>
-                            <div class="stat-title">Terminés</div>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
+            @endif
         </div>
         @endif
 
-        <!-- Quick Actions -->
-        <div class="mb-8">
-            <div class="section-header">
-                <div class="section-icon">
-                    <i class="fas fa-bolt"></i>
+        <!-- Charts -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h4 class="section-title mb-3"><i class="fas fa-chart-bar"></i> Statistiques Visuelles</h4>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="chart-container">
+                    <div class="chart-title"><i class="fas fa-calendar-alt"></i> <span>Évolution Pointages (6 mois)</span></div>
+                    <canvas id="pointagesMonthlyChart" height="250"></canvas>
                 </div>
-                <h3>Actions Rapides</h3>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <a href="{{ route('taches.create') }}" class="quick-action">
-                    <div class="quick-action-icon">
-                        <i class="fas fa-plus"></i>
-                    </div>
-                    <div class="text-sm font-semibold">Nouvelle Tâche</div>
-                </a>
-
-                <a href="{{ route('admin.projets.create') }}" class="quick-action">
-                    <div class="quick-action-icon">
-                        <i class="fas fa-folder-plus"></i>
-                    </div>
-                    <div class="text-sm font-semibold">Nouveau Projet</div>
-                </a>
-
-                <a href="{{ route('formations.index') }}" class="quick-action">
-                    <div class="quick-action-icon">
-                        <i class="fas fa-graduation-cap"></i>
-                    </div>
-                    <div class="text-sm font-semibold">Formations</div>
-                </a>
-
-                <a href="{{ route('objectifs.index') }}" class="quick-action">
-                    <div class="quick-action-icon">
-                        <i class="fas fa-bullseye"></i>
-                    </div>
-                    <div class="text-sm font-semibold">Objectifs</div>
-                </a>
-
-                <a href="{{ route('pointage.index') }}" class="quick-action">
-                    <div class="quick-action-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="text-sm font-semibold">Pointages</div>
-                </a>
-
-                <a href="{{ route('reclamations.index') }}" class="quick-action">
-                    <div class="quick-action-icon">
-                        <i class="fas fa-exclamation-circle"></i>
-                    </div>
-                    <div class="text-sm font-semibold">Réclamations</div>
-                </a>
+            <div class="col-lg-6 mb-4">
+                <div class="chart-container">
+                    <div class="chart-title"><i class="fas fa-tasks"></i> <span>Répartition des Tâches</span></div>
+                    <canvas id="tachesStatusChart" height="250"></canvas>
+                </div>
             </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="chart-container">
+                    <div class="chart-title"><i class="fas fa-bullseye"></i> <span>Progression Objectifs</span></div>
+                    <canvas id="objectifsProgressChart" height="250"></canvas>
+                </div>
+            </div>
+
+            @if($isAdmin && $chartData['projets_status'])
+            <div class="col-lg-6 mb-4">
+                <div class="chart-container">
+                    <div class="chart-title"><i class="fas fa-project-diagram"></i> <span>Statut des Projets</span></div>
+                    <canvas id="projetsStatusChart" height="250"></canvas>
+                </div>
+            </div>
+            @endif
+
+            <div class="col-lg-6 mb-4">
+                <div class="chart-container">
+                    <div class="chart-title"><i class="fas fa-chart-line"></i> <span>Tendance Retards (4 semaines)</span></div>
+                    <canvas id="retardsTrendChart" height="250"></canvas>
+                </div>
+            </div>
+
+            @if($isAdmin && $chartData['users_performance'])
+            <div class="col-lg-12 mb-4">
+                <div class="chart-container">
+                    <div class="chart-title"><i class="fas fa-trophy"></i> <span>Top 10 Performers (Tâches terminées ce mois)</span></div>
+                    <canvas id="usersPerformanceChart" height="120"></canvas>
+                </div>
+            </div>
+            @endif
+        </div>
+
+        <!-- Activities & Top Performers -->
+        <div class="row">
+            <div class="col-lg-8 mb-4">
+                <div class="activity-list">
+                    <h5 class="chart-title"><i class="fas fa-history"></i> <span>Activités Récentes</span></h5>
+
+                    @if($recentActivities['taches']->count() > 0)
+                    <h6 style="color: #7f8c8d; font-size: 14px; margin: 20px 0 12px 0;"><i class="fas fa-tasks"></i> Dernières Tâches</h6>
+                    @foreach($recentActivities['taches'] as $tache)
+                    <div class="activity-item">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="activity-icon gradient-orange"><i class="fas fa-tasks"></i></div>
+                            <div class="flex-grow-1">
+                                <strong>{{ Str::limit($tache->titre, 50) }}</strong><br>
+<small style="color: #7f8c8d;">
+    Assigné à: {{ collect($tache->users)->pluck('name')->implode(', ') }}
+</small>                            </div>
+                            <div class="text-end">
+                                <span class="badge-{{ $tache->status == 'termine' ? 'success' : ($tache->status == 'en cours' ? 'warning' : 'info') }} stat-card-badge">
+                                    {{ ucfirst(str_replace('_', ' ', $tache->status)) }}
+                                </span>
+                                <div class="activity-time mt-1">{{ $tache->created_at->diffForHumans() }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                    @endif
+
+                    @if($recentActivities['pointages']->count() > 0)
+                    <h6 style="color: #7f8c8d; font-size: 14px; margin: 20px 0 12px 0;"><i class="fas fa-clock"></i> Derniers Pointages</h6>
+                    @foreach($recentActivities['pointages'] as $pointage)
+                    <div class="activity-item">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="activity-icon gradient-green"><i class="fas fa-sign-in-alt"></i></div>
+                            <div class="flex-grow-1">
+                                <strong>{{ $pointage->user->name }}</strong><br>
+                                <small style="color: #7f8c8d;">
+                                    Arrivée: {{ $pointage->heure_arrivee ? \Carbon\Carbon::parse($pointage->heure_arrivee)->format('H:i') : '-' }}
+                                    @if($pointage->heure_depart) / Départ: {{ \Carbon\Carbon::parse($pointage->heure_depart)->format('H:i') }} @endif
+                                </small>
+                            </div>
+                            <div class="activity-time">{{ \Carbon\Carbon::parse($pointage->date_pointage)->format('d/m/Y') }}</div>
+                        </div>
+                    </div>
+                    @endforeach
+                    @endif
+
+                    @if($isAdmin && $recentActivities['projets'] && $recentActivities['projets']->count() > 0)
+                    <h6 style="color: #7f8c8d; font-size: 14px; margin: 20px 0 12px 0;"><i class="fas fa-project-diagram"></i> Projets Récents</h6>
+                    @foreach($recentActivities['projets'] as $projet)
+                    <div class="activity-item">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="activity-icon gradient-purple"><i class="fas fa-project-diagram"></i></div>
+                            <div class="flex-grow-1">
+                                <strong>{{ Str::limit($projet->titre ?? $projet->nom, 50) }}</strong><br>
+                                <small style="color: #7f8c8d;">Clients: {{ $projet->users->pluck('name')->join(', ') }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge-{{ $projet->statut_projet == 'terminé' ? 'success' : ($projet->statut_projet == 'en cours' ? 'warning' : 'info') }} stat-card-badge">
+                                    {{ ucfirst($projet->statut_projet) }}
+                                </span>
+                                <div class="activity-time mt-1">{{ $projet->created_at->diffForHumans() }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                    @endif
+
+                    @if($isAdmin && $recentActivities['rendezvous'] && $recentActivities['rendezvous']->count() > 0)
+                    <h6 style="color: #7f8c8d; font-size: 14px; margin: 20px 0 12px 0;"><i class="fas fa-calendar-check"></i> Prochains Rendez-vous</h6>
+                    @foreach($recentActivities['rendezvous'] as $rdv)
+                    <div class="activity-item">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="activity-icon gradient-blue"><i class="fas fa-handshake"></i></div>
+                            <div class="flex-grow-1">
+                                <strong>{{ $rdv->titre ?? 'Rendez-vous' }}</strong><br>
+                                <small style="color: #7f8c8d;">
+                                    Avec: {{ $rdv->projet->users->pluck('name')->join(', ') }}
+                                    - {{ \Carbon\Carbon::parse($rdv->date_heure)->format('d/m/Y à H:i') }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                    @endif
+                </div>
+            </div>
+
+            <!-- Top Performers -->
+            @if($isAdmin && $topPerformers && $topPerformers->count() > 0)
+            <div class="col-lg-4 mb-4">
+                <div class="activity-list">
+                    <h5 class="chart-title mb-4"><i class="fas fa-trophy"></i> <span>Top Performers</span></h5>
+                    @foreach($topPerformers as $index => $performer)
+                    <div class="performer-card">
+                        <div class="performer-rank rank-{{ $index < 3 ? $index + 1 : 'other' }}">{{ $index + 1 }}</div>
+                        <div class="performer-info">
+                            <div class="performer-name">{{ $performer->name }}</div>
+                            <div class="performer-stats">
+                                <i class="fas fa-check-circle"></i> {{ $performer->taches_terminees }} tâches terminées
+                                | <i class="fas fa-clock"></i> {{ $performer->pointages_ponctuel }} pointages ponctuels
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 
-    <script>
-        function clockIn() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    submitPointage(position.coords.latitude, position.coords.longitude);
-                }, function() {
-                    submitPointage(null, null);
-                });
-            } else {
-                submitPointage(null, null);
-            }
-        }
-
-        function clockOut() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    submitPointage(position.coords.latitude, position.coords.longitude);
-                }, function() {
-                    submitPointage(null, null);
-                });
-            } else {
-                submitPointage(null, null);
-            }
-        }
-
-        function submitPointage(lat, lng) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            
-            
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = '_token';
-            csrfToken.value = '{{ csrf_token() }}';
-            form.appendChild(csrfToken);
-
-            if (lat && lng) {
-                const latInput = document.createElement('input');
-                latInput.type = 'hidden';
-                latInput.name = 'user_latitude';
-                latInput.value = lat;
-                form.appendChild(latInput);
-
-                const lngInput = document.createElement('input');
-                lngInput.type = 'hidden';
-                lngInput.name = 'user_longitude';
-                lngInput.value = lng;
-                form.appendChild(lngInput);
-            }
-
-            document.body.appendChild(form);
-            form.submit();
-        }
-    </script>
+   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx1 = document.getElementById('pointagesMonthlyChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                // Wrap the array in collect()
+                labels: @json(collect($chartData['pointages_monthly'])->pluck('month')),
+                datasets: [
+                    { 
+                        label: 'Ponctuels', 
+                        data: @json(collect($chartData['pointages_monthly'])->pluck('ponctuel')), 
+                        backgroundColor: '#4CAF50' 
+                    },
+                    { 
+                        label: 'Retards', 
+                        data: @json(collect($chartData['pointages_monthly'])->pluck('retards')), 
+                        backgroundColor: '#F44336' 
+                    }
+                ]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'top' } } }
+        });
+    });
+</script>
 </x-app-layout>
