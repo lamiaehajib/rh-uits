@@ -161,7 +161,6 @@ Route::resource('vente_objectifs', VenteObjectifController::class);
    
     
     Route::get('/suivre-pointages', [SuivrePointageController::class, 'index'])->name('pointage.index');
-Route::post('/suivre-pointages/pointer', [SuivrePointageController::class, 'pointer'])->name('pointage.pointer');
 Route::get('/suivre-pointages/{id}', [SuivrePointageController::class, 'show'])->name('pointage.show');
 Route::put('/suivre-pointages/{id}/corriger', [SuivrePointageController::class, 'corriger'])->name('suivre-pointages.corriger'); // ou POST selon le formulaire
 
@@ -169,7 +168,7 @@ Route::put('/suivre-pointages/{id}/corriger', [SuivrePointageController::class, 
 Route::get('/suivre-pointages/statistiques', [SuivrePointageController::class, 'statistiques'])->name('suivre-pointages.statistiques');
 
 // Routes réservées aux administrateurs
-Route::middleware(['auth', 'role:Sup_Admin|Custom_Admin'])->group(function () {
+
     
     // Route pour exporter les pointages en CSV
     Route::get('/pointages/export/csv', [SuivrePointageController::class, 'exporter'])
@@ -178,7 +177,17 @@ Route::middleware(['auth', 'role:Sup_Admin|Custom_Admin'])->group(function () {
     // Route pour corriger un pointage
     Route::put('/pointages/{id}/corriger', [SuivrePointageController::class, 'corriger'])
         ->name('suivre_pointage.corriger');
-});
+
+        Route::get('/pointages/export/excel', [SuivrePointageController::class, 'exporterExcel'])
+    ->name('pointages.export.excel');
+
+Route::get('/pointages/export/pdf', [SuivrePointageController::class, 'exporterPdf'])
+    ->name('pointages.export.pdf');
+
+// Route pour les données des charts
+Route::get('/pointages/chart-data', [SuivrePointageController::class, 'getChartData'])
+    ->name('pointages.chart.data');
+
  // ✅ routes personnalisées أولاً
 Route::get('/objectifs/corbeille', [ObjectifController::class, 'corbeille'])
       ->name('objectifs.corbeille');

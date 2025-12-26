@@ -3,16 +3,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{{ __('Gestion des Pointages') }}</title>
         <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
-            // Configure Tailwind CSS to use a custom primary color (consistent with Tache/Reclamation)
             tailwind.config = {
                 theme: {
                     extend: {
                         colors: {
-                            'primary-red': '#D32F2F', // Your specified color for consistency
+                            'primary-red': '#D32F2F',
                         },
                         fontFamily: {
-                            sans: ['Inter', 'sans-serif'], // Set Inter as the default font
+                            sans: ['Inter', 'sans-serif'],
                         }
                     }
                 }
@@ -20,12 +20,11 @@
         </script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
         <style>
-            /* Base font for body */
             body {
                 font-family: 'Inter', sans-serif;
+                background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             }
 
-            /* --- Shared Animations from Tache/Reclamation modules --- */
             .animate-fade-in {
                 animation: fadeIn 0.5s ease-out forwards;
                 opacity: 0;
@@ -45,60 +44,15 @@
                 box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             }
 
-            .animate-pulse-subtle { /* Renamed from original 'animate-pulse' to avoid conflict if a stronger pulse is desired */
+            .animate-pulse-subtle {
                 animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
             }
 
             @keyframes pulse {
                 0%, 100% { opacity: 1; }
-                50% { opacity: 0.7; } /* Original pulse for alerts */
+                50% { opacity: 0.7; }
             }
 
-            @keyframes spin-slow {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-            }
-
-            .animate-spin-slow {
-                animation: spin-slow 3s linear infinite;
-            }
-
-            /* --- Reclamation-specific animations (reused for consistency) --- */
-            @keyframes fadeInDown {
-                from { opacity: 0; transform: translateY(-20px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-
-            @keyframes bounce-slow {
-                0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-                40% { transform: translateY(-10px); }
-                60% { transform: translateY(-5px); }
-            }
-            .animate-bounce-slow { animation: bounce-slow 2s infinite; }
-
-            @keyframes pulse-fast {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.03); }
-            }
-            .animate-pulse-fast { animation: pulse-fast 1.5s infinite; }
-
-            @keyframes wobble {
-                0%, 100% { transform: translateX(0); }
-                15% { transform: translateX(-5px); }
-                30% { transform: translateX(5px); }
-                45% { transform: translateX(-5px); }
-                60% { transform: translateX(5px); }
-                75% { transform: translateX(-5px); }
-            }
-            .animate-wobble { animation: wobble 1s infinite; }
-
-            @keyframes slide-in-up {
-                from { opacity: 0; transform: translateY(20px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            .animate-slide-in-up { animation: slide-in-up 0.6s ease-out forwards; }
-
-            /* Button gradients and shadows (Consistent with Tache/Reclamation) */
             .btn-primary-red {
                 background: linear-gradient(to right, #D32F2F, #B71C1C);
                 box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3);
@@ -122,7 +76,6 @@
                 transform: translateY(-2px);
             }
 
-            /* Custom Modal Styling (Consistent with Tache/Reclamation) */
             .modal-overlay {
                 position: fixed;
                 top: 0;
@@ -153,46 +106,56 @@
                 width: 400px;
                 transform: translateY(-20px);
                 transition: transform 0.3s ease-out;
-                position: relative;
-                overflow: hidden;
             }
 
             .modal-overlay.show .modal-content {
                 transform: translateY(0);
             }
 
-            .modal-content .header-icon {
-                font-size: 2.5rem;
-                margin-bottom: 1rem;
-                text-align: center;
-            }
-
-            .modal-content .message {
-                text-align: center;
-                margin-bottom: 1.5rem;
-                font-size: 1.125rem;
-                color: #374151;
-            }
-
-            .modal-content .buttons {
-                display: flex;
-                justify-content: center;
-                gap: 1rem;
-            }
-
-            /* Custom style for late/early pointages */
             .late-pointage-row {
-                color: #D32F2F; /* primary-red */
+                color: #D32F2F;
                 font-weight: bold;
             }
 
             .late-arrival-badge {
-                background-color: #D32F2F; /* primary-red */
+                background-color: #D32F2F;
                 color: white;
                 padding: 0.25rem 0.5rem;
-                border-radius: 0.375rem; /* rounded-md */
-                font-size: 0.75rem; /* text-xs */
+                border-radius: 0.375rem;
+                font-size: 0.75rem;
                 margin-left: 0.5rem;
+            }
+
+            .stat-card {
+                background: white;
+                border-radius: 1rem;
+                padding: 1.5rem;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+                transition: all 0.3s ease;
+            }
+
+            .stat-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            }
+
+            .stat-icon {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+            }
+
+            .chart-container {
+                position: relative;
+                height: 300px;
+                background: white;
+                border-radius: 1rem;
+                padding: 1.5rem;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
             }
         </style>
     </head>
@@ -205,14 +168,9 @@
             </div>
         </div>
 
-        <h2 class="font-semibold text-2xl text-gray-800 leading-tight border-b-2 border-primary-red pb-3 mb-6 animate-fade-in delay-100">
+        <h2 class="font-semibold text-3xl text-gray-800 leading-tight border-b-2 border-primary-red pb-3 mb-6 animate-fade-in">
             <i class="fas fa-fingerprint mr-3 text-primary-red"></i> {{ __('Gestion des Pointages') }}
         </h2>
-        <div class="flex justify-end items-center mb-6">
-            <div class="text-lg font-medium text-gray-600">
-                <i class="far fa-calendar-alt mr-2"></i> {{ now()->format('d/m/Y H:i') }}
-            </div>
-        </div>
 
         <div class="py-6">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -236,73 +194,177 @@
                     </div>
                 @endif
 
-                
-
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg mb-6 animate-fade-in delay-300">
-                    <div class="p-6 border-b border-gray-200">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-4">
-                            <i class="fas fa-filter mr-3 text-indigo-600"></i>
-                            {{ __('Filtres et Recherche') }}
-                        </h3>
-
-                        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-fade-in">
+                    <div class="stat-card card-hover-effect">
+                        <div class="flex items-center justify-between">
                             <div>
-                                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Recherche') }}</label>
-                                <div class="relative">
-                                    <input type="text" id="search" name="search" value="{{ request('search') }}"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red"
-                                        placeholder="{{ __('Nom ou date...') }}">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <i class="fas fa-search text-gray-400"></i>
-                                    </div>
-                                </div>
+                                <p class="text-gray-500 text-sm font-medium mb-1">Total Pointages</p>
+                                <h3 class="text-3xl font-bold text-gray-800">{{ $stats['total_pointages'] }}</h3>
+                            </div>
+                            <div class="stat-icon bg-blue-100 text-blue-600">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card card-hover-effect">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium mb-1">En Cours</p>
+                                <h3 class="text-3xl font-bold text-yellow-600">{{ $stats['pointages_en_cours'] }}</h3>
+                            </div>
+                            <div class="stat-icon bg-yellow-100 text-yellow-600">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card card-hover-effect">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium mb-1">Retards</p>
+                                <h3 class="text-3xl font-bold text-red-600">{{ $stats['retards'] }}</h3>
+                            </div>
+                            <div class="stat-icon bg-red-100 text-red-600">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card card-hover-effect">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium mb-1">Temps Total</p>
+                                <h3 class="text-2xl font-bold text-green-600">{{ $stats['temps_total'] }}</h3>
+                            </div>
+                            <div class="stat-icon bg-green-100 text-green-600">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in">
+                    <div class="chart-container">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-chart-bar mr-2 text-indigo-600"></i>
+                            Heures Travaillées (30 derniers jours)
+                        </h3>
+                        <canvas id="heuresChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-chart-pie mr-2 text-purple-600"></i>
+                            Retards (30 derniers jours)
+                        </h3>
+                        <canvas id="retardsChart"></canvas>
+                    </div>
+                </div>
+                @endif
+
+                <!-- Filters Section -->
+                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg mb-6 animate-fade-in">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold text-gray-900">
+                                <i class="fas fa-filter mr-3 text-indigo-600"></i>
+                                {{ __('Filtres Avancés') }}
+                            </h3>
+                            
+                            @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
+                            <div class="flex space-x-3">
+                                <button onclick="exporterExcel()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 shadow-md">
+                                    <i class="fas fa-file-excel mr-2"></i> Excel
+                                </button>
+                                <button onclick="exporterPdf()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200 shadow-md">
+                                    <i class="fas fa-file-pdf mr-2"></i> PDF
+                                </button>
+                            </div>
+                            @endif
+                        </div>
+
+                        <form method="GET" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                            <!-- Période rapide -->
+                            <div>
+                                <label for="periode" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Période') }}</label>
+                                <select id="periode" name="periode" onchange="toggleDateInputs()"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
+                                    <option value="">{{ __('Personnalisé') }}</option>
+                                    <option value="today" {{ request('periode') == 'today' ? 'selected' : '' }}>{{ __('Aujourd\'hui') }}</option>
+                                    <option value="yesterday" {{ request('periode') == 'yesterday' ? 'selected' : '' }}>{{ __('Hier') }}</option>
+                                    <option value="this_week" {{ request('periode') == 'this_week' ? 'selected' : '' }}>{{ __('Cette semaine') }}</option>
+                                    <option value="last_week" {{ request('periode') == 'last_week' ? 'selected' : '' }}>{{ __('Semaine dernière') }}</option>
+                                    <option value="this_month" {{ request('periode') == 'this_month' ? 'selected' : '' }}>{{ __('Ce mois') }}</option>
+                                    <option value="last_month" {{ request('periode') == 'last_month' ? 'selected' : '' }}>{{ __('Mois dernier') }}</option>
+                                    <option value="this_year" {{ request('periode') == 'this_year' ? 'selected' : '' }}>{{ __('Cette année') }}</option>
+                                </select>
                             </div>
 
-                            <div>
+                            <!-- Date début -->
+                            <div id="date_debut_container">
                                 <label for="date_debut" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Date début') }}</label>
                                 <input type="date" id="date_debut" name="date_debut" value="{{ request('date_debut') }}"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
                             </div>
 
+                            <!-- Date fin -->
+                            <div id="date_fin_container">
+                                <label for="date_fin" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Date fin') }}</label>
+                                <input type="date" id="date_fin" name="date_fin" value="{{ request('date_fin') }}"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
+                            </div>
+
+                            <!-- Statut -->
                             <div>
                                 <label for="statut" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Statut') }}</label>
                                 <select id="statut" name="statut"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
-                                    <option value="">{{ __('Tous les statuts') }}</option>
+                                    <option value="">{{ __('Tous') }}</option>
                                     <option value="en_cours" {{ request('statut') == 'en_cours' ? 'selected' : '' }}>{{ __('En cours') }}</option>
                                     <option value="termine" {{ request('statut') == 'termine' ? 'selected' : '' }}>{{ __('Terminé') }}</option>
+                                    <option value="retard" {{ request('statut') == 'retard' ? 'selected' : '' }}>{{ __('Retard') }}</option>
+                                    <option value="depart_anticipe" {{ request('statut') == 'depart_anticipe' ? 'selected' : '' }}>{{ __('Départ anticipé') }}</option>
                                 </select>
                             </div>
 
-                             <div class="form-group">
-        <label for="user_id">Filtrer par Utilisateur</label>
-        <select name="user_id" id="user_id" class="form-control">
-            <option value="all">Tous les utilisateurs</option> {{-- Option for all users --}}
-            @foreach($users as $user)
-                <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
-                    {{ $user->name }}
-                </option>
-            @endforeach
-        </select>
-    </div>
+                            <!-- Utilisateur -->
+                            @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
+                            <div>
+                                <label for="user_id" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Utilisateur') }}</label>
+                                <select name="user_id" id="user_id"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
+                                    <option value="all">{{ __('Tous') }}</option>
+                                    @foreach($users as $user)
+                                        <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
+                                            {{ $user->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            @endif
 
+                            <!-- Boutons -->
                             <div class="flex items-end space-x-3">
                                 <button type="submit"
                                     class="btn-primary-red flex-1 flex items-center justify-center px-5 py-2 rounded-md shadow-sm text-white font-medium">
-                                    <i class="fas fa-filter mr-2"></i>
+                                    <i class="fas fa-search mr-2"></i>
                                     {{ __('Filtrer') }}
                                 </button>
                                 <a href="{{ route('pointage.index') }}"
                                     class="btn-secondary-tailwind flex items-center justify-center px-5 py-2 rounded-md shadow-sm font-bold text-sm uppercase tracking-wider">
                                     <i class="fas fa-undo mr-2"></i>
-
                                 </a>
                             </div>
                         </form>
                     </div>
                 </div>
 
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg animate-fade-in delay-400">
+                <!-- Table Section -->
+                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg animate-fade-in">
                     <div class="p-6 border-b border-gray-200">
                         <div class="flex justify-between items-center">
                             <h3 class="text-xl font-semibold text-gray-900">
@@ -326,7 +388,7 @@
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Départ') }}</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Durée') }}</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Statut') }}</th>
-                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Localisation') }}</th> {{-- Added this column --}}
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Localisation') }}</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Actions') }}</th>
                                     </tr>
                                 </thead>
@@ -423,7 +485,6 @@
                                                     </span>
                                                 @endif
                                             </td>
-                                            {{-- Display Localisation --}}
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 {{ $pointage->localisation ?? 'Non spécifiée' }}
                                             </td>
@@ -432,7 +493,6 @@
                                                     class="text-blue-600 hover:text-blue-800 transition duration-200 transform hover:scale-110" title="{{ __('Voir') }}">
                                                     <i class="fas fa-eye text-lg"></i>
                                                 </a>
-                                                {{-- Correction button for admins --}}
                                                 @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
                                                     <button type="button" onclick="ouvrirModalCorrection(
                                                         {{ $pointage->id }},
@@ -457,7 +517,7 @@
                             {{ $pointages->links('pagination::tailwind') }}
                         </div>
                     @else
-                        <div class="p-6 text-center bg-gray-100 rounded-b-lg animate-fade-in delay-500">
+                        <div class="p-6 text-center bg-gray-100 rounded-b-lg">
                             <div class="text-gray-400 text-6xl mb-4">
                                 <i class="fas fa-clock"></i>
                             </div>
@@ -469,299 +529,168 @@
             </div>
         </div>
 
-     
-
         @push('scripts')
             <script>
-                // Live duration update for current pointage
-                function mettreAJourDuree() {
-                    const elementDuree = document.getElementById('duree-travail');
-                    if (elementDuree) {
-                        const debut = parseInt(elementDuree.dataset.debut);
-                        const maintenant = Math.floor(Date.now() / 1000);
-                        const diffMinutes = Math.floor((maintenant - debut) / 60);
-                        const heures = Math.floor(diffMinutes / 60);
-                        const minutes = diffMinutes % 60;
-                        elementDuree.textContent = `${heures}h ${minutes.toString().padStart(2, '0')}min`;
+                // Toggle date inputs based on period selection
+                function toggleDateInputs() {
+                    const periode = document.getElementById('periode').value;
+                    const dateDebutContainer = document.getElementById('date_debut_container');
+                    const dateFinContainer = document.getElementById('date_fin_container');
+                    
+                    if (periode && periode !== '') {
+                        dateDebutContainer.style.display = 'none';
+                        dateFinContainer.style.display = 'none';
+                    } else {
+                        dateDebutContainer.style.display = 'block';
+                        dateFinContainer.style.display = 'block';
                     }
                 }
-                // Update every second
-                setInterval(mettreAJourDuree, 1000);
-                mettreAJourDuree(); // Initial call
 
-                // Custom Alert/Confirmation Modal Logic (Copied from Tache/Reclamation for consistency)
-                const customAlertModal = document.getElementById('custom-alert-modal');
-                const alertModalMessage = document.getElementById('alert-modal-message');
-                const alertModalButtons = document.getElementById('alert-modal-buttons');
-                const alertModalIcon = document.getElementById('alert-modal-icon');
-                let resolveAlertModalPromise;
+                // Initialize on load
+                document.addEventListener('DOMContentLoaded', () => {
+                    toggleDateInputs();
+                });
 
-                function showCustomAlertModal(message, type = 'alert', onConfirm = null) {
-                    alertModalMessage.textContent = message;
-                    alertModalButtons.innerHTML = ''; // Clear previous buttons
-                    alertModalIcon.innerHTML = ''; // Clear previous icon
+                // Export functions
+                function exporterExcel() {
+                    const currentUrl = new URL(window.location.href);
+                    const params = currentUrl.searchParams.toString();
+                    window.location.href = "{{ route('pointages.export.excel') }}" + (params ? '?' + params : '');
+                }
 
-                    if (type === 'confirm') {
-                        alertModalIcon.innerHTML = '<i class="fas fa-question-circle text-blue-500"></i>';
-                        const confirmBtn = document.createElement('button');
-                        confirmBtn.textContent = 'Confirmer';
-                        confirmBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
-                        confirmBtn.onclick = () => {
-                            customAlertModal.classList.remove('show');
-                            if (onConfirm) onConfirm();
-                            resolveAlertModalPromise(true);
-                        };
-                        alertModalButtons.appendChild(confirmBtn);
+                function exporterPdf() {
+                    const currentUrl = new URL(window.location.href);
+                    const params = currentUrl.searchParams.toString();
+                    window.location.href = "{{ route('pointages.export.pdf') }}" + (params ? '?' + params : '');
+                }
 
-                        const cancelBtn = document.createElement('button');
-                        cancelBtn.textContent = 'Annuler';
-                        cancelBtn.className = 'px-6 py-3 rounded-full font-bold text-sm uppercase tracking-wider shadow-md btn-secondary-tailwind';
-                        cancelBtn.onclick = () => {
-                            customAlertModal.classList.remove('show');
-                            resolveAlertModalPromise(false);
-                        };
-                        alertModalButtons.appendChild(cancelBtn);
-                    } else if (type === 'alert') {
-                        alertModalIcon.innerHTML = '<i class="fas fa-info-circle text-gray-500"></i>';
-                        const okBtn = document.createElement('button');
-                        okBtn.textContent = 'OK';
-                        okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
-                        okBtn.onclick = () => {
-                            customAlertModal.classList.remove('show');
-                            if (onConfirm) onConfirm();
-                            resolveAlertModalPromise(true);
-                        };
-                        alertModalButtons.appendChild(okBtn);
-                    } else if (type === 'success') {
-                        alertModalIcon.innerHTML = '<i class="fas fa-check-circle text-green-500"></i>';
-                        const okBtn = document.createElement('button');
-                        okBtn.textContent = 'OK';
-                        okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
-                        okBtn.onclick = () => {
-                            customAlertModal.classList.remove('show');
-                            if (onConfirm) onConfirm();
-                            resolveAlertModalPromise(true);
-                        };
-                        alertModalButtons.appendChild(okBtn);
-                    } else if (type === 'error') {
-                        alertModalIcon.innerHTML = '<i class="fas fa-times-circle text-primary-red"></i>';
-                        const okBtn = document.createElement('button');
-                        okBtn.textContent = 'OK';
-                        okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
-                        okBtn.onclick = () => {
-                            customAlertModal.classList.remove('show');
-                            if (onConfirm) onConfirm();
-                            resolveAlertModalPromise(true);
-                        };
-                        alertModalButtons.appendChild(okBtn);
+                // Charts initialization
+                @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
+                document.addEventListener('DOMContentLoaded', async () => {
+                    try {
+                        const response = await fetch("{{ route('pointages.chart.data') }}");
+                        const data = await response.json();
+
+                        // Heures travaillées chart
+                        const heuresCtx = document.getElementById('heuresChart');
+                        if (heuresCtx) {
+                            new Chart(heuresCtx, {
+                                type: 'line',
+                                data: {
+                                    labels: data.dates,
+                                    datasets: [{
+                                        label: 'Heures travaillées',
+                                        data: data.heures_travaillees,
+                                        borderColor: 'rgb(79, 70, 229)',
+                                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                                        tension: 0.4,
+                                        fill: true
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            display: false
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: {
+                                                callback: function(value) {
+                                                    return value + 'h';
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                        // Retards chart
+                        const retardsCtx = document.getElementById('retardsChart');
+                        if (retardsCtx) {
+                            new Chart(retardsCtx, {
+                                type: 'bar',
+                                data: {
+                                    labels: data.dates,
+                                    datasets: [{
+                                        label: 'Retards',
+                                        data: data.retards,
+                                        backgroundColor: 'rgba(211, 47, 47, 0.8)',
+                                        borderColor: 'rgb(211, 47, 47)',
+                                        borderWidth: 1
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: {
+                                            display: false
+                                        }
+                                    },
+                                    scales: {
+                                        y: {
+                                            beginAtZero: true,
+                                            ticks: {
+                                                stepSize: 1
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Erreur lors du chargement des graphiques:', error);
                     }
+                });
+                @endif
 
-                    customAlertModal.classList.add('show');
-                    return new Promise(resolve => {
-                        resolveAlertModalPromise = resolve;
-                    });
-                }
-
-                // Convenience functions to replace native alert/confirm with custom modal
-                window.showCustomAlert = function(message, callback = null) {
-                    return showCustomAlertModal(message, 'alert', callback);
-                }
-
-                window.showCustomConfirm = function(message, callback = null) {
-                    return showCustomAlertModal(message, 'confirm', callback);
-                }
-
-                window.showCustomSuccess = function(message, callback = null) {
-                    return showCustomAlertModal(message, 'success', callback);
-                }
-
-                window.showCustomError = function(message, callback = null) {
-                    return showCustomAlertModal(message, 'error', callback);
-                }
-
-                // Functions for the correction modal (already present, but ensure consistency)
+                // Modal functions
                 function ouvrirModalCorrection(pointageId, heureArrivee, heureDepart, description, localisation, userLatitude, userLongitude) {
                     document.getElementById('modalCorrection').classList.remove('hidden');
                     const form = document.getElementById('formCorrection');
-
                     form.action = `/pointage/${pointageId}/corriger`;
-
                     document.getElementById('modal_heure_arrivee').value = heureArrivee;
                     document.getElementById('modal_heure_depart').value = heureDepart;
                     document.getElementById('modal_description').value = description;
                     document.getElementById('modal_localisation').value = localisation;
-                    document.getElementById('modal_user_latitude').value = userLatitude; // Populate latitude
-                    document.getElementById('modal_user_longitude').value = userLongitude; // Populate longitude
+                    document.getElementById('modal_user_latitude').value = userLatitude;
+                    document.getElementById('modal_user_longitude').value = userLongitude;
                 }
 
                 function fermerModalCorrection() {
                     document.getElementById('modalCorrection').classList.add('hidden');
-                    document.getElementById('modal_heure_arrivee').value = '';
-                    document.getElementById('modal_heure_depart').value = '';
-                    document.getElementById('modal_description').value = '';
-                    document.getElementById('modal_localisation').value = '';
-                    document.getElementById('modal_user_latitude').value = ''; // Clear latitude
-                    document.getElementById('modal_user_longitude').value = ''; // Clear longitude
                 }
 
-                document.getElementById('modalCorrection')?.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        fermerModalCorrection();
+                // Custom alert modal
+                const customAlertModal = document.getElementById('custom-alert-modal');
+                function showCustomAlert(message, type = 'alert') {
+                    const alertModalMessage = document.getElementById('alert-modal-message');
+                    const alertModalButtons = document.getElementById('alert-modal-buttons');
+                    const alertModalIcon = document.getElementById('alert-modal-icon');
+                    
+                    alertModalMessage.textContent = message;
+                    alertModalButtons.innerHTML = '';
+                    alertModalIcon.innerHTML = '';
+
+                    if (type === 'alert') {
+                        alertModalIcon.innerHTML = '<i class="fas fa-info-circle text-gray-500"></i>';
+                    } else if (type === 'error') {
+                        alertModalIcon.innerHTML = '<i class="fas fa-times-circle text-red-600"></i>';
                     }
-                });
 
-                // --- Geolocation Logic ---
-                const pointageArriveeForm = document.getElementById('pointageArriveeForm');
-                const pointageSortieForm = document.getElementById('pointageSortieForm');
-                const localisationDisplay = document.getElementById('localisation_display');
+                    const okBtn = document.createElement('button');
+                    okBtn.textContent = 'OK';
+                    okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
+                    okBtn.onclick = () => customAlertModal.classList.remove('show');
+                    alertModalButtons.appendChild(okBtn);
 
-                const userLatitudeIn = document.getElementById('user_latitude_in');
-                const userLongitudeIn = document.getElementById('user_longitude_in');
-                const localisationHiddenIn = document.getElementById('localisation_hidden_in');
-
-                const userLatitudeOut = document.getElementById('user_latitude_out');
-                const userLongitudeOut = document.getElementById('user_longitude_out');
-                const localisationHiddenOut = document.getElementById('localisation_hidden_out');
-
-
-                const pointerArriveeBtn = document.getElementById('pointerArriveeBtn');
-                const pointerSortieBtn = document.getElementById('pointerSortieBtn');
-
-                // Function to handle geolocation or fallbacks
-                function handleGeolocation(callback, formButton, form) {
-                    // Check if on HTTPS (secure context) AND if geolocation is supported
-                    if (window.isSecureContext && navigator.geolocation) {
-                        formButton.disabled = true;
-                        formButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Récupération de la position...';
-
-                        navigator.geolocation.getCurrentPosition(
-                            (position) => {
-                                const lat = position.coords.latitude;
-                                const lon = position.coords.longitude;
-                                callback(lat, lon, 'Automatique'); // Pass 'Automatique' as a source hint
-                                formButton.disabled = false;
-                                if (form.id === 'pointageArriveeForm') {
-                                    formButton.innerHTML = '<i class="fas fa-play-circle mr-2"></i> Pointer l\'Arrivée';
-                                } else if (form.id === 'pointageSortieForm') {
-                                    formButton.innerHTML = '<i class="fas fa-stop-circle mr-2"></i> Pointer la Sortie';
-                                }
-                            },
-                            (error) => {
-                                console.error("Erreur de géolocalisation: ", error);
-                                let errorMessage = "Impossible de récupérer votre position. Le pointage sera enregistré sans localisation précise.";
-                                if (error.code === error.PERMISSION_DENIED) {
-                                    errorMessage += " (Accès à la localisation refusé)";
-                                } else if (error.code === error.POSITION_UNAVAILABLE) {
-                                    errorMessage += " (Position non déterminable)";
-                                } else if (error.code === error.TIMEOUT) {
-                                    errorMessage += " (Délai expiré)";
-                                }
-                                showCustomError(errorMessage);
-                                // Fallback: Proceed without geolocation data, set as 'Non spécifiée' or similar
-                                callback(null, null, 'Non détectée (Erreur)');
-                                formButton.disabled = false;
-                                if (form.id === 'pointageArriveeForm') {
-                                    formButton.innerHTML = '<i class="fas fa-play-circle mr-2"></i> Pointer l\'Arrivée';
-                                } else if (form.id === 'pointageSortieForm') {
-                                    formButton.innerHTML = '<i class="fas fa-stop-circle mr-2"></i> Pointer la Sortie';
-                                }
-                            },
-                            {
-                                enableHighAccuracy: true,
-                                timeout: 15000,
-                                maximumAge: 0
-                            }
-                        );
-                    } else {
-                        // Fallback: Not on HTTPS or Geolocation not supported
-                        let message = "La géolocalisation n'est pas disponible ou l'accès est bloqué (Site non sécurisé). Le pointage sera enregistré sans localisation précise.";
-                        if (!navigator.geolocation) {
-                             message = "Votre navigateur ne supporte pas la géolocalisation. Le pointage sera enregistré sans localisation précise.";
-                        } else if (!window.isSecureContext) {
-                            message = "Ce site n'est pas sécurisé (HTTPS). La géolocalisation automatique est désactivée. Le pointage sera enregistré sans localisation précise.";
-                        }
-
-                        showCustomAlert(message, 'info'); // Show info message instead of error
-                        console.warn("Geolocation fallback: Not on HTTPS or not supported.");
-                        
-                        // Proceed with null coordinates and 'Non détectée' location
-                        callback(null, null, 'Non détectée (HTTP)');
-                        formButton.disabled = false; // Ensure button is re-enabled
-                        if (form.id === 'pointageArriveeForm') {
-                            formButton.innerHTML = '<i class="fas fa-play-circle mr-2"></i> Pointer l\'Arrivée';
-                        } else if (form.id === 'pointageSortieForm') {
-                            formButton.innerHTML = '<i class="fas fa-stop-circle mr-2"></i> Pointer la Sortie';
-                        }
-                    }
+                    customAlertModal.classList.add('show');
                 }
-
-                // Handle arrival form submission
-                if (pointageArriveeForm) {
-                    pointageArriveeForm.addEventListener('submit', function(event) {
-                        event.preventDefault(); // Prevent default submission
-                        handleGeolocation((lat, lon, status) => {
-                            userLatitudeIn.value = lat;
-                            userLongitudeIn.value = lon;
-                            // Set the hidden localisation field based on status for backend to log/process
-                            localisationHiddenIn.value = status; 
-                            if (localisationDisplay) {
-                                localisationDisplay.value = 'Position ' + status + '. Envoi du pointage...';
-                            }
-                            this.submit(); // Submit the form regardless of geolocation success
-                        }, pointerArriveeBtn, pointageArriveeForm);
-                    });
-                }
-
-                // Handle departure form submission
-                if (pointageSortieForm) {
-                    pointageSortieForm.addEventListener('submit', function(event) {
-                        event.preventDefault(); // Prevent default submission
-                        handleGeolocation((lat, lon, status) => {
-                            userLatitudeOut.value = lat;
-                            userLongitudeOut.value = lon;
-                            // Set the hidden localisation field based on status for backend to log/process
-                            localisationHiddenOut.value = status;
-                            this.submit(); // Submit the form regardless of geolocation success
-                        }, pointerSortieBtn, pointageSortieForm);
-                    });
-                }
-
-                // Initialize localisation display on page load if user is not an Sup_Admin
-                document.addEventListener('DOMContentLoaded', () => {
-                    const isAdmin = {{ auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin') ? 'true' : 'false' }};
-                    if (!isAdmin && localisationDisplay) {
-                        if (window.isSecureContext && navigator.geolocation) {
-                            localisationDisplay.value = 'Veuillez cliquer pour pointer afin de détecter votre position.';
-                        } else {
-                            localisationDisplay.value = 'Géolocalisation automatique non disponible (Site non sécurisé ou navigateur non compatible).';
-                            if (pointerArriveeBtn) {
-                                pointerArriveeBtn.textContent = 'Pointer l\'Arrivée (Manuel)';
-                                pointerArriveeBtn.classList.add('bg-gray-500'); // Optional: change color to indicate manual/no-auto-location
-                                pointerArriveeBtn.classList.remove('bg-green-600');
-                            }
-                        }
-                    }
-                });
-
-                // Set initial state of buttons based on geolocation availability (optional visual hint)
-                document.addEventListener('DOMContentLoaded', () => {
-                    const isAdmin = {{ auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin') ? 'true' : 'false' }};
-                    if (!isAdmin) {
-                        if (!window.isSecureContext || !navigator.geolocation) {
-                            if (pointerArriveeBtn) {
-                               pointerArriveeBtn.textContent = 'Pointer l\'Arrivée (sans localisation)';
-                                pointerArriveeBtn.classList.add('bg-orange-500'); // Change color to hint
-                                pointerArriveeBtn.classList.remove('bg-green-600');
-                            }
-                            if (pointerSortieBtn) { // For the departure button as well
-                                pointerSortieBtn.textContent = 'Pointer la Sortie (sans localisation)';
-                                pointerSortieBtn.classList.add('bg-orange-500');
-                                pointerSortieBtn.classList.remove('bg-primary-red');
-                            }
-                        }
-                    }
-                });
-
             </script>
         @endpush
 </x-app-layout>

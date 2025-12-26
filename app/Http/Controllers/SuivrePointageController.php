@@ -9,38 +9,26 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class SuivrePointageController extends Controller
 {
-    /**
-     * Define the target UITS location coordinates and a radius for proximity check.
-     * VOUS DEVEZ DÉFINIR LES BONNES LATITUDE ET LONGITUDE POUR "N° 68 Rue Camille St Saëns, Casablanca 20300, Maroc".
-     * Utilisez un outil comme Google Maps pour obtenir des coordonnées précises.
-     * Exemple : 33.5855, -7.6329 (Ce sont des approximations, obtenez les précises !)
-     */
-    private const UITS_LATITUDE = 33.5855; // <-- CHANGEZ CECI PAR LA VRAIE LATITUDE DE VOTRE BUREAU
-    private const UITS_LONGITUDE = -7.6329; // <-- CHANGEZ CECI PAR LA VRAIE LONGITUDE DE VOTRE BUREAU
-    private const PROXIMITY_RADIUS_METERS = 300; // Définir la distance (en mètres) à laquelle l'utilisateur est considéré "chez UITS"
-
-    /**
-     * Constructeur du contrôleur avec gestion des permissions.
-     */
+    
     public function __construct()
     {
         $this->middleware('permission:pointage-list', ['only' => ['index', 'show']]);
-        // Aucune permission spécifique pour 'pointer' ici, car la restriction par rôle est faite dans la méthode elle-même.
     }
 
     /**
-     * Afficher la liste des pointages.
+     * Afficher la liste des pointages avec filtres avancés.
      */
     public function index(Request $request)
     {
         $utilisateur = auth()->user();
+        $isAdmin = $utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin');
 
         $pointageEnCours = null;
-        if (!($utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin'))) {
+        if (!$isAdmin) {
             $pointageEnCours = SuivrePointage::where('iduser', Auth::id())
                 ->whereDate('date_pointage', Carbon::today('Africa/Casablanca'))
                 ->whereNull('heure_depart')
@@ -48,32 +36,75 @@ class SuivrePointageController extends Controller
         }
 
         $requete = SuivrePointage::with('user');
-
-        // Get all users for the filter dropdown
         $users = User::orderBy('name')->get();
+        $queryParams = $request->except('page');
 
-        // Store all request parameters to append them to pagination links
-        $queryParams = $request->except('page'); // Exclude 'page' as paginator handles it
-
+        // Filtre par recherche
         if ($recherche = $request->input('search')) {
             $requete->whereHas('user', function ($query) use ($recherche) {
                 $query->where('name', 'like', "%{$recherche}%");
-            })
-            ->orWhereDate('date_pointage', 'like', "%{$recherche}%");
+            })->orWhereDate('date_pointage', 'like', "%{$recherche}%");
         }
 
+        // Filtre par période (mois/semaine)
+        if ($periode = $request->input('periode')) {
+            switch ($periode) {
+                case 'today':
+                    $requete->whereDate('date_pointage', Carbon::today('Africa/Casablanca'));
+                    break;
+                case 'yesterday':
+                    $requete->whereDate('date_pointage', Carbon::yesterday('Africa/Casablanca'));
+                    break;
+                case 'this_week':
+                    $requete->whereBetween('date_pointage', [
+                        Carbon::now('Africa/Casablanca')->startOfWeek(),
+                        Carbon::now('Africa/Casablanca')->endOfWeek()
+                    ]);
+                    break;
+                case 'last_week':
+                    $requete->whereBetween('date_pointage', [
+                        Carbon::now('Africa/Casablanca')->subWeek()->startOfWeek(),
+                        Carbon::now('Africa/Casablanca')->subWeek()->endOfWeek()
+                    ]);
+                    break;
+                case 'this_month':
+                    $requete->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->month)
+                           ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
+                    break;
+                case 'last_month':
+                    $requete->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->subMonth()->month)
+                           ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->subMonth()->year);
+                    break;
+                case 'this_year':
+                    $requete->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
+                    break;
+            }
+        }
+
+        // Filtre par plage de dates personnalisée
         if ($dateDebut = $request->input('date_debut')) {
             $requete->whereDate('date_pointage', '>=', $dateDebut);
         }
+        if ($dateFin = $request->input('date_fin')) {
+            $requete->whereDate('date_pointage', '<=', $dateFin);
+        }
 
+        // Filtre par statut
         if ($statut = $request->input('statut')) {
             if ($statut === 'en_cours') {
                 $requete->whereNull('heure_depart');
             } elseif ($statut === 'termine') {
                 $requete->whereNotNull('heure_depart');
+            } elseif ($statut === 'retard') {
+                $requete->whereNotNull('heure_arrivee')
+                       ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00']);
+            } elseif ($statut === 'depart_anticipe') {
+                $requete->whereNotNull('heure_depart')
+                       ->whereRaw('TIME(heure_depart) < ?', ['17:30:00']);
             }
         }
 
+        // Filtre par utilisateur
         if ($userId = $request->input('user_id')) {
             if ($userId !== 'all') {
                 $requete->where('iduser', $userId);
@@ -82,34 +113,323 @@ class SuivrePointageController extends Controller
 
         $requete->orderBy('date_pointage', 'DESC')->orderBy('heure_arrivee', 'DESC');
 
-        if ($utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin')) {
-            // Apply appends() here
-            $pointages = $requete->paginate(10)->appends($queryParams);
-        } else {
-            // Apply appends() here
-            $pointages = $requete->where('iduser', $utilisateur->id)->paginate(10)->appends($queryParams);
+        // Restriction pour non-admin
+        if (!$isAdmin) {
+            $requete->where('iduser', $utilisateur->id);
         }
 
-        // Also pass the current filter values back to the view to pre-fill the form
-        $currentSearch = $request->input('search');
-        $currentDateDebut = $request->input('date_debut');
-        $currentStatut = $request->input('statut');
-        $currentUserId = $request->input('user_id');
+        $pointages = $requete->paginate(15)->appends($queryParams);
 
+        // Statistiques pour le dashboard
+        $stats = $this->getStatistiques($request, $isAdmin ? null : $utilisateur->id);
 
-        return view('suivre_pointage.index', compact('pointages', 'pointageEnCours', 'users',
-            'currentSearch', 'currentDateDebut', 'currentStatut', 'currentUserId'
+        return view('suivre_pointage.index', compact(
+            'pointages',
+            'pointageEnCours',
+            'users',
+            'stats'
         ));
     }
 
     /**
-     * Effectuer un pointage (arrivée ou départ).
+     * Obtenir les statistiques.
      */
-    
+    private function getStatistiques(Request $request, $userId = null)
+    {
+        $query = SuivrePointage::query();
+        
+        if ($userId) {
+            $query->where('iduser', $userId);
+        }
+
+        // Appliquer les mêmes filtres que l'index
+        if ($periode = $request->input('periode')) {
+            switch ($periode) {
+                case 'today':
+                    $query->whereDate('date_pointage', Carbon::today('Africa/Casablanca'));
+                    break;
+                case 'this_week':
+                    $query->whereBetween('date_pointage', [
+                        Carbon::now('Africa/Casablanca')->startOfWeek(),
+                        Carbon::now('Africa/Casablanca')->endOfWeek()
+                    ]);
+                    break;
+                case 'this_month':
+                    $query->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->month)
+                          ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
+                    break;
+            }
+        } else {
+            // Par défaut: ce mois
+            $query->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->month)
+                  ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
+        }
+
+        $totalPointages = $query->count();
+        $pointagesComplets = $query->clone()->whereNotNull('heure_depart')->count();
+        $pointagesEnCours = $query->clone()->whereNull('heure_depart')->count();
+        
+        $retards = $query->clone()
+            ->whereNotNull('heure_arrivee')
+            ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00'])
+            ->count();
+
+        $departsAnticipes = $query->clone()
+            ->whereNotNull('heure_depart')
+            ->whereRaw('TIME(heure_depart) < ?', ['17:30:00'])
+            ->count();
+
+        // Temps total travaillé
+        $pointagesTermines = $query->clone()->whereNotNull('heure_depart')->get();
+        $tempsTotal = 0;
+        foreach ($pointagesTermines as $pointage) {
+            if ($pointage->heure_arrivee && $pointage->heure_depart) {
+                $arrivee = Carbon::parse($pointage->heure_arrivee);
+                $depart = Carbon::parse($pointage->heure_depart);
+                $tempsTotal += $arrivee->diffInMinutes($depart);
+            }
+        }
+
+        $heures = floor($tempsTotal / 60);
+        $minutes = $tempsTotal % 60;
+
+        return [
+            'total_pointages' => $totalPointages,
+            'pointages_complets' => $pointagesComplets,
+            'pointages_en_cours' => $pointagesEnCours,
+            'retards' => $retards,
+            'departs_anticipes' => $departsAnticipes,
+            'temps_total' => sprintf('%d h %02d min', $heures, $minutes),
+            'temps_moyen' => $pointagesComplets > 0 ? sprintf('%d h %02d min', floor($tempsTotal / $pointagesComplets / 60), ($tempsTotal / $pointagesComplets) % 60) : '0 h 00 min',
+        ];
+    }
+
     /**
-     * Calcule la distance grand cercle entre deux points sur une sphère.
+     * Exporter les pointages en Excel/CSV.
      */
-   
+    public function exporterExcel(Request $request)
+    {
+        $utilisateur = auth()->user();
+        $isAdmin = $utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin');
+
+        if (!$isAdmin) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        $requete = SuivrePointage::with('user');
+        $this->appliquerFiltres($requete, $request);
+
+        $pointages = $requete->orderBy('date_pointage', 'DESC')->get();
+
+        $filename = 'pointages_' . Carbon::now('Africa/Casablanca')->format('Y-m-d_His') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($pointages) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+            
+            fputcsv($file, [
+                'Utilisateur',
+                'Date',
+                'Heure Arrivée',
+                'Heure Départ',
+                'Durée (minutes)',
+                'Statut',
+                'Retard',
+                'Départ Anticipé',
+                'Localisation',
+                'Description'
+            ], ';');
+
+            foreach ($pointages as $pointage) {
+                $duree = '';
+                $retard = 'Non';
+                $departAnticipe = 'Non';
+
+                if ($pointage->heure_arrivee && $pointage->heure_depart) {
+                    $arrivee = Carbon::parse($pointage->heure_arrivee);
+                    $depart = Carbon::parse($pointage->heure_depart);
+                    $duree = $arrivee->diffInMinutes($depart);
+                }
+
+                if ($pointage->heure_arrivee) {
+                    $arriveeTime = Carbon::parse($pointage->heure_arrivee);
+                    $expectedArrivee = Carbon::parse($arriveeTime->format('Y-m-d') . ' 09:10:00');
+                    if ($arriveeTime->greaterThan($expectedArrivee)) {
+                        $retard = 'Oui';
+                    }
+                }
+
+                if ($pointage->heure_depart) {
+                    $departTime = Carbon::parse($pointage->heure_depart);
+                    $expectedDepart = Carbon::parse($departTime->format('Y-m-d') . ' 17:30:00');
+                    if ($departTime->lessThan($expectedDepart)) {
+                        $departAnticipe = 'Oui';
+                    }
+                }
+
+                fputcsv($file, [
+                    $pointage->user->name,
+                    $pointage->date_pointage ? $pointage->date_pointage->format('d/m/Y') : '',
+                    $pointage->heure_arrivee ? Carbon::parse($pointage->heure_arrivee)->format('H:i') : '',
+                    $pointage->heure_depart ? Carbon::parse($pointage->heure_depart)->format('H:i') : '',
+                    $duree,
+                    $pointage->heure_depart ? 'Terminé' : 'En cours',
+                    $retard,
+                    $departAnticipe,
+                    $pointage->localisation ?? '',
+                    $pointage->description ?? ''
+                ], ';');
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Exporter les pointages en PDF.
+     */
+    public function exporterPdf(Request $request)
+    {
+        $utilisateur = auth()->user();
+        $isAdmin = $utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin');
+
+        if (!$isAdmin) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        $requete = SuivrePointage::with('user');
+        $this->appliquerFiltres($requete, $request);
+
+        $pointages = $requete->orderBy('date_pointage', 'DESC')->get();
+        $stats = $this->getStatistiques($request);
+
+        $pdf = Pdf::loadView('suivre_pointage.export_pdf', compact('pointages', 'stats'));
+        
+        $filename = 'pointages_' . Carbon::now('Africa/Casablanca')->format('Y-m-d_His') . '.pdf';
+        
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Appliquer les filtres à une requête.
+     */
+    private function appliquerFiltres($requete, Request $request)
+    {
+        if ($recherche = $request->input('search')) {
+            $requete->whereHas('user', function ($query) use ($recherche) {
+                $query->where('name', 'like', "%{$recherche}%");
+            });
+        }
+
+        if ($periode = $request->input('periode')) {
+            switch ($periode) {
+                case 'today':
+                    $requete->whereDate('date_pointage', Carbon::today('Africa/Casablanca'));
+                    break;
+                case 'this_week':
+                    $requete->whereBetween('date_pointage', [
+                        Carbon::now('Africa/Casablanca')->startOfWeek(),
+                        Carbon::now('Africa/Casablanca')->endOfWeek()
+                    ]);
+                    break;
+                case 'this_month':
+                    $requete->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->month)
+                           ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
+                    break;
+            }
+        }
+
+        if ($dateDebut = $request->input('date_debut')) {
+            $requete->whereDate('date_pointage', '>=', $dateDebut);
+        }
+        if ($dateFin = $request->input('date_fin')) {
+            $requete->whereDate('date_pointage', '<=', $dateFin);
+        }
+
+        if ($statut = $request->input('statut')) {
+            if ($statut === 'en_cours') {
+                $requete->whereNull('heure_depart');
+            } elseif ($statut === 'termine') {
+                $requete->whereNotNull('heure_depart');
+            } elseif ($statut === 'retard') {
+                $requete->whereNotNull('heure_arrivee')
+                       ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00']);
+            }
+        }
+
+        if ($userId = $request->input('user_id')) {
+            if ($userId !== 'all') {
+                $requete->where('iduser', $userId);
+            }
+        }
+    }
+
+    /**
+     * API pour les données de charts.
+     */
+    public function getChartData(Request $request)
+    {
+        $utilisateur = auth()->user();
+        $isAdmin = $utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin');
+
+        $query = SuivrePointage::query();
+        
+        if (!$isAdmin) {
+            $query->where('iduser', $utilisateur->id);
+        }
+
+        // Données pour les 30 derniers jours
+        $dateDebut = Carbon::now('Africa/Casablanca')->subDays(30);
+        $query->where('date_pointage', '>=', $dateDebut);
+
+        $pointages = $query->orderBy('date_pointage')->get();
+
+        $chartData = [
+            'dates' => [],
+            'heures_travaillees' => [],
+            'retards' => [],
+        ];
+
+        $groupedByDate = $pointages->groupBy(function($pointage) {
+            return Carbon::parse($pointage->date_pointage)->format('Y-m-d');
+        });
+
+        foreach ($groupedByDate as $date => $pointagesJour) {
+            $chartData['dates'][] = Carbon::parse($date)->format('d/m');
+            
+            $tempsTotal = 0;
+            $retardsJour = 0;
+
+            foreach ($pointagesJour as $pointage) {
+                if ($pointage->heure_arrivee && $pointage->heure_depart) {
+                    $arrivee = Carbon::parse($pointage->heure_arrivee);
+                    $depart = Carbon::parse($pointage->heure_depart);
+                    $tempsTotal += $arrivee->diffInMinutes($depart) / 60;
+                }
+
+                if ($pointage->heure_arrivee) {
+                    $arriveeTime = Carbon::parse($pointage->heure_arrivee);
+                    $expectedArrivee = Carbon::parse($arriveeTime->format('Y-m-d') . ' 09:10:00');
+                    if ($arriveeTime->greaterThan($expectedArrivee)) {
+                        $retardsJour++;
+                    }
+                }
+            }
+
+            $chartData['heures_travaillees'][] = round($tempsTotal, 2);
+            $chartData['retards'][] = $retardsJour;
+        }
+
+        return response()->json($chartData);
+    }
+
     /**
      * Afficher les détails d'un pointage.
      */
@@ -126,55 +446,7 @@ class SuivrePointageController extends Controller
     }
 
     /**
-     * Obtenir les statistiques de pointage pour un utilisateur.
-     */
-    public function statistiques(Request $request)
-    {
-        $utilisateur = auth()->user();
-        $moisActuel = $request->get('mois', Carbon::now('Africa/Casablanca')->format('Y-m'));
-
-        $requete = SuivrePointage::where('iduser', $utilisateur->id)
-            ->whereYear('date_pointage', '=', Carbon::parse($moisActuel, 'Africa/Casablanca')->year)
-            ->whereMonth('date_pointage', '=', Carbon::parse($moisActuel, 'Africa/Casablanca')->month);
-
-        $statistiques = [
-            'total_pointages' => $requete->count(),
-            'pointages_complets' => $requete->clone()->whereNotNull('heure_depart')->count(),
-            'pointages_en_cours' => $requete->clone()->whereNull('heure_depart')->count(),
-            'temps_total_travaille' => $this->calculerTempsTotalTravaille($utilisateur->id, $moisActuel),
-        ];
-
-        return response()->json($statistiques);
-    }
-
-    /**
-     * Calculer le temps total travaillé pour un utilisateur.
-     */
-    private function calculerTempsTotalTravaille($utilisateurId, $mois)
-    {
-        $pointages = SuivrePointage::where('iduser', $utilisateurId)
-            ->whereYear('date_pointage', '=', Carbon::parse($mois, 'Africa/Casablanca')->year)
-            ->whereMonth('date_pointage', '=', Carbon::parse($mois, 'Africa/Casablanca')->month)
-            ->whereNotNull('heure_depart')
-            ->get();
-
-        $tempsTotal = 0;
-        foreach ($pointages as $pointage) {
-            if ($pointage->heure_arrivee && $pointage->heure_depart) {
-                $arrivee = Carbon::parse($pointage->heure_arrivee);
-                $depart = Carbon::parse($pointage->heure_depart);
-                $tempsTotal += $arrivee->diffInMinutes($depart);
-            }
-        }
-
-        $heures = floor($tempsTotal / 60);
-        $minutes = $tempsTotal % 60;
-
-        return sprintf('%d h %02d min', $heures, $minutes);
-    }
-
-    /**
-     * Corriger un pointage (pour les administrateurs).
+     * Corriger un pointage.
      */
     public function corriger(Request $request, $id)
     {
