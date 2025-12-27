@@ -9,29 +9,33 @@ use Illuminate\Support\Facades\Storage;
 class BackupController extends Controller
 {
     public function download()
-    {
-        // 1. Run the backup command to create a new backup file
-        try {
-            Artisan::call('backup:run', ['--only-db' => true]);
-        } catch (\Exception $e) {
-            \Log::error("Backup failed during download attempt: " . $e->getMessage());
-        }
-
-        // 2. Find the latest backup file in the local storage
+{
+    try {
+        // 1. تشغيل الكوموند
+        Artisan::call('backup:run', ['--only-db' => true]);
+        
         $backupDisk = Storage::disk('local');
         
-        // ** التعديل الحاسم: ابحثي في الجذر مباشرة **
-        $files = $backupDisk->files(); 
+        // 2. جلب جميع الملفات مع التواريخ ديالها
+        $files = $backupDisk->allFiles(); // كيجيب كاع الملفات حتى اللي وسط المجلدات
 
-        // Find the latest file in the array of files
-        $latestBackup = end($files);
-
-        if ($latestBackup) {
-            // 3. Send the file to the browser for download
-            return $backupDisk->download($latestBackup, basename($latestBackup));
+        if (empty($files)) {
+            return back()->with('error', 'لا يوجد أي ملف باك أب.');
         }
 
-        // 4. If no backup file is found, return an error message
-        return back()->with('error', 'No backup file found to download.');
+        // 3. ترتيب الملفات حسب تاريخ التعديل (الأحدث أولاً)
+        usort($files, function ($a, $b) use ($backupDisk) {
+            return $backupDisk->lastModified($b) <=> $backupDisk->lastModified($a);
+        });
+
+        // 4. تحميل أحدث ملف
+        $latestBackup = $files[0];
+        
+        return $backupDisk->download($latestBackup, basename($latestBackup));
+
+    } catch (\Exception $e) {
+        \Log::error("Backup failed: " . $e->getMessage());
+        return back()->with('error', 'فشلت عملية الباك أب: ' . $e->getMessage());
     }
+}
 }
