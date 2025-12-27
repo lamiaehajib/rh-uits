@@ -312,7 +312,7 @@
         </x-slot>
 
         <div class="py-8 relative z-10">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-10xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 @if (session('success'))
                     <div class="notification-modern border-l-4 border-green-500 text-green-700 p-6 mb-6 animate-slide-in" role="alert">
