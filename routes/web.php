@@ -256,7 +256,7 @@ Route::middleware(['auth', 'check.clocked.in'])->group(function () {
     
     
     Route::get('/dashboard/chart-data', [DashboardController::class, 'getChartData'])->name('dashboard.chart.data');
-    Route::get('/dashboard/export-stats', [DashboardController::class, 'exportStats'])->name('dashboard.export');
+    Route::get('/dashboard/export', [DashboardController::class, 'exportStats'])->name('dashboard.export');
 });
 Route::resource('image_preuve', ImagePreuveController::class);
 Route::get('/image_preuve/{id}/download', [ImagePreuveController::class, 'download'])->name('image_preuve.download');

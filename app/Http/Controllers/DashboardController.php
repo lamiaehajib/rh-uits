@@ -22,43 +22,54 @@ class DashboardController extends Controller
         $user = Auth::user();
         $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
-        // Statistiques générales
+        // Récupérer les filtres (par défaut: depuis le début)
+        $filterType = $request->input('filter_type', 'all_time'); // all_time, monthly, yearly
+        $selectedMonth = $request->input('month', now()->month);
+        $selectedYear = $request->input('year', now()->year);
+
+        // Créer la période de filtrage
+        $dateRange = $this->getDateRange($filterType, $selectedMonth, $selectedYear);
+
+        // Statistiques générales avec filtrage
         $stats = [
-            'users' => $this->getUserStats($isAdmin),
-            'pointages' => $this->getPointageStats($isAdmin, $user),
-            'taches' => $this->getTacheStats($isAdmin, $user),
-            'objectifs' => $this->getObjectifStats($isAdmin, $user),
-            'clients' => $this->getClientStats($isAdmin),
-            'projets' => $this->getProjetStats($isAdmin),
+            'users' => $this->getUserStats($isAdmin, $dateRange),
+            'pointages' => $this->getPointageStats($isAdmin, $user, $dateRange),
+            'taches' => $this->getTacheStats($isAdmin, $user, $dateRange),
+            'objectifs' => $this->getObjectifStats($isAdmin, $user, $dateRange),
+            'clients' => $this->getClientStats($isAdmin, $dateRange),
+            'projets' => $this->getProjetStats($isAdmin, $dateRange),
         ];
 
         // Données pour les charts
         $chartData = [
-            'pointages_monthly' => $this->getPointagesMonthlyChart($isAdmin, $user),
-            'taches_status' => $this->getTachesStatusChart($isAdmin, $user),
-            'objectifs_progress' => $this->getObjectifsProgressChart($isAdmin, $user),
-            'projets_status' => $this->getProjetsStatusChart($isAdmin),
-            'users_performance' => $this->getUsersPerformanceChart($isAdmin),
-            'retards_trend' => $this->getRetardsTrendChart($isAdmin, $user),
+            'pointages_monthly' => $this->getPointagesMonthlyChart($isAdmin, $user, $dateRange),
+            'taches_status' => $this->getTachesStatusChart($isAdmin, $user, $dateRange),
+            'objectifs_progress' => $this->getObjectifsProgressChart($isAdmin, $user, $dateRange),
+            'projets_status' => $this->getProjetsStatusChart($isAdmin, $dateRange),
+            'users_performance' => $this->getUsersPerformanceChart($isAdmin, $dateRange),
+            'retards_trend' => $this->getRetardsTrendChart($isAdmin, $user, $dateRange),
         ];
 
         // Activités récentes
         $recentActivities = [
-            'taches' => $this->getRecentTaches($isAdmin, $user, 5),
-            'pointages' => $this->getRecentPointages($isAdmin, $user, 5),
-            'projets' => $this->getRecentProjets($isAdmin, 5),
+            'taches' => $this->getRecentTaches($isAdmin, $user, 5, $dateRange),
+            'pointages' => $this->getRecentPointages($isAdmin, $user, 5, $dateRange),
+            'projets' => $this->getRecentProjets($isAdmin, 5, $dateRange),
             'rendezvous' => $this->getUpcomingRendezVous($isAdmin, 5),
         ];
 
-        // Top performers (pour admins seulement)
-        $topPerformers = $isAdmin ? $this->getTopPerformers() : null;
+        // Top performers
+        $topPerformers = $isAdmin ? $this->getTopPerformers($dateRange) : null;
 
         // Alerts et notifications
         $alerts = [
-            'retards' => $this->getRetardsAlert($isAdmin, $user),
-            'taches_overdue' => $this->getTachesOverdueAlert($isAdmin, $user),
-            'objectifs_incomplets' => $this->getObjectifsIncomplets($isAdmin, $user),
+            'retards' => $this->getRetardsAlert($isAdmin, $user, $dateRange),
+            'taches_overdue' => $this->getTachesOverdueAlert($isAdmin, $user, $dateRange),
+            'objectifs_incomplets' => $this->getObjectifsIncomplets($isAdmin, $user, $dateRange),
         ];
+
+        // Liste des années disponibles pour le filtre
+        $availableYears = range(2020, now()->year);
 
         return view('dashboard.index', compact(
             'stats',
@@ -66,27 +77,64 @@ class DashboardController extends Controller
             'recentActivities',
             'topPerformers',
             'alerts',
-            'isAdmin'
+            'isAdmin',
+            'filterType',
+            'selectedMonth',
+            'selectedYear',
+            'availableYears'
         ));
     }
 
-    // ==================== STATISTIQUES ====================
+    // ==================== HELPER: Date Range ====================
+    
+    private function getDateRange($filterType, $month, $year)
+    {
+        switch ($filterType) {
+            case 'monthly':
+                return [
+                    'start' => Carbon::createFromDate($year, $month, 1)->startOfMonth(),
+                    'end' => Carbon::createFromDate($year, $month, 1)->endOfMonth(),
+                    'type' => 'monthly'
+                ];
+            case 'yearly':
+                return [
+                    'start' => Carbon::createFromDate($year, 1, 1)->startOfYear(),
+                    'end' => Carbon::createFromDate($year, 12, 31)->endOfYear(),
+                    'type' => 'yearly'
+                ];
+            default: // all_time
+                return [
+                    'start' => null,
+                    'end' => null,
+                    'type' => 'all_time'
+                ];
+        }
+    }
 
-    private function getUserStats($isAdmin)
+    // ==================== STATISTIQUES (Modifiées) ====================
+
+    private function getUserStats($isAdmin, $dateRange)
     {
         if (!$isAdmin) return null;
+
+        $query = User::query();
+        
+        if ($dateRange['start']) {
+            $newUsersQuery = User::whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+            $newCount = $newUsersQuery->count();
+        } else {
+            $newCount = User::count();
+        }
 
         return [
             'total' => User::count(),
             'active' => User::where('is_active', true)->count(),
             'inactive' => User::where('is_active', false)->count(),
-            'new_this_month' => User::whereMonth('created_at', Carbon::now()->month)
-                                    ->whereYear('created_at', Carbon::now()->year)
-                                    ->count(),
+            'new_in_period' => $newCount,
         ];
     }
 
-    private function getPointageStats($isAdmin, $user)
+    private function getPointageStats($isAdmin, $user, $dateRange)
     {
         $query = SuivrePointage::query();
         
@@ -94,22 +142,25 @@ class DashboardController extends Controller
             $query->where('iduser', $user->id);
         }
 
-        $thisMonth = $query->clone()
-            ->whereMonth('date_pointage', Carbon::now()->month)
-            ->whereYear('date_pointage', Carbon::now()->year);
+        // Appliquer le filtre de date
+        if ($dateRange['start']) {
+            $query->whereBetween('date_pointage', [$dateRange['start'], $dateRange['end']]);
+        }
 
-        $retards = $thisMonth->clone()
+        $total = $query->clone()->count();
+
+        $retards = $query->clone()
             ->whereNotNull('heure_arrivee')
             ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00'])
             ->count();
 
-        $departsAnticipes = $thisMonth->clone()
+        $departsAnticipes = $query->clone()
             ->whereNotNull('heure_depart')
             ->whereRaw('TIME(heure_depart) < ?', ['17:30:00'])
             ->count();
 
         // Calculer temps moyen travaillé
-        $pointagesTermines = $thisMonth->clone()->whereNotNull('heure_depart')->get();
+        $pointagesTermines = $query->clone()->whereNotNull('heure_depart')->get();
         $tempsTotal = 0;
         foreach ($pointagesTermines as $pointage) {
             if ($pointage->heure_arrivee && $pointage->heure_depart) {
@@ -123,17 +174,17 @@ class DashboardController extends Controller
             : 0;
 
         return [
-            'total_this_month' => $thisMonth->count(),
+            'total_period' => $total,
             'retards' => $retards,
             'departs_anticipes' => $departsAnticipes,
             'temps_moyen_heures' => $tempsMoyen,
-            'taux_ponctualite' => $thisMonth->count() > 0 
-                ? round((($thisMonth->count() - $retards) / $thisMonth->count()) * 100, 2) 
+            'taux_ponctualite' => $total > 0 
+                ? round((($total - $retards) / $total) * 100, 2) 
                 : 100,
         ];
     }
 
-    private function getTacheStats($isAdmin, $user)
+    private function getTacheStats($isAdmin, $user, $dateRange)
     {
         $query = Tache::query();
         
@@ -141,6 +192,11 @@ class DashboardController extends Controller
             $query->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             })->where('datedebut', '<=', Carbon::now());
+        }
+
+        // Appliquer le filtre de date sur created_at
+        if ($dateRange['start']) {
+            $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
         }
 
         $total = $query->clone()->count();
@@ -164,7 +220,7 @@ class DashboardController extends Controller
         ];
     }
 
-    private function getObjectifStats($isAdmin, $user)
+    private function getObjectifStats($isAdmin, $user, $dateRange)
     {
         $query = Objectif::query();
         
@@ -174,17 +230,20 @@ class DashboardController extends Controller
             });
         }
 
+        // Appliquer le filtre de date
+        if ($dateRange['start']) {
+            $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+        }
+
         $total = $query->clone()->count();
         $completed = $query->clone()->where('progress', '>=', 100)->count();
         $inProgress = $query->clone()->where('progress', '>', 0)->where('progress', '<', 100)->count();
         
-        // Objectifs en retard
         $overdue = $query->clone()
             ->where('progress', '<', 100)
             ->where('date', '<', Carbon::now())
             ->count();
 
-        // Progression moyenne
         $avgProgress = $query->clone()->avg('progress') ?? 0;
 
         return [
@@ -197,9 +256,19 @@ class DashboardController extends Controller
         ];
     }
 
-    private function getClientStats($isAdmin)
+    private function getClientStats($isAdmin, $dateRange)
     {
         if (!$isAdmin) return null;
+
+        $query = User::role('Client');
+        
+        if ($dateRange['start']) {
+            $newQuery = User::role('Client')
+                ->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+            $newCount = $newQuery->count();
+        } else {
+            $newCount = User::role('Client')->count();
+        }
 
         $clients = User::role('Client')->get();
         
@@ -207,29 +276,32 @@ class DashboardController extends Controller
             'total' => $clients->count(),
             'particuliers' => $clients->where('type_client', 'particulier')->count(),
             'entreprises' => $clients->where('type_client', 'entreprise')->count(),
-            'new_this_month' => User::role('Client')
-                ->whereMonth('created_at', Carbon::now()->month)
-                ->whereYear('created_at', Carbon::now()->year)
-                ->count(),
+            'new_in_period' => $newCount,
         ];
     }
 
-    private function getProjetStats($isAdmin)
+    private function getProjetStats($isAdmin, $dateRange)
     {
         if (!$isAdmin) return null;
 
+        $query = Projet::query();
+
+        if ($dateRange['start']) {
+            $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+        }
+
         return [
-            'total' => Projet::count(),
-            'en_cours' => Projet::where('statut_projet', 'en cours')->count(),
-            'termine' => Projet::where('statut_projet', 'terminé')->count(),
-            'en_attente' => Projet::where('statut_projet', 'en attente')->count(),
-            'annule' => Projet::where('statut_projet', 'annulé')->count(),
+            'total' => $query->clone()->count(),
+            'en_cours' => $query->clone()->where('statut_projet', 'en cours')->count(),
+            'termine' => $query->clone()->where('statut_projet', 'terminé')->count(),
+            'en_attente' => $query->clone()->where('statut_projet', 'en attente')->count(),
+            'annule' => $query->clone()->where('statut_projet', 'annulé')->count(),
         ];
     }
 
-    // ==================== CHARTS DATA ====================
+    // ==================== CHARTS DATA (Modifiées) ====================
 
-    private function getPointagesMonthlyChart($isAdmin, $user)
+    private function getPointagesMonthlyChart($isAdmin, $user, $dateRange)
     {
         $query = SuivrePointage::query();
         
@@ -237,33 +309,66 @@ class DashboardController extends Controller
             $query->where('iduser', $user->id);
         }
 
-        // Derniers 6 mois
-        $data = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $date = Carbon::now()->subMonths($i);
-            
-            $monthQuery = $query->clone()
-                ->whereMonth('date_pointage', $date->month)
-                ->whereYear('date_pointage', $date->year);
+        if ($dateRange['type'] === 'yearly' || $dateRange['type'] === 'all_time') {
+            // Afficher les 12 derniers mois
+            $data = [];
+            $startMonth = $dateRange['type'] === 'yearly' 
+                ? Carbon::createFromDate($dateRange['start']->year, 1, 1)
+                : Carbon::now()->subMonths(11);
 
-            $total = $monthQuery->clone()->count();
-            $retards = $monthQuery->clone()
-                ->whereNotNull('heure_arrivee')
-                ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00'])
-                ->count();
+            for ($i = 0; $i < 12; $i++) {
+                $date = $startMonth->copy()->addMonths($i);
+                
+                $monthQuery = $query->clone()
+                    ->whereMonth('date_pointage', $date->month)
+                    ->whereYear('date_pointage', $date->year);
 
-            $data[] = [
-                'month' => $date->locale('fr')->format('M Y'),
-                'total' => $total,
-                'retards' => $retards,
-                'ponctuel' => $total - $retards,
-            ];
+                $total = $monthQuery->clone()->count();
+                $retards = $monthQuery->clone()
+                    ->whereNotNull('heure_arrivee')
+                    ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00'])
+                    ->count();
+
+                $data[] = [
+                    'month' => $date->locale('fr')->format('M Y'),
+                    'total' => $total,
+                    'retards' => $retards,
+                    'ponctuel' => $total - $retards,
+                ];
+            }
+        } else {
+            // Afficher par semaine pour le mois
+            $data = [];
+            for ($i = 0; $i < 4; $i++) {
+                $startOfWeek = $dateRange['start']->copy()->addWeeks($i);
+                $endOfWeek = $startOfWeek->copy()->endOfWeek();
+
+                if ($endOfWeek->gt($dateRange['end'])) {
+                    $endOfWeek = $dateRange['end'];
+                }
+
+                $weekQuery = $query->clone()
+                    ->whereBetween('date_pointage', [$startOfWeek, $endOfWeek]);
+
+                $total = $weekQuery->clone()->count();
+                $retards = $weekQuery->clone()
+                    ->whereNotNull('heure_arrivee')
+                    ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00'])
+                    ->count();
+
+                $data[] = [
+                    'month' => 'Sem ' . ($i + 1),
+                    'total' => $total,
+                    'retards' => $retards,
+                    'ponctuel' => $total - $retards,
+                ];
+            }
         }
 
         return $data;
     }
 
-    private function getTachesStatusChart($isAdmin, $user)
+    private function getTachesStatusChart($isAdmin, $user, $dateRange)
     {
         $query = Tache::query();
         
@@ -271,6 +376,10 @@ class DashboardController extends Controller
             $query->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             })->where('datedebut', '<=', Carbon::now());
+        }
+
+        if ($dateRange['start']) {
+            $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
         }
 
         return [
@@ -289,7 +398,7 @@ class DashboardController extends Controller
         ];
     }
 
-    private function getObjectifsProgressChart($isAdmin, $user)
+    private function getObjectifsProgressChart($isAdmin, $user, $dateRange)
     {
         $query = Objectif::query();
         
@@ -297,6 +406,10 @@ class DashboardController extends Controller
             $query->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
+        }
+
+        if ($dateRange['start']) {
+            $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
         }
 
         return [
@@ -312,35 +425,44 @@ class DashboardController extends Controller
         ];
     }
 
-    private function getProjetsStatusChart($isAdmin)
+    private function getProjetsStatusChart($isAdmin, $dateRange)
     {
         if (!$isAdmin) return null;
+
+        $query = Projet::query();
+
+        if ($dateRange['start']) {
+            $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+        }
 
         return [
             'labels' => ['En cours', 'Terminé', 'En attente', 'Annulé'],
             'data' => [
-                Projet::where('statut_projet', 'en cours')->count(),
-                Projet::where('statut_projet', 'terminé')->count(),
-                Projet::where('statut_projet', 'en attente')->count(),
-                Projet::where('statut_projet', 'annulé')->count(),
+                $query->clone()->where('statut_projet', 'en cours')->count(),
+                $query->clone()->where('statut_projet', 'terminé')->count(),
+                $query->clone()->where('statut_projet', 'en attente')->count(),
+                $query->clone()->where('statut_projet', 'annulé')->count(),
             ],
             'colors' => ['#ffc107', '#28a745', '#17a2b8', '#dc3545'],
         ];
     }
 
-    private function getUsersPerformanceChart($isAdmin)
+    private function getUsersPerformanceChart($isAdmin, $dateRange)
     {
         if (!$isAdmin) return null;
 
-        // Top 10 users par nombre de tâches terminées ce mois
-        $users = User::whereHas('taches', function ($q) {
-            $q->where('status', 'termine')
-              ->whereMonth('updated_at', Carbon::now()->month)
-              ->whereYear('updated_at', Carbon::now()->year);
-        })->withCount(['taches as taches_terminees' => function ($q) {
-            $q->where('status', 'termine')
-              ->whereMonth('updated_at', Carbon::now()->month)
-              ->whereYear('updated_at', Carbon::now()->year);
+        $query = User::whereHas('taches', function ($q) use ($dateRange) {
+            $q->where('status', 'termine');
+            if ($dateRange['start']) {
+                $q->whereBetween('updated_at', [$dateRange['start'], $dateRange['end']]);
+            }
+        });
+
+        $users = $query->withCount(['taches as taches_terminees' => function ($q) use ($dateRange) {
+            $q->where('status', 'termine');
+            if ($dateRange['start']) {
+                $q->whereBetween('updated_at', [$dateRange['start'], $dateRange['end']]);
+            }
         }])->orderBy('taches_terminees', 'desc')
           ->limit(10)
           ->get();
@@ -351,7 +473,7 @@ class DashboardController extends Controller
         ];
     }
 
-    private function getRetardsTrendChart($isAdmin, $user)
+    private function getRetardsTrendChart($isAdmin, $user, $dateRange)
     {
         $query = SuivrePointage::query();
         
@@ -380,9 +502,9 @@ class DashboardController extends Controller
         return $data;
     }
 
-    // ==================== ACTIVITÉS RÉCENTES ====================
+    // ==================== ACTIVITÉS RÉCENTES (Modifiées) ====================
 
-    private function getRecentTaches($isAdmin, $user, $limit)
+    private function getRecentTaches($isAdmin, $user, $limit, $dateRange)
     {
         $query = Tache::with('users', 'creator');
         
@@ -392,15 +514,23 @@ class DashboardController extends Controller
             })->where('datedebut', '<=', Carbon::now());
         }
 
+        if ($dateRange['start']) {
+            $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+        }
+
         return $query->orderBy('created_at', 'desc')->limit($limit)->get();
     }
 
-    private function getRecentPointages($isAdmin, $user, $limit)
+    private function getRecentPointages($isAdmin, $user, $limit, $dateRange)
     {
         $query = SuivrePointage::with('user');
         
         if (!$isAdmin) {
             $query->where('iduser', $user->id);
+        }
+
+        if ($dateRange['start']) {
+            $query->whereBetween('date_pointage', [$dateRange['start'], $dateRange['end']]);
         }
 
         return $query->orderBy('date_pointage', 'desc')
@@ -409,12 +539,17 @@ class DashboardController extends Controller
                     ->get();
     }
 
-    private function getRecentProjets($isAdmin, $limit)
+    private function getRecentProjets($isAdmin, $limit, $dateRange)
     {
         if (!$isAdmin) return null;
 
-        return Projet::with('users')
-            ->orderBy('created_at', 'desc')
+        $query = Projet::with('users');
+
+        if ($dateRange['start']) {
+            $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
+        }
+
+        return $query->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
     }
@@ -431,30 +566,35 @@ class DashboardController extends Controller
             ->get();
     }
 
-    // ==================== TOP PERFORMERS ====================
+    // ==================== TOP PERFORMERS (Modifié) ====================
 
-    private function getTopPerformers()
+    private function getTopPerformers($dateRange)
     {
-        return User::whereHas('taches')
-            ->withCount([
-                'taches as taches_terminees' => function ($q) {
-                    $q->where('status', 'termine')
-                      ->whereMonth('updated_at', Carbon::now()->month);
-                },
-                'suiviPointages as pointages_ponctuel' => function ($q) {
-                    $q->whereMonth('date_pointage', Carbon::now()->month)
-                      ->whereNotNull('heure_arrivee')
-                      ->whereRaw('TIME(heure_arrivee) <= ?', ['09:10:00']);
+        $query = User::whereHas('taches');
+
+        return $query->withCount([
+            'taches as taches_terminees' => function ($q) use ($dateRange) {
+                $q->where('status', 'termine');
+                if ($dateRange['start']) {
+                    $q->whereBetween('updated_at', [$dateRange['start'], $dateRange['end']]);
                 }
-            ])
-            ->orderBy('taches_terminees', 'desc')
-            ->limit(5)
-            ->get();
+            },
+            'suiviPointages as pointages_ponctuel' => function ($q) use ($dateRange) {
+                if ($dateRange['start']) {
+                    $q->whereBetween('date_pointage', [$dateRange['start'], $dateRange['end']]);
+                }
+                $q->whereNotNull('heure_arrivee')
+                  ->whereRaw('TIME(heure_arrivee) <= ?', ['09:10:00']);
+            }
+        ])
+        ->orderBy('taches_terminees', 'desc')
+        ->limit(5)
+        ->get();
     }
 
-    // ==================== ALERTS ====================
+    // ==================== ALERTS (Modifiées) ====================
 
-    private function getRetardsAlert($isAdmin, $user)
+    private function getRetardsAlert($isAdmin, $user, $dateRange)
     {
         $query = SuivrePointage::with('user');
         
@@ -462,10 +602,14 @@ class DashboardController extends Controller
             $query->where('iduser', $user->id);
         }
 
-        // Utilisateurs avec plus de 3 retards ce mois
+        if ($dateRange['start']) {
+            $query->whereBetween('date_pointage', [$dateRange['start'], $dateRange['end']]);
+        } else {
+            $query->whereMonth('date_pointage', Carbon::now()->month)
+                  ->whereYear('date_pointage', Carbon::now()->year);
+        }
+
         $usersWithRetards = $query->select('iduser', DB::raw('COUNT(*) as retards_count'))
-            ->whereMonth('date_pointage', Carbon::now()->month)
-            ->whereYear('date_pointage', Carbon::now()->year)
             ->whereNotNull('heure_arrivee')
             ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00'])
             ->groupBy('iduser')
@@ -476,7 +620,7 @@ class DashboardController extends Controller
         return $usersWithRetards;
     }
 
-    private function getTachesOverdueAlert($isAdmin, $user)
+    private function getTachesOverdueAlert($isAdmin, $user, $dateRange)
     {
         $query = Tache::with('users');
         
@@ -484,6 +628,10 @@ class DashboardController extends Controller
             $query->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
+        }
+
+        if ($dateRange['start']) {
+            $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
         }
 
         return $query->where('status', '!=', 'termine')
@@ -494,7 +642,7 @@ class DashboardController extends Controller
             ->get();
     }
 
-    private function getObjectifsIncomplets($isAdmin, $user)
+    private function getObjectifsIncomplets($isAdmin, $user, $dateRange)
     {
         $query = Objectif::with('users');
         
@@ -502,6 +650,10 @@ class DashboardController extends Controller
             $query->whereHas('users', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             });
+        }
+
+        if ($dateRange['start']) {
+            $query->whereBetween('created_at', [$dateRange['start'], $dateRange['end']]);
         }
 
         return $query->where('progress', '<', 100)
@@ -519,37 +671,47 @@ class DashboardController extends Controller
         $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
         $type = $request->input('type');
 
+        $filterType = $request->input('filter_type', 'all_time');
+        $selectedMonth = $request->input('month', now()->month);
+        $selectedYear = $request->input('year', now()->year);
+        $dateRange = $this->getDateRange($filterType, $selectedMonth, $selectedYear);
+
         switch ($type) {
             case 'pointages_monthly':
-                return response()->json($this->getPointagesMonthlyChart($isAdmin, $user));
+                return response()->json($this->getPointagesMonthlyChart($isAdmin, $user, $dateRange));
             case 'taches_status':
-                return response()->json($this->getTachesStatusChart($isAdmin, $user));
+                return response()->json($this->getTachesStatusChart($isAdmin, $user, $dateRange));
             case 'objectifs_progress':
-                return response()->json($this->getObjectifsProgressChart($isAdmin, $user));
+                return response()->json($this->getObjectifsProgressChart($isAdmin, $user, $dateRange));
             case 'projets_status':
-                return response()->json($this->getProjetsStatusChart($isAdmin));
+                return response()->json($this->getProjetsStatusChart($isAdmin, $dateRange));
             case 'users_performance':
-                return response()->json($this->getUsersPerformanceChart($isAdmin));
+                return response()->json($this->getUsersPerformanceChart($isAdmin, $dateRange));
             case 'retards_trend':
-                return response()->json($this->getRetardsTrendChart($isAdmin, $user));
+                return response()->json($this->getRetardsTrendChart($isAdmin, $user, $dateRange));
             default:
                 return response()->json(['error' => 'Type de chart invalide'], 400);
         }
     }
 
     // Export dashboard data
-    public function exportStats(Request $request)
+   public function exportStats(Request $request)
     {
         $user = Auth::user();
         $isAdmin = $user->hasRole('Sup_Admin') || $user->hasRole('Custom_Admin');
 
+        $filterType = $request->input('filter_type', 'all_time');
+        $selectedMonth = $request->input('month', now()->month);
+        $selectedYear = $request->input('year', now()->year);
+        $dateRange = $this->getDateRange($filterType, $selectedMonth, $selectedYear);
+
         $stats = [
-            'users' => $this->getUserStats($isAdmin),
-            'pointages' => $this->getPointageStats($isAdmin, $user),
-            'taches' => $this->getTacheStats($isAdmin, $user),
-            'objectifs' => $this->getObjectifStats($isAdmin, $user),
-            'clients' => $this->getClientStats($isAdmin),
-            'projets' => $this->getProjetStats($isAdmin),
+            'users' => $this->getUserStats($isAdmin, $dateRange),
+            'pointages' => $this->getPointageStats($isAdmin, $user, $dateRange),
+            'taches' => $this->getTacheStats($isAdmin, $user, $dateRange),
+            'objectifs' => $this->getObjectifStats($isAdmin, $user, $dateRange),
+            'clients' => $this->getClientStats($isAdmin, $dateRange),
+            'projets' => $this->getProjetStats($isAdmin, $dateRange),
         ];
 
         $filename = 'dashboard_stats_' . Carbon::now()->format('Y-m-d_His') . '.csv';
@@ -561,10 +723,10 @@ class DashboardController extends Controller
 
         $callback = function() use ($stats) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
             
             fputcsv($file, ['Statistiques du Dashboard', 'Valeur'], ';');
-            fputcsv($file, [''], ';'); // Ligne vide
+            fputcsv($file, [''], ';');
 
             foreach ($stats as $category => $data) {
                 if ($data) {
@@ -572,7 +734,7 @@ class DashboardController extends Controller
                     foreach ($data as $key => $value) {
                         fputcsv($file, [$key, $value], ';');
                     }
-                    fputcsv($file, [''], ';'); // Ligne vide
+                    fputcsv($file, [''], ';');
                 }
             }
 

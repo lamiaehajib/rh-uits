@@ -1,6 +1,6 @@
 <x-app-layout>
     <style>
-        /* الكود CSS اللي عندك بالضبط (ما غيرتش فيه شي حاجة) */
+        /* Tout le CSS dial avant */
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
@@ -40,7 +40,7 @@
         .badge-danger { background: #f8d7da; color: #721c24; }
         .badge-info { background: #d1ecf1; color: #0c5460; }
 
-        .chart-container { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07); animation: fadeInUp 0.8s ease; margin-bottom: 24px; }
+        .chart-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07); animation: fadeInUp 0.8s ease; margin-bottom: 24px; }
         .chart-title { font-size: 18px; font-weight: 600; color: #2c3e50; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
         .chart-title i { background: linear-gradient(135deg, #C2185B, #D32F2F); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
@@ -69,42 +69,120 @@
         .progress-bar-custom { height: 8px; background: #ecf0f1; border-radius: 4px; overflow: hidden; margin-top: 8px; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, #C2185B, #D32F2F); border-radius: 4px; transition: width 1s ease; }
 
-        .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(211, 47, 47, 0.1); border-radius: 50%; border-top-color: #D32F2F; animation: spin 1s ease-in-out infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .section-header { margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid #ecf0f1; }
         .section-title { font-size: 24px; font-weight: bold; background: linear-gradient(135deg, #C2185B, #D32F2F); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; }
 
         .quick-action-btn { background: white; border: 2px solid #ecf0f1; border-radius: 8px; padding: 16px; text-align: center; transition: all 0.3s ease; cursor: pointer; }
         .quick-action-btn:hover { border-color: #D32F2F; transform: translateY(-4px); box-shadow: 0 8px 16px rgba(211, 47, 47, 0.2); }
         .quick-action-icon { font-size: 32px; background: linear-gradient(135deg, #C2185B, #D32F2F); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
 
+        .chart-wrapper { position: relative; margin: auto; height: 300px; width: 100%; }
+        .performance-wrapper { height: 400px; }
+
+        /* Filter Styles - JDID */
+        .filter-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            margin-bottom: 24px;
+            animation: fadeInUp 0.5s ease;
+        }
+        .filter-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-title i {
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .filter-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+        .filter-item {
+            flex: 1;
+            min-width: 150px;
+        }
+        .filter-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #7f8c8d;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .filter-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: #D32F2F;
+            box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+        }
+        .filter-btn {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(211, 47, 47, 0.3);
+        }
+        .filter-btn-reset {
+            padding: 10px 20px;
+            background: white;
+            color: #7f8c8d;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .filter-btn-reset:hover {
+            border-color: #D32F2F;
+            color: #D32F2F;
+        }
+        .period-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            background: linear-gradient(135deg, #C2185B, #D32F2F);
+            color: white;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-left: 12px;
+        }
+
         @media (max-width: 768px) {
             .stat-card-value { font-size: 24px; }
             .chart-container { padding: 16px; }
             .performer-card { flex-direction: column; text-align: center; }
+            .filter-group { flex-direction: column; }
+            .filter-item { min-width: 100%; }
         }
-        .chart-wrapper {
-            position: relative;
-            margin: auto;
-            height: 300px; /* Ghadi i-koun hada houwa l-kabr l-max dial chart */
-            width: 100%;
-        }
-
-        .chart-container { 
-            background: white; 
-            border-radius: 12px; 
-            padding: 20px; 
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07); 
-            animation: fadeInUp 0.8s ease; 
-            margin-bottom: 24px; 
-        }
-        
-        /* Special height for the performance chart (horizontal) */
-        .performance-wrapper {
-            height: 400px;
-        }
-        
     </style>
 
     <div class="container-fluid py-4">
@@ -113,14 +191,84 @@
             <div class="col-12">
                 <h1 class="section-title mb-2">
                     <i class="fas fa-chart-line"></i> Dashboard
+                    @if($filterType === 'monthly')
+                        <span class="period-badge">
+                            <i class="far fa-calendar"></i> 
+                            {{ \Carbon\Carbon::createFromDate($selectedYear, $selectedMonth, 1)->locale('fr')->isoFormat('MMMM YYYY') }}
+                        </span>
+                    @elseif($filterType === 'yearly')
+                        <span class="period-badge">
+                            <i class="far fa-calendar-alt"></i> Année {{ $selectedYear }}
+                        </span>
+                    @else
+                        <span class="period-badge">
+                            <i class="fas fa-infinity"></i> Depuis le début
+                        </span>
+                    @endif
                 </h1>
                 <p style="color: #7f8c8d; font-size: 14px;">
-                    <i class="far fa-calendar"></i> {{ now()->locale('fr')->isoFormat('dddd D MMMM YYYY') }}
+                    <i class="far fa-clock"></i> Dernière mise à jour: {{ now()->locale('fr')->isoFormat('dddd D MMMM YYYY à HH:mm') }}
                 </p>
             </div>
         </div>
 
-        <!-- Quick Actions (اختياري لكن يعطي لمسة حلوة) -->
+        <!-- Filtres - JDID -->
+        <div class="filter-container">
+            <div class="filter-title">
+                <i class="fas fa-filter"></i>
+                <span>Filtrer les statistiques</span>
+            </div>
+            <form method="GET" action="{{ route('dashboard') }}" id="filterForm">
+                <div class="filter-group">
+                    <div class="filter-item">
+                        <label class="filter-label">Période</label>
+                        <select name="filter_type" class="filter-select" id="filterType" onchange="toggleFilters()">
+                            <option value="all_time" {{ $filterType === 'all_time' ? 'selected' : '' }}>Depuis le début</option>
+                            <option value="monthly" {{ $filterType === 'monthly' ? 'selected' : '' }}>Par mois</option>
+                            <option value="yearly" {{ $filterType === 'yearly' ? 'selected' : '' }}>Par année</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-item" id="monthFilter" style="{{ $filterType !== 'monthly' ? 'display: none;' : '' }}">
+                        <label class="filter-label">Mois</label>
+                        <select name="month" class="filter-select">
+                            @for($m = 1; $m <= 12; $m++)
+                                <option value="{{ $m }}" {{ $selectedMonth == $m ? 'selected' : '' }}>
+                                    {{ \Carbon\Carbon::create()->month($m)->locale('fr')->isoFormat('MMMM') }}
+                                </option>
+                            @endfor
+                        </select>
+                    </div>
+
+                    <div class="filter-item" id="yearFilter" style="{{ $filterType === 'all_time' ? 'display: none;' : '' }}">
+                        <label class="filter-label">Année</label>
+                        <select name="year" class="filter-select">
+                            @foreach($availableYears as $year)
+                                <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>
+                                    {{ $year }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="filter-item" style="flex: 0; min-width: auto;">
+                        <button type="submit" class="filter-btn">
+                            <i class="fas fa-search"></i>
+                            <span>Appliquer</span>
+                        </button>
+                    </div>
+
+                    <div class="filter-item" style="flex: 0; min-width: auto;">
+                        <button type="button" class="filter-btn-reset" onclick="resetFilters()">
+                            <i class="fas fa-redo"></i>
+                            Réinitialiser
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Quick Actions -->
         <div class="row mb-4">
             <div class="col-lg-3 col-md-6 mb-3">
                 <div class="quick-action-btn" onclick="location.href='{{ route('taches.create') }}'">
@@ -141,7 +289,7 @@
                 </div>
             </div>
             <div class="col-lg-3 col-md-6 mb-3">
-                <a href="{{ route('dashboard.export') }}" class="quick-action-btn d-block text-decoration-none text-dark">
+                <a href="{{ route('dashboard.export', request()->all()) }}" class="quick-action-btn d-block text-decoration-none text-dark">
                     <div class="quick-action-icon"><i class="fas fa-file-export"></i></div>
                     <div>Exporter Stats</div>
                 </a>
@@ -159,7 +307,7 @@
                     <div class="stat-card-label">Total Utilisateurs</div>
                     <div class="mt-3">
                         <span class="badge-success stat-card-badge"><i class="fas fa-check-circle"></i> {{ $stats['users']['active'] }} Actifs</span>
-                        <span class="badge-danger stat-card-badge ms-2"><i class="fas fa-times-circle"></i> {{ $stats['users']['inactive'] }} Inactifs</span>
+                        <span class="badge-info stat-card-badge ms-2"><i class="fas fa-user-plus"></i> {{ $stats['users']['new_in_period'] }} Nouveaux</span>
                     </div>
                 </div>
             </div>
@@ -200,8 +348,8 @@
             <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
                 <div class="stat-card">
                     <div class="stat-card-icon gradient-green"><i class="fas fa-clock"></i></div>
-                    <div class="stat-card-value">{{ $stats['pointages']['total_this_month'] }}</div>
-                    <div class="stat-card-label">Pointages ce mois</div>
+                    <div class="stat-card-value">{{ $stats['pointages']['total_period'] }}</div>
+                    <div class="stat-card-label">Pointages</div>
                     <div class="mt-3">
                         <span class="badge-danger stat-card-badge"><i class="fas fa-exclamation-triangle"></i> {{ $stats['pointages']['retards'] }} Retards</span>
                         <span class="badge-success stat-card-badge ms-2">{{ $stats['pointages']['taux_ponctualite'] }}% Ponctuel</span>
