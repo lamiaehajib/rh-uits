@@ -3,7 +3,7 @@
 <header class="modern-header">
     <div class="header-container">
         <!-- Bouton Menu Burger (à gauche avant le logo) -->
-        <button class="menu-burger" id="menuBurgerBtn" onclick="toggleSidebar()">
+         <button class="menu-burger" id="menuBurgerBtn" onclick="toggleSidebarMenu()">
             <span></span>
             <span></span>
             <span></span>
@@ -1023,164 +1023,105 @@
 </style>
 
 <script>
-    // ======================================= 
-    // HORLOGE EN TEMPS RÉEL
-    // ======================================= 
-    function updateDateTime() {
-        const now = new Date();
-        const timeElement = document.getElementById('current-time');
-        const dateElement = document.getElementById('current-date');
-        
-        if (timeElement) {
-            timeElement.textContent = now.toLocaleTimeString('fr-FR', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                second: '2-digit'
-            });
-        }
-        
-        if (dateElement) {
-            dateElement.textContent = now.toLocaleDateString('fr-FR', { 
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
-            });
-        }
-    }
+// HORLOGE
+function updateDateTime() {
+    const now = new Date();
+    const timeEl = document.getElementById('current-time');
+    const dateEl = document.getElementById('current-date');
+    if (timeEl) timeEl.textContent = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    if (dateEl) dateEl.textContent = now.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+}
+updateDateTime();
+setInterval(updateDateTime, 1000);
 
-    updateDateTime();
-    setInterval(updateDateTime, 1000);
-
-    // ======================================= 
-    // GESTION DES DROPDOWNS
-    // ======================================= 
-    function setupDropdown(btnId, dropdownId) {
-        const btn = document.getElementById(btnId);
-        const dropdown = document.getElementById(dropdownId);
-        
-        if (btn && dropdown) {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                
-                // Fermer tous les autres dropdowns
-                document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                    if (menu !== dropdown) {
-                        menu.classList.remove('show');
-                    }
-                });
-                
-                dropdown.classList.toggle('show');
-            });
-        }
-    }
-
-    setupDropdown('profile-btn', 'profile-dropdown');
-    setupDropdown('quick-actions-btn', 'quick-actions-dropdown');
-
-    // Fermer les dropdowns en cliquant ailleurs
-    document.addEventListener('click', function() {
-        document.querySelectorAll('.dropdown-menu').forEach(menu => {
-            menu.classList.remove('show');
-        });
-    });
-
-    // Empêcher la fermeture lors du clic à l'intérieur du dropdown
-    document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        menu.addEventListener('click', function(e) {
+// DROPDOWNS
+function setupDropdown(btnId, dropdownId) {
+    const btn = document.getElementById(btnId);
+    const dropdown = document.getElementById(dropdownId);
+    if (btn && dropdown) {
+        btn.addEventListener('click', function(e) {
             e.stopPropagation();
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                if (menu !== dropdown) menu.classList.remove('show');
+            });
+            dropdown.classList.toggle('show');
         });
+    }
+}
+setupDropdown('profile-btn', 'profile-dropdown');
+setupDropdown('quick-actions-btn', 'quick-actions-dropdown');
+
+document.addEventListener('click', () => {
+    document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+});
+document.querySelectorAll('.dropdown-menu').forEach(m => {
+    m.addEventListener('click', e => e.stopPropagation());
+});
+
+// RECHERCHE MOBILE
+const mbsBtn = document.getElementById('mobile-search-btn');
+const mbsOverlay = document.getElementById('mobile-search-overlay');
+const mbsClose = document.getElementById('mobile-search-close');
+if (mbsBtn && mbsOverlay && mbsClose) {
+    mbsBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        mbsOverlay.classList.add('show');
+        setTimeout(() => {
+            const inp = document.querySelector('.mobile-search-input');
+            if (inp) inp.focus();
+        }, 300);
     });
-
-    // ======================================= 
-    // RECHERCHE MOBILE (OVERLAY)
-    // ======================================= 
-    const mobileSearchBtn = document.getElementById('mobile-search-btn');
-    const mobileSearchOverlay = document.getElementById('mobile-search-overlay');
-    const mobileSearchClose = document.getElementById('mobile-search-close');
-
-    if (mobileSearchBtn && mobileSearchOverlay && mobileSearchClose) {
-        // Ouvrir l'overlay
-        mobileSearchBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            mobileSearchOverlay.classList.add('show');
-            // Focus automatique sur l'input
-            setTimeout(() => {
-                const input = document.querySelector('.mobile-search-input');
-                if (input) input.focus();
-            }, 300);
-        });
-
-        // Fermer l'overlay
-        mobileSearchClose.addEventListener('click', function() {
-            mobileSearchOverlay.classList.remove('show');
-        });
-
-        // Fermer en cliquant en dehors
-        mobileSearchOverlay.addEventListener('click', function(e) {
-            if (e.target === mobileSearchOverlay) {
-                mobileSearchOverlay.classList.remove('show');
-            }
-        });
-
-        // Fermer avec Escape
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && mobileSearchOverlay.classList.contains('show')) {
-                mobileSearchOverlay.classList.remove('show');
-            }
-        });
-    }
-
-    // ======================================= 
-    // TOGGLE SIDEBAR (Integration)
-    // ======================================= 
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const burger = document.getElementById('menuBurgerBtn');
-        
-        if (sidebar) {
-            // Check if mobile
-            if (window.innerWidth <= 768) {
-                sidebar.classList.toggle('mobile-open');
-                const overlay = document.querySelector('.overlay');
-                if (overlay) {
-                    overlay.classList.toggle('active');
-                }
-            } else {
-                sidebar.classList.toggle('collapsed');
-            }
+    mbsClose.addEventListener('click', () => mbsOverlay.classList.remove('show'));
+    mbsOverlay.addEventListener('click', e => {
+        if (e.target === mbsOverlay) mbsOverlay.classList.remove('show');
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && mbsOverlay.classList.contains('show')) {
+            mbsOverlay.classList.remove('show');
         }
-        
-        if (burger) {
-            burger.classList.toggle('active');
-        }
-    }
+    });
+}
 
-    // ======================================= 
-    // DARK MODE TOGGLE
-    // ======================================= 
-    let isDarkMode = false;
+// FONCTION TOGGLE SIDEBAR - CONNECTÉE AVEC NAVIGATION
+function toggleSidebarMenu() {
+    const sidebar = document.getElementById('sidebar');
+    const burger = document.getElementById('menuBurgerBtn');
+    const overlay = document.querySelector('.overlay');
     
-    function toggleTheme() {
-        isDarkMode = !isDarkMode;
-        document.body.classList.toggle('dark-mode');
-        const icon = document.getElementById('themeIcon');
-        if (icon) {
-            icon.className = isDarkMode ? 'bx bx-sun' : 'bx bx-moon';
-        }
-        localStorage.setItem('darkMode', isDarkMode);
+    if (!sidebar) return;
+    
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        // Mode mobile: toggle class mobile-open
+        sidebar.classList.toggle('mobile-open');
+        if (overlay) overlay.classList.toggle('active');
+    } else {
+        // Mode desktop: toggle class collapsed
+        sidebar.classList.toggle('collapsed');
     }
+    
+    // Animation du burger
+    if (burger) burger.classList.toggle('active');
+}
 
-    // Load theme from localStorage
-    window.addEventListener('DOMContentLoaded', () => {
-        const savedTheme = localStorage.getItem('darkMode') === 'true';
-        if (savedTheme) {
-            isDarkMode = true;
-            document.body.classList.add('dark-mode');
-            const icon = document.getElementById('themeIcon');
-            if (icon) {
-                icon.className = 'bx bx-sun';
-            }
-        }
-    });
+// DARK MODE
+let isDarkMode = false;
+function toggleTheme() {
+    isDarkMode = !isDarkMode;
+    document.body.classList.toggle('dark-mode');
+    const icon = document.getElementById('themeIcon');
+    if (icon) icon.className = isDarkMode ? 'bx bx-sun' : 'bx bx-moon';
+    localStorage.setItem('darkMode', isDarkMode);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem('darkMode') === 'true';
+    if (saved) {
+        isDarkMode = true;
+        document.body.classList.add('dark-mode');
+        const icon = document.getElementById('themeIcon');
+        if (icon) icon.className = 'bx bx-sun';
+    }
+});
 </script>
