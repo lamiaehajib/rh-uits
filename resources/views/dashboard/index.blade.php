@@ -495,7 +495,7 @@
                 </div>
             </form>
         </div>
-
+@if($isAdmin)
         <!-- Quick Actions -->
         <div class="row mb-4">
             <div class="col-lg-3 col-md-6 mb-3">
@@ -523,12 +523,12 @@
                 </a>
             </div>
         </div>
-
+@endif
         <!-- Admin Stats -->
         @if($isAdmin)
         <div class="row mb-4">
             @if($stats['users'])
-            <div class="col-xl-3 col-lg-6 col-md-6 mb-4">
+            <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
                 <div class="stat-card">
                     <div class="stat-card-icon gradient-red"><i class="fas fa-users"></i></div>
                     <div class="stat-card-value">{{ $stats['users']['total'] }}</div>
@@ -542,7 +542,7 @@
             @endif
 
             @if($stats['clients'])
-            <div class="col-xl-3 col-lg-6 col-md-6 mb-4">
+            <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
                 <div class="stat-card">
                     <div class="stat-card-icon gradient-blue"><i class="fas fa-user-tie"></i></div>
                     <div class="stat-card-value">{{ $stats['clients']['total'] }}</div>
@@ -556,7 +556,7 @@
             @endif
 
             @if($stats['projets'])
-            <div class="col-xl-3 col-lg-6 col-md-6 mb-4">
+            <div class="col-xl-4 col-lg-6 col-md-6 mb-4">
                 <div class="stat-card">
                     <div class="stat-card-icon gradient-purple"><i class="fas fa-project-diagram"></i></div>
                     <div class="stat-card-value">{{ $stats['projets']['total'] }}</div>
