@@ -372,70 +372,114 @@
                             <i class="fas fa-filter"></i>
                             {{ __('Filtres et Tri') }}
                         </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                            <div>
-                                <label for="search" class="block text-sm font-semibold text-gray-700 mb-2">{{ __('Recherche') }}</label>
-                                <div class="relative">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <i class="fas fa-search text-gray-400"></i>
-                                    </div>
-                                    <input type="text" name="search" id="search" class="focus:ring-primary-red focus:border-primary-red block w-full pl-10 pr-3 py-3 sm:text-sm border-gray-300 rounded-lg" placeholder="{{ __('Rechercher...') }}" value="{{ request('search') }}">
-                                </div>
-                            </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+    <!-- Recherche -->
+    <div>
+        <label for="search" class="block text-sm font-semibold text-gray-700 mb-2">{{ __('Recherche') }}</label>
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-search text-gray-400"></i>
+            </div>
+            <input type="text" name="search" id="search" class="focus:ring-primary-red focus:border-primary-red block w-full pl-10 pr-3 py-3 sm:text-sm border-gray-300 rounded-lg" placeholder="{{ __('Rechercher...') }}" value="{{ request('search') }}">
+        </div>
+    </div>
 
-                            <div>
-                                <label for="status" class="block text-sm font-semibold text-gray-700 mb-2">{{ __('Statut') }}</label>
-                                <select id="status" name="status" class="block w-full py-3 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
-                                    <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>{{ __('Tous les statuts') }}</option>
-                                    <option value="nouveau" {{ request('status') == 'nouveau' ? 'selected' : '' }}>{{ __('Nouveau') }}</option>
-                                    <option value="en cours" {{ request('status') == 'en cours' ? 'selected' : '' }}>{{ __('En cours') }}</option>
-                                    <option value="termine" {{ request('status') == 'termine' ? 'selected' : '' }}>{{ __('Terminé') }}</option>
-                                </select>
-                            </div>
+    <!-- Statut -->
+    <div>
+        <label for="status" class="block text-sm font-semibold text-gray-700 mb-2">{{ __('Statut') }}</label>
+        <select id="status" name="status" class="block w-full py-3 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
+            <option value="all" {{ request('status') == 'all' ? 'selected' : '' }}>{{ __('Tous les statuts') }}</option>
+            <option value="nouveau" {{ request('status') == 'nouveau' ? 'selected' : '' }}>{{ __('Nouveau') }}</option>
+            <option value="en cours" {{ request('status') == 'en cours' ? 'selected' : '' }}>{{ __('En cours') }}</option>
+            <option value="termine" {{ request('status') == 'termine' ? 'selected' : '' }}>{{ __('Terminé') }}</option>
+        </select>
+    </div>
 
-                            <div>
-                                <label for="date_filter" class="block text-sm font-semibold text-gray-700 mb-2">{{ __('Filtre par Date') }}</label>
-                                <select id="date_filter" name="date_filter" class="block w-full py-3 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
-                                    <option value="" {{ !request('date_filter') ? 'selected' : '' }}>{{ __('Aucun filtre') }}</option>
-                                    <option value="today" {{ request('date_filter') == 'today' ? 'selected' : '' }}>{{ __('Aujourd\'hui') }}</option>
-                                    <option value="this_week" {{ request('date_filter') == 'this_week' ? 'selected' : '' }}>{{ __('Cette Semaine') }}</option>
-                                    <option value="this_month" {{ request('date_filter') == 'this_month' ? 'selected' : '' }}>{{ __('Ce Mois-ci') }}</option>
-                                    <option value="overdue" {{ request('date_filter') == 'overdue' ? 'selected' : '' }}>{{ __('En Retard') }}</option>
-                                    <option value="future" {{ request('date_filter') == 'future' ? 'selected' : '' }}>{{ __('Futur') }}</option>
-                                </select>
-                            </div>
+    <!-- Filtre par Date -->
+    <div>
+        <label for="date_filter" class="block text-sm font-semibold text-gray-700 mb-2">{{ __('Filtre par Date') }}</label>
+        <select id="date_filter" name="date_filter" class="block w-full py-3 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
+            <option value="" {{ !request('date_filter') ? 'selected' : '' }}>{{ __('Aucun filtre') }}</option>
+            <option value="today" {{ request('date_filter') == 'today' ? 'selected' : '' }}>{{ __('Aujourd\'hui') }}</option>
+            <option value="this_week" {{ request('date_filter') == 'this_week' ? 'selected' : '' }}>{{ __('Cette Semaine') }}</option>
+            <option value="this_month" {{ request('date_filter') == 'this_month' ? 'selected' : '' }}>{{ __('Ce Mois-ci') }}</option>
+            <option value="overdue" {{ request('date_filter') == 'overdue' ? 'selected' : '' }}>{{ __('En Retard') }}</option>
+            <option value="future" {{ request('date_filter') == 'future' ? 'selected' : '' }}>{{ __('Futur') }}</option>
+        </select>
+    </div>
 
-                            @if (auth()->user()->hasRole(['Sup_Admin', 'Custom_Admin']))
-                                <div>
-                                    <label for="user_filter" class="block text-sm font-semibold text-gray-700 mb-2">{{ __('Utilisateur') }}</label>
-                                    <select id="user_filter" name="user_filter" class="block w-full py-3 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
-                                        <option value="all" {{ request('user_filter') == 'all' ? 'selected' : '' }}>{{ __('Tous les utilisateurs') }}</option>
-                                        @foreach ($users as $user)
-                                            <option value="{{ $user->id }}" {{ request('user_filter') == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            @endif
+    <!-- NOUVEAU: Filtre par Mois -->
+    <div>
+        <label for="month_filter" class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-calendar-alt mr-1 text-primary-red"></i>
+            {{ __('Mois') }}
+        </label>
+        <select id="month_filter" name="month_filter" class="block w-full py-3 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
+            <option value="all" {{ request('month_filter') == 'all' || !request('month_filter') ? 'selected' : '' }}>{{ __('Tous les mois') }}</option>
+            <option value="1" {{ request('month_filter') == '1' ? 'selected' : '' }}>{{ __('Janvier') }}</option>
+            <option value="2" {{ request('month_filter') == '2' ? 'selected' : '' }}>{{ __('Février') }}</option>
+            <option value="3" {{ request('month_filter') == '3' ? 'selected' : '' }}>{{ __('Mars') }}</option>
+            <option value="4" {{ request('month_filter') == '4' ? 'selected' : '' }}>{{ __('Avril') }}</option>
+            <option value="5" {{ request('month_filter') == '5' ? 'selected' : '' }}>{{ __('Mai') }}</option>
+            <option value="6" {{ request('month_filter') == '6' ? 'selected' : '' }}>{{ __('Juin') }}</option>
+            <option value="7" {{ request('month_filter') == '7' ? 'selected' : '' }}>{{ __('Juillet') }}</option>
+            <option value="8" {{ request('month_filter') == '8' ? 'selected' : '' }}>{{ __('Août') }}</option>
+            <option value="9" {{ request('month_filter') == '9' ? 'selected' : '' }}>{{ __('Septembre') }}</option>
+            <option value="10" {{ request('month_filter') == '10' ? 'selected' : '' }}>{{ __('Octobre') }}</option>
+            <option value="11" {{ request('month_filter') == '11' ? 'selected' : '' }}>{{ __('Novembre') }}</option>
+            <option value="12" {{ request('month_filter') == '12' ? 'selected' : '' }}>{{ __('Décembre') }}</option>
+        </select>
+    </div>
 
-                            <div>
-                                <label for="sort_by" class="block text-sm font-semibold text-gray-700 mb-2">{{ __('Trier par') }}</label>
-                                <select id="sort_by" name="sort_by" class="block w-full py-3 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
-                                    <option value="created_at" {{ request('sort_by') == 'created_at' ? 'selected' : '' }}>{{ __('Date de Création') }}</option>
-                                    <option value="datedebut" {{ request('sort_by') == 'datedebut' ? 'selected' : '' }}>{{ __('Date de Début') }}</option>
-                                    <option value="status" {{ request('sort_by') == 'status' ? 'selected' : '' }}>{{ __('Statut') }}</option>
-                                    <option value="titre" {{ request('sort_by') == 'titre' ? 'selected' : '' }}>{{ __('Titre') }}</option>
-                                    <option value="priorite" {{ request('sort_by') == 'priorite' ? 'selected' : '' }}>{{ __('Priorité') }}</option>
-                                </select>
-                            </div>
+    <!-- NOUVEAU: Filtre par Année -->
+    <div>
+        <label for="year_filter" class="block text-sm font-semibold text-gray-700 mb-2">
+            <i class="fas fa-calendar mr-1 text-primary-red"></i>
+            {{ __('Année') }}
+        </label>
+        <select id="year_filter" name="year_filter" class="block w-full py-3 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
+            <option value="all" {{ request('year_filter') == 'all' || !request('year_filter') ? 'selected' : '' }}>{{ __('Toutes les années') }}</option>
+            @foreach($availableYears as $year)
+                <option value="{{ $year }}" {{ request('year_filter') == $year ? 'selected' : '' }}>{{ $year }}</option>
+            @endforeach
+        </select>
+    </div>
 
-                            <div>
-                                <label for="sort_direction" class="block text-sm font-semibold text-gray-700 mb-2">{{ __('Direction') }}</label>
-                                <select id="sort_direction" name="sort_direction" class="block w-full py-3 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
-                                    <option value="desc" {{ request('sort_direction') == 'desc' ? 'selected' : '' }}>{{ __('Décroissant') }}</option>
-                                    <option value="asc" {{ request('sort_direction') == 'asc' ? 'selected' : '' }}>{{ __('Croissant') }}</option>
-                                </select>
-                            </div>
-                        </div>
+    @if (auth()->user()->hasRole(['Sup_Admin', 'Custom_Admin']))
+        <!-- Utilisateur -->
+        <div>
+            <label for="user_filter" class="block text-sm font-semibold text-gray-700 mb-2">{{ __('Utilisateur') }}</label>
+            <select id="user_filter" name="user_filter" class="block w-full py-3 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
+                <option value="all" {{ request('user_filter') == 'all' ? 'selected' : '' }}>{{ __('Tous les utilisateurs') }}</option>
+                @foreach ($users as $user)
+                    <option value="{{ $user->id }}" {{ request('user_filter') == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
+                @endforeach
+            </select>
+        </div>
+    @endif
+
+    <!-- Trier par -->
+    <div>
+        <label for="sort_by" class="block text-sm font-semibold text-gray-700 mb-2">{{ __('Trier par') }}</label>
+        <select id="sort_by" name="sort_by" class="block w-full py-3 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
+            <option value="created_at" {{ request('sort_by') == 'created_at' ? 'selected' : '' }}>{{ __('Date de Création') }}</option>
+            <option value="datedebut" {{ request('sort_by') == 'datedebut' ? 'selected' : '' }}>{{ __('Date de Début') }}</option>
+            <option value="status" {{ request('sort_by') == 'status' ? 'selected' : '' }}>{{ __('Statut') }}</option>
+            <option value="titre" {{ request('sort_by') == 'titre' ? 'selected' : '' }}>{{ __('Titre') }}</option>
+            <option value="priorite" {{ request('sort_by') == 'priorite' ? 'selected' : '' }}>{{ __('Priorité') }}</option>
+        </select>
+    </div>
+
+    <!-- Direction -->
+    <div>
+        <label for="sort_direction" class="block text-sm font-semibold text-gray-700 mb-2">{{ __('Direction') }}</label>
+        <select id="sort_direction" name="sort_direction" class="block w-full py-3 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-primary-red focus:border-primary-red sm:text-sm">
+            <option value="desc" {{ request('sort_direction') == 'desc' ? 'selected' : '' }}>{{ __('Décroissant') }}</option>
+            <option value="asc" {{ request('sort_direction') == 'asc' ? 'selected' : '' }}>{{ __('Croissant') }}</option>
+        </select>
+    </div>
+</div>
+                     
                         <div class="mt-6 flex justify-end space-x-3">
                             <button type="submit" class="inline-flex items-center px-6 py-3 bg-primary-red border border-transparent rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red">
                                 <i class="fas fa-filter mr-2"></i> {{ __('Appliquer') }}
@@ -445,7 +489,12 @@
                             </a>
                         </div>
                     </form>
-
+ <!-- NOUVEAU: Bouton Export Tâches en Retard -->
+    @if(request('month_filter') && request('month_filter') !== 'all')
+        <button type="button" onclick="exportOverdueTasks()" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 border border-transparent rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg hover:from-orange-600 hover:to-red-700 transition-all duration-300 transform hover:scale-105">
+            <i class="fas fa-download mr-2"></i> {{ __('Export Retard') }}
+        </button>
+    @endif
                     <!-- Table ou message vide -->
                     @if ($taches->isEmpty())
                         <div class="bg-gray-50 p-12 text-center rounded-lg shadow-lg animate-fade-in delay-500">
@@ -577,6 +626,36 @@
             <script>
                 // La fonction markAsComplete et la logique de modal personnalisée ont été supprimées
                 // car les actions sont maintenant gérées via des soumissions de formulaire directes ou des confirmations natives.
+                function exportOverdueTasks() {
+        const month = document.getElementById('month_filter').value;
+        const year = document.getElementById('year_filter').value;
+        
+        if (!month || month === 'all') {
+            alert('Veuillez sélectionner un mois pour exporter les tâches en retard.');
+            return;
+        }
+        
+        const monthNames = {
+            '1': 'Janvier', '2': 'Février', '3': 'Mars', '4': 'Avril',
+            '5': 'Mai', '6': 'Juin', '7': 'Juillet', '8': 'Août',
+            '9': 'Septembre', '10': 'Octobre', '11': 'Novembre', '12': 'Décembre'
+        };
+        
+        const monthName = monthNames[month];
+        const yearLabel = year && year !== 'all' ? year : new Date().getFullYear();
+        
+        if (confirm(`Télécharger les tâches en retard pour ${monthName} ${yearLabel} ?`)) {
+            // Construire l'URL avec les paramètres
+            const url = new URL('{{ route("taches.export.overdue") }}', window.location.origin);
+            url.searchParams.append('month_filter', month);
+            if (year && year !== 'all') {
+                url.searchParams.append('year_filter', year);
+            }
+            
+            // Rediriger vers l'URL d'export
+            window.location.href = url.toString();
+        }
+    }
             </script>
             
         @endpush

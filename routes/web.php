@@ -127,7 +127,8 @@ Route::post('taches/{id}/duplicate', [TacheController::class, 'duplicate'])->nam
 Route::patch('taches/{id}/complete', [TacheController::class, 'markAsComplete'])->name('taches.complete');
 Route::get('taches/dashboard', [TacheController::class, 'dashboard'])->name('taches.dashboard');
 Route::get('taches/export', [TacheController::class, 'export'])->name('taches.export');
-
+Route::get('/taches/export-overdue', [TacheController::class, 'exportOverdueTasks'])
+    ->name('taches.export.overdue');
       
 Route::resource('taches', TacheController::class);
 

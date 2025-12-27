@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TacheController extends Controller
 {
@@ -24,82 +25,173 @@ class TacheController extends Controller
     }
 
     public function index(Request $request)
-    {
-        $user = auth()->user();
-        $search = $request->get('search');
-        $status = $request->get('status');
-        $date_filter = $request->get('date_filter');
-        $user_filter = $request->get('user_filter');
-        $sort_by = $request->get('sort_by', 'created_at');
-        $sort_direction = $request->get('sort_direction', 'desc');
+{
+    $user = auth()->user();
+    $search = $request->get('search');
+    $status = $request->get('status');
+    $date_filter = $request->get('date_filter');
+    $user_filter = $request->get('user_filter');
+    $month_filter = $request->get('month_filter'); // NOUVEAU
+    $year_filter = $request->get('year_filter');   // NOUVEAU
+    $sort_by = $request->get('sort_by', 'created_at');
+    $sort_direction = $request->get('sort_direction', 'desc');
 
-        $query = Tache::with('users');
+    $query = Tache::with('users');
 
-        if (!$this->isAdmin($user)) {
-            $query->whereHas('users', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
-            // Appliquer le filtre datedebut uniquement si l'utilisateur n'est PAS un admin pour sa liste de tâches générale
-            $query->where('datedebut', '<=', Carbon::now());
+    if (!$this->isAdmin($user)) {
+        $query->whereHas('users', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        });
+        $query->where('datedebut', '<=', Carbon::now());
+    }
+
+    if ($search) {
+        $query->where(function($q) use ($search) {
+            $q->where('description', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%")
+                ->orWhere('titre', 'like', "%{$search}%")
+                ->orWhereDate('date', 'like', "%{$search}%");
+        });
+    }
+
+    if ($status && $status !== 'all') {
+        $query->where('status', $status);
+    }
+
+    if ($date_filter) {
+        switch ($date_filter) {
+            case 'today':
+                $query->whereDate('datedebut', Carbon::today());
+                break;
+            case 'this_week':
+                $query->whereBetween('datedebut', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                break;
+            case 'this_month':
+                $query->whereMonth('datedebut', Carbon::now()->month);
+                break;
+            case 'overdue':
+                $query->where('status', '!=', 'termine')
+                        ->whereNotNull('date_fin_prevue')
+                        ->where('date_fin_prevue', '<', Carbon::now());
+                break;
+            case 'future':
+                if ($this->isAdmin($user)) {
+                    $query->where('datedebut', '>', Carbon::now());
+                }
+                break;
         }
+    }
 
-        if ($search) {
-            $query->where(function($q) use ($search) {
-                $q->where('description', 'like', "%{$search}%")
-                    ->orWhere('status', 'like', "%{$search}%")
-                    ->orWhere('titre', 'like', "%{$search}%")
-                    ->orWhereDate('date', 'like', "%{$search}%");
-            });
-        }
+    // NOUVEAU: Filtre par mois
+    if ($month_filter && $month_filter !== 'all') {
+        $query->whereMonth('datedebut', $month_filter);
+    }
 
-        if ($status && $status !== 'all') {
-            $query->where('status', $status);
-        }
+    // NOUVEAU: Filtre par année
+    if ($year_filter && $year_filter !== 'all') {
+        $query->whereYear('datedebut', $year_filter);
+    }
 
-        if ($date_filter) {
-            switch ($date_filter) {
-                case 'today':
-                    $query->whereDate('datedebut', Carbon::today());
-                    break;
-                case 'this_week':
-                    $query->whereBetween('datedebut', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
-                    break;
-                case 'this_month':
-                    $query->whereMonth('datedebut', Carbon::now()->month);
-                    break;
-                case 'overdue':
-                    $query->where('status', '!=', 'termine')
-                            ->whereNotNull('date_fin_prevue')
-                            ->where('date_fin_prevue', '<', Carbon::now());
-                    break;
-                case 'future':
-                    if ($this->isAdmin($user)) {
-                        $query->where('datedebut', '>', Carbon::now());
-                    }
-                    break;
+    if ($user_filter && $user_filter !== 'all' && $this->isAdmin($user)) {
+        $query->whereHas('users', function ($q) use ($user_filter) {
+            $q->where('user_id', $user_filter);
+        });
+    }
+
+    if ($sort_by === 'priorite') {
+        $query->orderByRaw("FIELD(priorite, 'élevé', 'moyen', 'faible') " . $sort_direction);
+    } else {
+        $query->orderBy($sort_by, $sort_direction);
+    }
+
+    $taches = $query->paginate(10)->appends($request->query());
+
+    $stats = $this->getTaskStats($user);
+
+    $users = $this->isAdmin($user) ? User::all() : collect();
+
+    // NOUVEAU: Préparer les années disponibles (5 dernières années + année courante + 2 années futures)
+    $availableYears = range(Carbon::now()->year - 5, Carbon::now()->year + 2);
+
+    return view('taches.index', compact('taches', 'stats', 'users', 'availableYears'));
+}
+
+
+
+public function exportOverdueTasks(Request $request)
+{
+    $user = auth()->user();
+    $month = $request->get('month_filter');
+    $year = $request->get('year_filter');
+
+    // Validation
+    if (!$month || $month == 'all') {
+        return redirect()->back()->with('error', 'Veuillez sélectionner un mois pour exporter les tâches en retard.');
+    }
+
+    $query = Tache::with('users')
+        ->where('status', '!=', 'termine')
+        ->whereNotNull('date_fin_prevue')
+        ->where('date_fin_prevue', '<', Carbon::now());
+
+    // Appliquer le filtre par mois
+    $query->whereMonth('datedebut', $month);
+
+    // Appliquer le filtre par année si spécifié
+    if ($year && $year !== 'all') {
+        $query->whereYear('datedebut', $year);
+    }
+
+    // Si l'utilisateur n'est pas admin, filtrer ses tâches uniquement
+    if (!$this->isAdmin($user)) {
+        $query->whereHas('users', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        });
+        $query->where('datedebut', '<=', Carbon::now());
+    }
+
+    $taches = $query->get();
+
+    // Nom du mois en français
+    $monthNames = [
+        1 => 'Janvier', 2 => 'Février', 3 => 'Mars', 4 => 'Avril',
+        5 => 'Mai', 6 => 'Juin', 7 => 'Juillet', 8 => 'Août',
+        9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre'
+    ];
+
+    $monthName = $monthNames[$month] ?? 'Mois';
+    $yearLabel = $year && $year !== 'all' ? $year : Carbon::now()->year;
+
+    // Calculer les statistiques
+    $totalJoursRetard = 0;
+    foreach ($taches as $tache) {
+        if ($tache->date_fin_prevue) {
+            $dateFinPrevue = Carbon::parse($tache->date_fin_prevue);
+            $daysLate = $dateFinPrevue->diffInDays(Carbon::now(), false);
+            if ($daysLate > 0) {
+                $totalJoursRetard += $daysLate;
             }
         }
-
-        if ($user_filter && $user_filter !== 'all' && $this->isAdmin($user)) {
-            $query->whereHas('users', function ($q) use ($user_filter) {
-                $q->where('user_id', $user_filter);
-            });
-        }
-
-        if ($sort_by === 'priorite') {
-            $query->orderByRaw("FIELD(priorite, 'élevé', 'moyen', 'faible') " . $sort_direction);
-        } else {
-            $query->orderBy($sort_by, $sort_direction);
-        }
-
-        $taches = $query->paginate(10)->appends($request->query());
-
-        $stats = $this->getTaskStats($user);
-
-        $users = $this->isAdmin($user) ? User::all() : collect();
-
-        return view('taches.index', compact('taches', 'stats', 'users'));
     }
+
+    $stats = [
+        'total' => $taches->count(),
+        'total_jours_retard' => $totalJoursRetard,
+        'retard_moyen' => $taches->count() > 0 ? round($totalJoursRetard / $taches->count(), 1) : 0,
+    ];
+
+    // Générer le PDF
+    $pdf = Pdf::loadView('taches.pdf.overdue', [
+        'taches' => $taches,
+        'monthName' => $monthName,
+        'year' => $yearLabel,
+        'stats' => $stats,
+    ]);
+
+    $filename = 'taches_en_retard_' . $monthName . '_' . $yearLabel . '_' . date('Y-m-d_H-i-s') . '.pdf';
+
+    return $pdf->download($filename);
+}
 
     public function create()
     {
