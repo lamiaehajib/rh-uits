@@ -22,7 +22,7 @@ class SuivrePointageController extends Controller
     /**
      * Afficher la liste des pointages avec filtres avancés.
      */
-    public function index(Request $request)
+     public function index(Request $request)
     {
         $utilisateur = auth()->user();
         $isAdmin = $utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin');
@@ -36,7 +36,12 @@ class SuivrePointageController extends Controller
         }
 
         $requete = SuivrePointage::with('user');
-        $users = User::orderBy('name')->get();
+        
+        // MODIFIÉ: Exclure les utilisateurs avec le rôle "client"
+        $users = User::whereDoesntHave('roles', function($q) {
+            $q->where('name', 'client');
+        })->orderBy('name')->get();
+        
         $queryParams = $request->except('page');
 
         // Filtre par recherche
