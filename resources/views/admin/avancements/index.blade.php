@@ -8,7 +8,6 @@
 
     body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      
         line-height: 1.6;
     }
 
@@ -55,7 +54,13 @@
         font-weight: 500;
     }
 
-    .btn-primary {
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary, .btn-danger {
         background: linear-gradient(135deg, #C2185B, #D32F2F);
         border: none;
         padding: 0.8rem 2rem;
@@ -70,7 +75,11 @@
         box-shadow: 0 10px 25px rgba(194, 24, 91, 0.3);
     }
 
-    .btn-primary:hover {
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444, #D32F2F);
+    }
+
+    .btn-primary:hover, .btn-danger:hover {
         transform: translateY(-2px);
         box-shadow: 0 15px 35px rgba(194, 24, 91, 0.4);
         text-decoration: none;
@@ -167,7 +176,7 @@
     /* Table Styles */
     .table-responsive {
         border-radius: 0 0 24px 24px;
-        overflow: hidden;
+        overflow-x: auto;
     }
 
     .modern-table {
@@ -186,6 +195,7 @@
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        white-space: nowrap;
     }
 
     .modern-table tbody td {
@@ -204,6 +214,73 @@
         transform: translateY(-1px);
     }
 
+    /* Mobile Card View */
+    .mobile-cards {
+        display: none;
+        padding: 1rem;
+    }
+
+    .mobile-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        animation: fadeInUp 0.4s ease;
+    }
+
+    .mobile-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        gap: 1rem;
+    }
+
+    .mobile-card-title {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #333;
+        flex: 1;
+    }
+
+    .mobile-card-info {
+        display: grid;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .mobile-info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .mobile-info-label {
+        color: #666;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .mobile-info-value {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .mobile-card-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
     /* Status Badges */
     .status-badge {
         padding: 0.5rem 1rem;
@@ -213,6 +290,7 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
         display: inline-block;
+        white-space: nowrap;
     }
 
     .status-en-cours {
@@ -350,31 +428,143 @@
     }
 
     /* Responsive Design */
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
         .container-fluid {
             padding: 1rem;
         }
 
-        .header-content {
-            flex-direction: column;
-            text-align: center;
+        .header-section {
+            padding: 1.5rem;
         }
 
         .header-text h2 {
             font-size: 1.8rem;
         }
 
-        .modern-table {
+        .modern-table thead th,
+        .modern-table tbody td {
+            padding: 1rem 0.75rem;
+            font-size: 0.85rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0.75rem;
+        }
+
+        .header-section {
+            padding: 1.25rem;
+            border-radius: 16px;
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .header-text {
+            text-align: center;
+        }
+
+        .header-text h2 {
+            font-size: 1.6rem;
+        }
+
+        .header-text p {
+            font-size: 1rem;
+        }
+
+        .header-actions {
+            justify-content: center;
+        }
+
+        .btn-primary, .btn-danger {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .progress-card {
+            padding: 1.25rem;
+            border-radius: 16px;
+        }
+
+        .progress-card h5 {
+            font-size: 1.2rem;
+        }
+
+        .progress-container {
+            height: 30px;
+        }
+
+        .progress-bar {
             font-size: 0.85rem;
         }
 
-        .modern-table thead th,
-        .modern-table tbody td {
-            padding: 0.8rem 0.5rem;
+        .main-card {
+            border-radius: 16px;
         }
 
-        .btn-group {
-            flex-direction: column;
+        .card-header {
+            padding: 1.25rem 1.5rem;
+        }
+
+        .card-header h5 {
+            font-size: 1.1rem;
+        }
+
+        /* Hide table, show mobile cards */
+        .table-responsive {
+            display: none;
+        }
+
+        .mobile-cards {
+            display: block;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .header-text h2 {
+            font-size: 1.4rem;
+        }
+
+        .btn-primary, .btn-danger {
+            padding: 0.65rem 1.25rem;
+            font-size: 0.85rem;
+        }
+
+        .progress-card h5 {
+            font-size: 1.1rem;
+        }
+
+        .mobile-card {
+            padding: 1.25rem;
+        }
+
+        .mobile-card-title {
+            font-size: 1rem;
+        }
+
+        .mobile-info-label {
+            font-size: 0.75rem;
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            padding: 0.4rem 0.8rem;
+        }
+
+        .btn-action {
+            width: 32px;
+            height: 32px;
+            font-size: 0.85rem;
         }
     }
 
@@ -406,13 +596,14 @@
                 <h2>Avancements du projet</h2>
                 <p>{{ $projet->titre }}</p>
             </div>
-           <a href="{{ route('admin.avancements.corbeille_globale') }}" class="btn btn-danger">
-    <i class="fa fa-trash"></i> Corbeille
-</a>
-
-            <a href="{{ route('admin.avancements.create', $projet) }}" class="btn-primary">
-                <i class="fas fa-plus"></i> Nouvelle étape
-            </a>
+            <div class="header-actions">
+                <a href="{{ route('admin.avancements.corbeille_globale') }}" class="btn-danger">
+                    <i class="fa fa-trash"></i> Corbeille
+                </a>
+                <a href="{{ route('admin.avancements.create', $projet) }}" class="btn-primary">
+                    <i class="fas fa-plus"></i> Nouvelle étape
+                </a>
+            </div>
         </div>
     </div>
 
@@ -434,6 +625,7 @@
         </div>
         <div class="card-body">
             @if($avancements->count() > 0)
+                <!-- Desktop Table View -->
                 <div class="table-responsive">
                     <table class="modern-table">
                         <thead>
@@ -510,6 +702,79 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Mobile Card View -->
+                <div class="mobile-cards">
+                    @foreach($avancements as $avancement)
+                        <div class="mobile-card">
+                            <div class="mobile-card-header">
+                                <div class="mobile-card-title">{{ $avancement->etape }}</div>
+                                @switch($avancement->statut)
+                                    @case('en cours')
+                                        <span class="status-badge status-en-cours">En cours</span>
+                                        @break
+                                    @case('terminé')
+                                        <span class="status-badge status-termine">Terminé</span>
+                                        @break
+                                    @case('bloqué')
+                                        <span class="status-badge status-bloque">Bloqué</span>
+                                        @break
+                                @endswitch
+                            </div>
+
+                            @if($avancement->description)
+                                <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">
+                                    {{ Str::limit($avancement->description, 80) }}
+                                </p>
+                            @endif
+
+                            <div class="mobile-info-row">
+                                <span class="mobile-info-label">Progression</span>
+                                <div class="progress-row">
+                                    <div class="progress-mini" style="width: 80px;">
+                                        <div class="progress-bar-mini" style="width: {{ $avancement->pourcentage }}%"></div>
+                                    </div>
+                                    <span class="mobile-info-value">{{ $avancement->pourcentage }}%</span>
+                                </div>
+                            </div>
+
+                            <div class="mobile-info-row">
+                                <span class="mobile-info-label">Date prévue</span>
+                                <span class="mobile-info-value">
+                                    {{ $avancement->date_prevue ? $avancement->date_prevue->format('d/m/Y') : '-' }}
+                                </span>
+                            </div>
+
+                            <div class="mobile-info-row">
+                                <span class="mobile-info-label">Date réalisée</span>
+                                <span class="mobile-info-value">
+                                    {{ $avancement->date_realisee ? $avancement->date_realisee->format('d/m/Y') : '-' }}
+                                </span>
+                            </div>
+
+                            <div class="mobile-card-actions">
+                                <a href="{{ route('admin.avancements.show', [$projet, $avancement]) }}" 
+                                   class="btn-action btn-view">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ route('admin.avancements.edit', [$projet, $avancement]) }}" 
+                                   class="btn-action btn-edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form action="{{ route('admin.avancements.destroy', [$projet, $avancement]) }}" 
+                                      method="POST" 
+                                      style="display: inline-block;"
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette étape ?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn-action btn-delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
             @else
                 <div class="empty-state">
                     <i class="fas fa-tasks fa-3x"></i>
@@ -532,38 +797,6 @@
 
 @push('scripts')
 <script>
-// Animation fadeIn
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-// Script pour mise à jour rapide du pourcentage (optionnel)
-function updatePourcentage(avancementId, newValue) {
-    fetch(`/admin/projets/{{ $projet->id }}/avancements/${avancementId}/pourcentage`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        body: JSON.stringify({
-            pourcentage: newValue
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
-        }
-    });
-}
-
 // Animation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
     // Animation des barres de progression
