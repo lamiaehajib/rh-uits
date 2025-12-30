@@ -24,97 +24,95 @@ class TacheController extends Controller
         $this->middleware('permission:tache-show', ['only' => ['show']]);
     }
 
-    public function index(Request $request)
-{
-    $user = auth()->user();
-    $search = $request->get('search');
-    $status = $request->get('status');
-    $date_filter = $request->get('date_filter');
-    $user_filter = $request->get('user_filter');
-    $month_filter = $request->get('month_filter'); // NOUVEAU
-    $year_filter = $request->get('year_filter');   // NOUVEAU
-    $sort_by = $request->get('sort_by', 'created_at');
-    $sort_direction = $request->get('sort_direction', 'desc');
+   public function index(Request $request)
+    {
+        $user = auth()->user();
+        $search = $request->get('search');
+        $status = $request->get('status');
+        $date_filter = $request->get('date_filter');
+        $user_filter = $request->get('user_filter');
+        $month_filter = $request->get('month_filter');
+        $year_filter = $request->get('year_filter');
+        $sort_by = $request->get('sort_by', 'created_at');
+        $sort_direction = $request->get('sort_direction', 'desc');
 
-    $query = Tache::with('users');
+        $query = Tache::with('users');
 
-    if (!$this->isAdmin($user)) {
-        $query->whereHas('users', function ($q) use ($user) {
-            $q->where('user_id', $user->id);
-        });
-        $query->where('datedebut', '<=', Carbon::now());
-    }
-
-    if ($search) {
-        $query->where(function($q) use ($search) {
-            $q->where('description', 'like', "%{$search}%")
-                ->orWhere('status', 'like', "%{$search}%")
-                ->orWhere('titre', 'like', "%{$search}%")
-                ->orWhereDate('date', 'like', "%{$search}%");
-        });
-    }
-
-    if ($status && $status !== 'all') {
-        $query->where('status', $status);
-    }
-
-    if ($date_filter) {
-        switch ($date_filter) {
-            case 'today':
-                $query->whereDate('datedebut', Carbon::today());
-                break;
-            case 'this_week':
-                $query->whereBetween('datedebut', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
-                break;
-            case 'this_month':
-                $query->whereMonth('datedebut', Carbon::now()->month);
-                break;
-            case 'overdue':
-                $query->where('status', '!=', 'termine')
-                        ->whereNotNull('date_fin_prevue')
-                        ->where('date_fin_prevue', '<', Carbon::now());
-                break;
-            case 'future':
-                if ($this->isAdmin($user)) {
-                    $query->where('datedebut', '>', Carbon::now());
-                }
-                break;
+        if (!$this->isAdmin($user)) {
+            $query->whereHas('users', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+            $query->where('datedebut', '<=', Carbon::now());
         }
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhere('titre', 'like', "%{$search}%")
+                    ->orWhereDate('date', 'like', "%{$search}%");
+            });
+        }
+
+        if ($status && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        if ($date_filter) {
+            switch ($date_filter) {
+                case 'today':
+                    $query->whereDate('datedebut', Carbon::today());
+                    break;
+                case 'this_week':
+                    $query->whereBetween('datedebut', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                    break;
+                case 'this_month':
+                    $query->whereMonth('datedebut', Carbon::now()->month);
+                    break;
+                case 'overdue':
+                    $query->where('status', '!=', 'termine')
+                            ->whereNotNull('date_fin_prevue')
+                            ->where('date_fin_prevue', '<', Carbon::now());
+                    break;
+                case 'future':
+                    if ($this->isAdmin($user)) {
+                        $query->where('datedebut', '>', Carbon::now());
+                    }
+                    break;
+            }
+        }
+
+        if ($month_filter && $month_filter !== 'all') {
+            $query->whereMonth('datedebut', $month_filter);
+        }
+
+        if ($year_filter && $year_filter !== 'all') {
+            $query->whereYear('datedebut', $year_filter);
+        }
+
+        if ($user_filter && $user_filter !== 'all' && $this->isAdmin($user)) {
+            $query->whereHas('users', function ($q) use ($user_filter) {
+                $q->where('user_id', $user_filter);
+            });
+        }
+
+        if ($sort_by === 'priorite') {
+            $query->orderByRaw("FIELD(priorite, 'élevé', 'moyen', 'faible') " . $sort_direction);
+        } else {
+            $query->orderBy($sort_by, $sort_direction);
+        }
+
+        $taches = $query->paginate(10)->appends($request->query());
+
+        $stats = $this->getTaskStats($user);
+
+        // MODIFIÉ: Exclure les utilisateurs avec le rôle "client"
+        $users = $this->isAdmin($user) ? $this->getUsersWithoutClients() : collect();
+
+        $availableYears = range(Carbon::now()->year - 5, Carbon::now()->year + 2);
+
+        return view('taches.index', compact('taches', 'stats', 'users', 'availableYears'));
     }
-
-    // NOUVEAU: Filtre par mois
-    if ($month_filter && $month_filter !== 'all') {
-        $query->whereMonth('datedebut', $month_filter);
-    }
-
-    // NOUVEAU: Filtre par année
-    if ($year_filter && $year_filter !== 'all') {
-        $query->whereYear('datedebut', $year_filter);
-    }
-
-    if ($user_filter && $user_filter !== 'all' && $this->isAdmin($user)) {
-        $query->whereHas('users', function ($q) use ($user_filter) {
-            $q->where('user_id', $user_filter);
-        });
-    }
-
-    if ($sort_by === 'priorite') {
-        $query->orderByRaw("FIELD(priorite, 'élevé', 'moyen', 'faible') " . $sort_direction);
-    } else {
-        $query->orderBy($sort_by, $sort_direction);
-    }
-
-    $taches = $query->paginate(10)->appends($request->query());
-
-    $stats = $this->getTaskStats($user);
-
-    $users = $this->isAdmin($user) ? User::all() : collect();
-
-    // NOUVEAU: Préparer les années disponibles (5 dernières années + année courante + 2 années futures)
-    $availableYears = range(Carbon::now()->year - 5, Carbon::now()->year + 2);
-
-    return view('taches.index', compact('taches', 'stats', 'users', 'availableYears'));
-}
 
 
 
@@ -195,7 +193,8 @@ public function exportOverdueTasks(Request $request)
 
     public function create()
     {
-        $users = User::all();
+        // MODIFIÉ: Exclure les utilisateurs avec le rôle "client"
+        $users = $this->getUsersWithoutClients();
         return view('taches.create', compact('users'));
     }
 
@@ -306,12 +305,12 @@ public function exportOverdueTasks(Request $request)
                                 ->with('error', 'Accès refusé.');
         }
 
-        $users = User::all();
-        // Passer tous les paramètres de filtre de la chaîne de requête URL actuelle à la vue d'édition.
-        // C'est la clé : cela capture les filtres *originaux* (comme user_filter, et potentiellement status si défini).
+        // MODIFIÉ: Exclure les utilisateurs avec le rôle "client"
+        $users = $this->getUsersWithoutClients();
         $filterParams = $request->query();
         return view('taches.edit', compact('tache', 'users', 'filterParams'));
     }
+
 
     public function update(Request $request, $id)
     {
@@ -531,6 +530,13 @@ public function exportOverdueTasks(Request $request)
     private function isAdmin($user)
     {
         return $user->hasRole(['Sup_Admin', 'Custom_Admin']);
+    }
+
+    private function getUsersWithoutClients()
+    {
+        return User::whereDoesntHave('roles', function($q) {
+            $q->where('name', 'client');
+        })->get();
     }
 
     private function hasAccessToTask($user, $tache)

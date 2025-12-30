@@ -87,8 +87,13 @@
                     <p><strong><i class="fas fa-phone mr-2 text-gray-500"></i> Phone:</strong> {{ $user->tele }}</p>
                     <p><strong><i class="fas fa-briefcase mr-2 text-gray-500"></i> Post:</strong> {{ $user->poste }}</p>
                     <p><strong><i class="fas fa-map-marker-alt mr-2 text-gray-500"></i> Address:</strong> {{ $user->adresse }}</p>
-                    <p><strong><i class="fas fa-couch mr-2 text-gray-500"></i> Day Off:</strong> {{ $user->repos }}</p>
-                    <p>
+<p>
+    <strong><i class="fas fa-couch mr-2 text-gray-500"></i> Day Off:</strong> 
+    {{ is_array($user->repos) ? implode(', ', $user->repos) : $user->repos }}
+</p><p>
+    <strong><i class="fas fa-couch mr-2 text-gray-500"></i> Day Off:</strong> 
+    {{ is_array($user->repos) ? implode(', ', $user->repos) : $user->repos }}
+</p>                    <p>
                         <strong><i class="fas fa-toggle-on mr-2 text-gray-500"></i> Status:</strong>
                         @if($user->is_active)
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
