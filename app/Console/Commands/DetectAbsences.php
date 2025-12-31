@@ -9,11 +9,12 @@ use Carbon\Carbon;
 
 class DetectAbsences extends Command
 {
- protected $signature = 'absences:daily {--date=}';
-    protected $description = 'Détecter les absences quotidiennes (Exclut les clients)';
+    protected $signature = 'absences:daily {--date=}';
+    protected $description = 'Détecter les absences quotidiennes (Exclut les clients et les admins)';
 
     public function handle()
     {
+        // تحديد التاريخ: إما المعطى في الخيار أو تاريخ البارح
         $date = $this->option('date') 
             ? Carbon::parse($this->option('date'))
             : Carbon::yesterday('Africa/Casablanca');
@@ -32,23 +33,24 @@ class DetectAbsences extends Command
         
         $jourActuel = $joursSemaine[$date->englishDayOfWeek];
 
+        // جلب المستخدمين النشطين مع استثناء الأدوار المحددة
         $users = User::where('is_active', true)
             ->whereDoesntHave('roles', function ($query) {
-                $query->where('name', 'client');
+                $query->whereIn('name', ['client', 'Sup_Admin', 'Custom_Admin']);
             })
             ->get();
 
         $absencesDetectees = 0;
 
         foreach ($users as $user) {
-            // Vérifier jour de repos
+            // 1. التحقق من يوم الراحة
             $joursRepos = $user->repos ?? [];
             if (in_array($jourActuel, $joursRepos)) {
                 $this->line("⏭️  {$user->name} - Jour de repos ({$jourActuel})");
                 continue;
             }
 
-            // Vérifier présence
+            // 2. التحقق من وجود بصمة حضور
             $pointageExiste = SuivrePointage::where('iduser', $user->id)
                 ->whereDate('date_pointage', $date)
                 ->where('type', 'presence')
@@ -59,7 +61,7 @@ class DetectAbsences extends Command
                 continue;
             }
 
-            // Vérifier si absence déjà enregistrée
+            // 3. التحقق من عدم تسجيل الغياب مسبقاً
             $absenceExiste = SuivrePointage::where('iduser', $user->id)
                 ->whereDate('date_pointage', $date)
                 ->where('type', 'absence')
