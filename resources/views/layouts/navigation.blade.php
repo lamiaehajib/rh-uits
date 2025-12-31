@@ -435,12 +435,12 @@
             </a>
             @endcan
 
-            @can("formation-list")
+           
             <a href="{{ route('conges.index') }}" class="menu-item">
                 <i class='bx bx-chalkboard menu-icon'></i>
                 <span class="menu-text">Congés</span>
             </a>
-            @endcan
+            
 
             @can("objectif-list")
             <a href="{{ route('objectifs.index') }}" class="menu-item">
