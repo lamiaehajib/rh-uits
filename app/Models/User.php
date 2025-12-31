@@ -121,5 +121,8 @@ class User extends Authenticatable
         'last_login_at' => 'datetime',
         'repos' => 'array', // IMPORTANT: Cast le champ repos en array pour faciliter la manipulation
     ];
+
+
+    
     
 }

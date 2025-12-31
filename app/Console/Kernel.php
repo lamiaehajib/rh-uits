@@ -22,6 +22,12 @@ class Kernel extends ConsoleKernel
         $schedule->command('backup:run --only-db')->weekly()->at('02:00');
 
         $schedule->command('attendance:sync')->everyFifteenMinutes();
+
+
+        $schedule->command('absences:detect')
+             ->dailyAt('23:59')
+             ->timezone('Africa/Casablanca')
+             ->description('Détection automatique des absences');
     }
 
     /**

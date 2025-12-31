@@ -22,118 +22,82 @@ class SuivrePointageController extends Controller
     /**
      * Afficher la liste des pointages avec filtres avancés.
      */
-     public function index(Request $request)
+   public function index(Request $request)
     {
         $utilisateur = auth()->user();
         $isAdmin = $utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin');
 
-        $pointageEnCours = null;
-        if (!$isAdmin) {
-            $pointageEnCours = SuivrePointage::where('iduser', Auth::id())
-                ->whereDate('date_pointage', Carbon::today('Africa/Casablanca'))
-                ->whereNull('heure_depart')
-                ->first();
-        }
+        // MODIFICATION : On ne récupère que les pointages des utilisateurs qui ne sont PAS des clients
+        $requete = SuivrePointage::with('user')->whereHas('user', function ($query) {
+            $query->whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'client');
+            });
+        });
 
-        $requete = SuivrePointage::with('user');
-        
-        // MODIFIÉ: Exclure les utilisateurs avec le rôle "client"
-        $users = User::whereDoesntHave('roles', function($q) {
-            $q->where('name', 'client');
-        })->orderBy('name')->get();
-        
+        // MODIFICATION : Filtrer la liste des users pour le dropdown (exclure clients)
+        $users = User::whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'client');
+            })
+            ->orderBy('name')
+            ->get();
+
         $queryParams = $request->except('page');
 
-        // Filtre par recherche
         if ($recherche = $request->input('search')) {
             $requete->whereHas('user', function ($query) use ($recherche) {
                 $query->where('name', 'like', "%{$recherche}%");
             })->orWhereDate('date_pointage', 'like', "%{$recherche}%");
         }
 
-        // Filtre par période (mois/semaine)
+        if ($type = $request->input('type_pointage')) {
+            $requete->where('type', $type);
+        }
+
+        if ($isAdmin && $justifStatus = $request->input('justificatif_status')) {
+            $requete->where('type', 'absence');
+            switch ($justifStatus) {
+                case 'non_soumis': $requete->whereNull('justificatif'); break;
+                case 'en_attente': $requete->whereNotNull('justificatif')->where('justificatif_valide', false); break;
+                case 'valide': $requete->where('justificatif_valide', true); break;
+            }
+        }
+
         if ($periode = $request->input('periode')) {
             switch ($periode) {
-                case 'today':
-                    $requete->whereDate('date_pointage', Carbon::today('Africa/Casablanca'));
-                    break;
-                case 'yesterday':
-                    $requete->whereDate('date_pointage', Carbon::yesterday('Africa/Casablanca'));
-                    break;
-                case 'this_week':
-                    $requete->whereBetween('date_pointage', [
-                        Carbon::now('Africa/Casablanca')->startOfWeek(),
-                        Carbon::now('Africa/Casablanca')->endOfWeek()
-                    ]);
-                    break;
-                case 'last_week':
-                    $requete->whereBetween('date_pointage', [
-                        Carbon::now('Africa/Casablanca')->subWeek()->startOfWeek(),
-                        Carbon::now('Africa/Casablanca')->subWeek()->endOfWeek()
-                    ]);
-                    break;
-                case 'this_month':
-                    $requete->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->month)
-                           ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
-                    break;
-                case 'last_month':
-                    $requete->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->subMonth()->month)
-                           ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->subMonth()->year);
-                    break;
-                case 'this_year':
-                    $requete->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
-                    break;
+                case 'today': $requete->whereDate('date_pointage', Carbon::today('Africa/Casablanca')); break;
+                case 'yesterday': $requete->whereDate('date_pointage', Carbon::yesterday('Africa/Casablanca')); break;
+                case 'this_week': $requete->whereBetween('date_pointage', [Carbon::now('Africa/Casablanca')->startOfWeek(), Carbon::now('Africa/Casablanca')->endOfWeek()]); break;
+                case 'last_week': $requete->whereBetween('date_pointage', [Carbon::now('Africa/Casablanca')->subWeek()->startOfWeek(), Carbon::now('Africa/Casablanca')->subWeek()->endOfWeek()]); break;
+                case 'this_month': $requete->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->month)->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year); break;
+                case 'last_month': $requete->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->subMonth()->month)->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->subMonth()->year); break;
+                case 'this_year': $requete->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year); break;
             }
         }
 
-        // Filtre par plage de dates personnalisée
-        if ($dateDebut = $request->input('date_debut')) {
-            $requete->whereDate('date_pointage', '>=', $dateDebut);
-        }
-        if ($dateFin = $request->input('date_fin')) {
-            $requete->whereDate('date_pointage', '<=', $dateFin);
-        }
+        if ($dateDebut = $request->input('date_debut')) $requete->whereDate('date_pointage', '>=', $dateDebut);
+        if ($dateFin = $request->input('date_fin')) $requete->whereDate('date_pointage', '<=', $dateFin);
 
-        // Filtre par statut
         if ($statut = $request->input('statut')) {
-            if ($statut === 'en_cours') {
-                $requete->whereNull('heure_depart');
-            } elseif ($statut === 'termine') {
-                $requete->whereNotNull('heure_depart');
-            } elseif ($statut === 'retard') {
-                $requete->whereNotNull('heure_arrivee')
-                       ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00']);
-            } elseif ($statut === 'depart_anticipe') {
-                $requete->whereNotNull('heure_depart')
-                       ->whereRaw('TIME(heure_depart) < ?', ['17:30:00']);
-            }
+            if ($statut === 'en_cours') $requete->where('type', 'presence')->whereNull('heure_depart');
+            elseif ($statut === 'termine') $requete->where('type', 'presence')->whereNotNull('heure_depart');
+            elseif ($statut === 'retard') $requete->where('type', 'presence')->whereNotNull('heure_arrivee')->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00']);
+            elseif ($statut === 'depart_anticipe') $requete->where('type', 'presence')->whereNotNull('heure_depart')->whereRaw('TIME(heure_depart) < ?', ['17:30:00']);
         }
 
-        // Filtre par utilisateur
         if ($userId = $request->input('user_id')) {
-            if ($userId !== 'all') {
-                $requete->where('iduser', $userId);
-            }
+            if ($userId !== 'all') $requete->where('iduser', $userId);
         }
 
-        $requete->orderBy('date_pointage', 'DESC')->orderBy('heure_arrivee', 'DESC');
+        $requete->orderBy('date_pointage', 'DESC')->orderBy('created_at', 'DESC');
 
-        // Restriction pour non-admin
         if (!$isAdmin) {
             $requete->where('iduser', $utilisateur->id);
         }
 
         $pointages = $requete->paginate(15)->appends($queryParams);
-
-        // Statistiques pour le dashboard
         $stats = $this->getStatistiques($request, $isAdmin ? null : $utilisateur->id);
 
-        return view('suivre_pointage.index', compact(
-            'pointages',
-            'pointageEnCours',
-            'users',
-            'stats'
-        ));
+        return view('suivre_pointage.index', compact('pointages', 'users', 'stats'));
     }
 
     /**
@@ -438,17 +402,73 @@ class SuivrePointageController extends Controller
     /**
      * Afficher les détails d'un pointage.
      */
-    public function show($id)
-    {
-        $pointage = SuivrePointage::with('user')->findOrFail($id);
+   public function show($id)
+{
+    $pointage = SuivrePointage::with('user')->findOrFail($id);
 
-        $utilisateur = auth()->user();
-        if (!($utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin')) && $pointage->iduser !== $utilisateur->id) {
-            abort(403, 'Accès non autorisé.');
+    $utilisateur = auth()->user();
+    if (!($utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin')) && $pointage->iduser !== $utilisateur->id) {
+        abort(403, 'Accès non autorisé.');
+    }
+
+    // Si c'est une requête AJAX, retourner seulement les détails
+    if (request()->ajax()) {
+        // Calculer les informations
+        $isLateForArrival = false;
+        $isEarlyDeparture = false;
+        $duree = null;
+        $retardMinutes = 0;
+        $departMinutes = 0;
+
+        if ($pointage->heure_arrivee) {
+            $arriveeTime = Carbon::parse($pointage->heure_arrivee);
+            $expectedArrivee = Carbon::parse($arriveeTime->format('Y-m-d') . ' 09:10:00');
+            if ($arriveeTime->greaterThan($expectedArrivee)) {
+                $isLateForArrival = true;
+                $retardMinutes = $arriveeTime->diffInMinutes($expectedArrivee);
+            }
         }
 
-        return view('suivre_pointage.show', compact('pointage'));
+        if ($pointage->heure_depart) {
+            $departTime = Carbon::parse($pointage->heure_depart);
+            $expectedDepart = Carbon::parse($departTime->format('Y-m-d') . ' 17:30:00');
+            if ($departTime->lessThan($expectedDepart)) {
+                $isEarlyDeparture = true;
+                $departMinutes = $expectedDepart->diffInMinutes($departTime);
+            }
+        }
+
+        if ($pointage->heure_arrivee && $pointage->heure_depart) {
+            $arrivee = Carbon::parse($pointage->heure_arrivee);
+            $depart = Carbon::parse($pointage->heure_depart);
+            $minutes = $arrivee->diffInMinutes($depart);
+            $heures = floor($minutes / 60);
+            $mins = $minutes % 60;
+            $duree = sprintf('%d h %02d min', $heures, $mins);
+        }
+
+        return response()->json([
+            'user' => $pointage->user->name,
+            'date' => $pointage->date_pointage ? $pointage->date_pointage->format('d/m/Y') : 'N/A',
+            'type' => $pointage->type,
+            'heure_arrivee' => $pointage->heure_arrivee ? Carbon::parse($pointage->heure_arrivee)->format('H:i') : null,
+            'heure_depart' => $pointage->heure_depart ? Carbon::parse($pointage->heure_depart)->format('H:i') : null,
+            'duree' => $duree,
+            'is_late' => $isLateForArrival,
+            'retard_minutes' => $retardMinutes,
+            'is_early_departure' => $isEarlyDeparture,
+            'depart_minutes' => $departMinutes,
+            'localisation' => $pointage->localisation,
+            'description' => $pointage->description,
+            'justificatif' => $pointage->justificatif,
+            'justificatif_valide' => $pointage->justificatif_valide,
+            'created_at' => $pointage->created_at->format('d/m/Y H:i'),
+        ]);
     }
+
+    // Sinon retourner la vue normale
+    return view('suivre_pointage.show', compact('pointage'));
+}
 
     /**
      * Corriger un pointage.
@@ -500,4 +520,99 @@ class SuivrePointageController extends Controller
             return redirect()->back()->with('error', 'Une erreur est survenue lors de la correction.');
         }
     }
+
+
+    public function soumettreJustificatif(Request $request, $id)
+{
+    $request->validate([
+        'justificatif' => 'required|string|max:1000',
+        'justificatif_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120', // 5MB max
+    ]);
+
+    $pointage = SuivrePointage::findOrFail($id);
+    
+    // Vérifier que c'est bien une absence
+    if ($pointage->type !== 'absence') {
+        return back()->with('error', 'Vous ne pouvez justifier qu\'une absence.');
+    }
+
+    // Vérifier que l'utilisateur peut modifier ce pointage
+    if (!auth()->user()->hasRole(['Sup_Admin', 'Custom_Admin']) && $pointage->iduser !== auth()->id()) {
+        abort(403, 'Accès non autorisé.');
+    }
+
+    $data = [
+        'justificatif' => $request->justificatif,
+        'justificatif_soumis_at' => now(),
+    ];
+
+    // Gérer upload du fichier
+    if ($request->hasFile('justificatif_file')) {
+        $file = $request->file('justificatif_file');
+        $filename = 'justif_' . $pointage->id . '_' . time() . '.' . $file->extension();
+        $path = $file->storeAs('justificatifs', $filename, 'public');
+        $data['justificatif_file'] = $path;
+    }
+
+    $pointage->update($data);
+
+    Log::info('Justificatif soumis', [
+        'pointage_id' => $pointage->id,
+        'user_id' => auth()->id(),
+        'justificatif' => $request->justificatif
+    ]);
+
+    return back()->with('success', 'Justificatif soumis avec succès.');
+}
+
+/**
+ * Valider/Rejeter un justificatif (Admin uniquement)
+ */
+public function validerJustificatif(Request $request, $id)
+{
+    if (!auth()->user()->hasRole(['Sup_Admin', 'Custom_Admin'])) {
+        abort(403, 'Accès non autorisé.');
+    }
+
+    $request->validate([
+        'action' => 'required|in:valider,rejeter',
+        'commentaire_admin' => 'nullable|string|max:500',
+    ]);
+
+    $pointage = SuivrePointage::findOrFail($id);
+    
+    $valide = $request->action === 'valider';
+    
+    $pointage->update([
+        'justificatif_valide' => $valide,
+        'description' => $pointage->description . "\n[Admin] " . ($request->commentaire_admin ?? ($valide ? 'Justificatif validé' : 'Justificatif rejeté'))
+    ]);
+
+    Log::info('Justificatif ' . $request->action, [
+        'pointage_id' => $pointage->id,
+        'admin_id' => auth()->id(),
+        'decision' => $valide
+    ]);
+
+    return back()->with('success', 'Justificatif ' . ($valide ? 'validé' : 'rejeté') . ' avec succès.');
+}
+
+/**
+ * Télécharger le fichier justificatif
+ */
+public function telechargerJustificatif($id)
+{
+    $pointage = SuivrePointage::findOrFail($id);
+    
+    // Vérifier accès
+    if (!auth()->user()->hasRole(['Sup_Admin', 'Custom_Admin']) && $pointage->iduser !== auth()->id()) {
+        abort(403, 'Accès non autorisé.');
+    }
+
+    if (!$pointage->justificatif_file) {
+        abort(404, 'Aucun fichier justificatif trouvé.');
+    }
+
+    return response()->download(storage_path('app/public/' . $pointage->justificatif_file));
+}
 }

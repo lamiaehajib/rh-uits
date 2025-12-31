@@ -189,6 +189,33 @@ Route::get('/pointages/export/pdf', [SuivrePointageController::class, 'exporterP
 Route::get('/pointages/chart-data', [SuivrePointageController::class, 'getChartData'])
     ->name('pointages.chart.data');
 
+
+    Route::post('/pointage/{id}/justificatif/soumettre', [SuivrePointageController::class, 'soumettreJustificatif'])
+        ->name('pointage.justificatif.soumettre');
+    
+    Route::post('/pointage/{id}/justificatif/valider', [SuivrePointageController::class, 'validerJustificatif'])
+        ->name('pointage.justificatif.valider')
+        ->middleware('permission:pointage-edit');
+    
+    Route::get('/pointage/{id}/justificatif/telecharger', [SuivrePointageController::class, 'telechargerJustificatif'])
+        ->name('pointage.justificatif.telecharger');
+
+        Route::post('/admin/absences/detect-historical', function () {
+        Artisan::call('absences:detect-historical');
+        $output = Artisan::output();
+        preg_match('/Absences enregistrées: (\d+)/', $output, $matches);
+        return response()->json(['absences' => $matches[1] ?? 0]);
+    })->name('admin.absences.historical');
+    
+    Route::post('/admin/absences/detect-daily', function () {
+        Artisan::call('absences:daily');
+        $output = Artisan::output();
+        preg_match('/(\d+) absence/', $output, $matches);
+        return response()->json(['absences' => $matches[1] ?? 0]);
+    })->name('admin.absences.daily');
+
+
+    
  // ✅ routes personnalisées أولاً
 Route::get('/objectifs/corbeille', [ObjectifController::class, 'corbeille'])
       ->name('objectifs.corbeille');

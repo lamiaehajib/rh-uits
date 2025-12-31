@@ -103,7 +103,9 @@
                 border-radius: 0.75rem;
                 box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
                 max-width: 90%;
-                width: 400px;
+                max-height: 90vh;
+                overflow-y: auto;
+                width: 500px;
                 transform: translateY(-20px);
                 transition: transform 0.3s ease-out;
             }
@@ -158,18 +160,52 @@
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
             }
 
-            
+            .absence-row {
+                background-color: #fee;
+            }
+
+            .justificatif-badge {
+                display: inline-flex;
+                align-items: center;
+                padding: 0.25rem 0.75rem;
+                border-radius: 0.375rem;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+
+            .justificatif-non-soumis {
+                background-color: #fee;
+                color: #dc2626;
+            }
+
+            .justificatif-pending {
+                background-color: #fef3c7;
+                color: #d97706;
+            }
+
+            .justificatif-valide {
+                background-color: #d1fae5;
+                color: #059669;
+            }
+
+            .action-btn {
+                padding: 0.5rem 1rem;
+                border-radius: 0.375rem;
+                font-size: 0.875rem;
+                font-weight: 600;
+                transition: all 0.2s;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .action-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
         </style>
     </head>
     <body>
-        <div id="custom-alert-modal" class="modal-overlay">
-            <div class="modal-content rounded-xl shadow-2xl">
-                <div id="alert-modal-icon" class="header-icon"></div>
-                <div id="alert-modal-message" class="message"></div>
-                <div id="alert-modal-buttons" class="buttons"></div>
-            </div>
-        </div>
-
         <h2 class="font-semibold text-3xl text-gray-800 leading-tight border-b-2 border-primary-red pb-3 mb-6 animate-fade-in">
             <i class="fas fa-fingerprint mr-3 text-primary-red"></i> {{ __('Gestion des Pointages') }}
         </h2>
@@ -197,7 +233,7 @@
                 @endif
 
                 <!-- Stats Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-fade-in">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8 animate-fade-in">
                     <div class="stat-card card-hover-effect">
                         <div class="flex items-center justify-between">
                             <div>
@@ -242,6 +278,20 @@
                             </div>
                             <div class="stat-icon bg-green-100 text-green-600">
                                 <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card card-hover-effect">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm font-medium mb-1">Absences</p>
+                                <h3 class="text-3xl font-bold text-red-600">
+                                    {{ $pointages->where('type', 'absence')->count() }}
+                                </h3>
+                            </div>
+                            <div class="stat-icon bg-red-100 text-red-600">
+                                <i class="fas fa-user-times"></i>
                             </div>
                         </div>
                     </div>
@@ -290,7 +340,6 @@
                         </div>
 
                         <form method="GET" class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
-                            <!-- Période rapide -->
                             <div>
                                 <label for="periode" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Période') }}</label>
                                 <select id="periode" name="periode" onchange="toggleDateInputs()"
@@ -306,21 +355,18 @@
                                 </select>
                             </div>
 
-                            <!-- Date début -->
                             <div id="date_debut_container">
                                 <label for="date_debut" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Date début') }}</label>
                                 <input type="date" id="date_debut" name="date_debut" value="{{ request('date_debut') }}"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
                             </div>
 
-                            <!-- Date fin -->
                             <div id="date_fin_container">
                                 <label for="date_fin" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Date fin') }}</label>
                                 <input type="date" id="date_fin" name="date_fin" value="{{ request('date_fin') }}"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red focus:border-primary-red">
                             </div>
 
-                            <!-- Statut -->
                             <div>
                                 <label for="statut" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Statut') }}</label>
                                 <select id="statut" name="statut"
@@ -333,7 +379,16 @@
                                 </select>
                             </div>
 
-                            <!-- Utilisateur -->
+                            <div>
+                                <label for="type_pointage" class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                <select id="type_pointage" name="type_pointage"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red">
+                                    <option value="">Tous</option>
+                                    <option value="presence" {{ request('type_pointage') == 'presence' ? 'selected' : '' }}>Présence</option>
+                                    <option value="absence" {{ request('type_pointage') == 'absence' ? 'selected' : '' }}>Absence</option>
+                                </select>
+                            </div>
+
                             @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
                             <div>
                                 <label for="user_id" class="block text-sm font-medium text-gray-700 mb-1">{{ __('Utilisateur') }}</label>
@@ -347,9 +402,19 @@
                                     @endforeach
                                 </select>
                             </div>
+
+                            <div>
+                                <label for="justificatif_status" class="block text-sm font-medium text-gray-700 mb-1">Justificatif</label>
+                                <select id="justificatif_status" name="justificatif_status"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-red">
+                                    <option value="">Tous</option>
+                                    <option value="non_soumis" {{ request('justificatif_status') == 'non_soumis' ? 'selected' : '' }}>Non soumis</option>
+                                    <option value="en_attente" {{ request('justificatif_status') == 'en_attente' ? 'selected' : '' }}>En attente</option>
+                                    <option value="valide" {{ request('justificatif_status') == 'valide' ? 'selected' : '' }}>Validé</option>
+                                </select>
+                            </div>
                             @endif
 
-                            <!-- Boutons -->
                             <div class="flex items-end space-x-3">
                                 <button type="submit"
                                     class="btn-primary-red flex-1 flex items-center justify-center px-5 py-2 rounded-md shadow-sm text-white font-medium">
@@ -390,6 +455,8 @@
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Départ') }}</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Durée') }}</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Statut') }}</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Type</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Justificatif</th>
                                         <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">{{ __('Actions') }}</th>
                                     </tr>
                                 </thead>
@@ -414,10 +481,8 @@
                                                     $isEarlyDeparture = true;
                                                 }
                                             }
-
-                                            $isProblematicPointage = $isLateForArrival || $isEarlyDeparture;
                                         @endphp
-                                        <tr class="hover:bg-gray-50 transition duration-200 {{ $isProblematicPointage ? 'late-pointage-row' : '' }}">
+                                        <tr class="hover:bg-gray-50 transition duration-200 {{ $pointage->type === 'absence' ? 'absence-row' : '' }}">
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="flex items-center">
                                                     <div class="flex-shrink-0 h-8 w-8">
@@ -434,7 +499,9 @@
                                                 <i class="far fa-calendar-alt mr-1 text-gray-500"></i>{{ $pointage->date_pointage ? $pointage->date_pointage->format('d/m/Y') : 'N/A' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                @if($pointage->heure_arrivee)
+                                                @if($pointage->type === 'absence')
+                                                    <span class="text-gray-400">-</span>
+                                                @elseif($pointage->heure_arrivee)
                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $isLateForArrival ? 'bg-primary-red text-white' : 'bg-green-100 text-green-800' }}">
                                                         <i class="fas fa-play mr-1"></i>
                                                         {{ \Carbon\Carbon::parse($pointage->heure_arrivee)->format('H:i') }}
@@ -447,7 +514,9 @@
                                                 @endif
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                @if($pointage->heure_depart)
+                                                @if($pointage->type === 'absence')
+                                                    <span class="text-gray-400">-</span>
+                                                @elseif($pointage->heure_depart)
                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $isEarlyDeparture ? 'bg-primary-red text-white' : 'bg-primary-red text-white' }}">
                                                         <i class="fas fa-stop mr-1"></i>
                                                         {{ \Carbon\Carbon::parse($pointage->heure_depart)->format('H:i') }}
@@ -457,7 +526,9 @@
                                                 @endif
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                @if($pointage->heure_arrivee && $pointage->heure_depart)
+                                                @if($pointage->type === 'absence')
+                                                    <span class="text-gray-400">-</span>
+                                                @elseif($pointage->heure_arrivee && $pointage->heure_depart)
                                                     @php
                                                         $arrivee = \Carbon\Carbon::parse($pointage->heure_arrivee);
                                                         $depart = \Carbon\Carbon::parse($pointage->heure_depart);
@@ -474,7 +545,12 @@
                                                 @endif
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                @if($pointage->heure_depart)
+                                                @if($pointage->type === 'absence')
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                        <i class="fas fa-ban mr-1"></i>
+                                                        {{ __('Absent') }}
+                                                    </span>
+                                                @elseif($pointage->heure_depart)
                                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                                         <i class="fas fa-check-circle mr-1"></i>
                                                         {{ __('Terminé') }}
@@ -486,13 +562,81 @@
                                                     </span>
                                                 @endif
                                             </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                @if($pointage->type === 'absence')
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                        <i class="fas fa-user-times mr-1"></i> Absence
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        <i class="fas fa-user-check mr-1"></i> Présence
+                                                    </span>
+                                                @endif
+                                            </td>
+
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                @if($pointage->type === 'absence')
+                                                    @if($pointage->justificatif)
+                                                        @if($pointage->justificatif_valide)
+                                                            <span class="justificatif-badge justificatif-valide">
+                                                                <i class="fas fa-check-circle mr-1"></i> Validé
+                                                            </span>
+                                                        @else
+                                                            <span class="justificatif-badge justificatif-pending">
+                                                                <i class="fas fa-clock mr-1"></i> En attente
+                                                            </span>
+                                                        @endif
+                                                    @else
+                                                        <span class="justificatif-badge justificatif-non-soumis">
+                                                            <i class="fas fa-exclamation-circle mr-1"></i> Non soumis
+                                                        </span>
+                                                    @endif
+                                                @else
+                                                    <span class="text-gray-400">-</span>
+                                                @endif
+                                            </td>
                                             
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 flex items-center">
-                                                <a href="{{ route('pointage.show', $pointage->id) }}"
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                                <div class="flex items-center gap-2">
+
+                                                     <a href="{{ route('pointage.show', $pointage->id) }}"
                                                     class="text-blue-600 hover:text-blue-800 transition duration-200 transform hover:scale-110" title="{{ __('Voir') }}">
                                                     <i class="fas fa-eye text-lg"></i>
                                                 </a>
-                                                
+                                                    <!-- Bouton Voir Détails -->
+                                                    <button onclick="voirHistorique({{ $pointage->id }})"
+                                                        class="text-blue-600 hover:text-blue-800 transition duration-200 transform hover:scale-110" 
+                                                        title="{{ __('Voir historique') }}">
+                                                        <i class="fas fa-history text-lg"></i>
+                                                    </button>
+                                                    
+                                                    @if($pointage->type === 'absence')
+                                                        @if(!$pointage->justificatif)
+                                                            <!-- Bouton Soumettre Justificatif -->
+                                                            <button onclick="ouvrirModalJustificatif({{ $pointage->id }})"
+                                                                class="text-orange-600 hover:text-orange-800 transition duration-200 transform hover:scale-110" 
+                                                                title="Soumettre justificatif">
+                                                                <i class="fas fa-file-upload text-lg"></i>
+                                                            </button>
+                                                        @else
+                                                            <!-- Bouton Voir Justificatif -->
+                                                            <button onclick="voirJustificatif({{ $pointage->id }}, '{{ addslashes($pointage->justificatif) }}', '{{ $pointage->justificatif_file }}', {{ $pointage->justificatif_valide ? 'true' : 'false' }})"
+                                                                class="text-purple-600 hover:text-purple-800 transition duration-200 transform hover:scale-110" 
+                                                                title="Voir justificatif">
+                                                                <i class="fas fa-file-alt text-lg"></i>
+                                                            </button>
+                                                            
+                                                            @if(auth()->user()->hasRole(['Sup_Admin', 'Custom_Admin']) && !$pointage->justificatif_valide)
+                                                                <!-- Bouton Valider (Admin uniquement) -->
+                                                                <button onclick="ouvrirModalValidation({{ $pointage->id }})"
+                                                                    class="text-green-600 hover:text-green-800 transition duration-200 transform hover:scale-110" 
+                                                                    title="Valider/Rejeter">
+                                                                    <i class="fas fa-check-double text-lg"></i>
+                                                                </button>
+                                                            @endif
+                                                        @endif
+                                                    @endif
+                                                </div>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -516,9 +660,146 @@
             </div>
         </div>
 
+        <!-- Modal Historique Détaillé -->
+        <div id="modalHistorique" class="modal-overlay">
+            <div class="modal-content" style="max-width: 700px;">
+                <h3 class="text-2xl font-bold mb-6 text-gray-800 border-b pb-3">
+                    <i class="fas fa-history mr-2 text-indigo-600"></i>
+                    Détails du Pointage
+                </h3>
+                
+                <div id="historiqueContent" class="space-y-4">
+                    <!-- Le contenu sera injecté dynamiquement -->
+                </div>
+                
+                <div class="mt-6 pt-4 border-t">
+                    <button type="button" onclick="fermerModalHistorique()" 
+                        class="btn-secondary-tailwind w-full px-4 py-3 rounded-md font-semibold">
+                        <i class="fas fa-times mr-2"></i> Fermer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Soumettre Justificatif -->
+        <div id="modalJustificatif" class="modal-overlay">
+            <div class="modal-content">
+                <h3 class="text-xl font-bold mb-4 text-gray-800">
+                    <i class="fas fa-file-medical mr-2 text-orange-600"></i>
+                    Soumettre un justificatif d'absence
+                </h3>
+                <form id="formJustificatif" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Raison de l'absence <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="justificatif" rows="4" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-red"
+                            placeholder="Ex: Maladie, rendez-vous médical, urgence familiale..."></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Document justificatif (optionnel)
+                        </label>
+                        <input type="file" name="justificatif_file" accept=".jpg,.jpeg,.png,.pdf"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-red">
+                        <p class="text-xs text-gray-500 mt-1">Formats acceptés: JPG, PNG, PDF (max 5MB)</p>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button type="submit" class="btn-primary-red flex-1 px-4 py-2 rounded-md">
+                            <i class="fas fa-paper-plane mr-2"></i> Soumettre
+                        </button>
+                        <button type="button" onclick="fermerModalJustificatif()" 
+                            class="btn-secondary-tailwind flex-1 px-4 py-2 rounded-md">
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Modal Voir Justificatif -->
+        <div id="modalVoirJustificatif" class="modal-overlay">
+            <div class="modal-content">
+                <h3 class="text-xl font-bold mb-4 text-gray-800">
+                    <i class="fas fa-file-alt mr-2 text-purple-600"></i>
+                    Détails du justificatif
+                </h3>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                    <div id="justifStatut"></div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Raison</label>
+                    <div id="justifRaison" class="bg-gray-50 p-3 rounded-md text-gray-800"></div>
+                </div>
+                
+                <div id="justifFichierContainer" class="mb-4" style="display:none;">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Document</label>
+                    <a id="justifFichierLink" href="#" target="_blank" 
+                        class="text-blue-600 hover:text-blue-800 inline-flex items-center">
+                        <i class="fas fa-download mr-2"></i> Télécharger le document
+                    </a>
+                </div>
+                
+                <button type="button" onclick="fermerModalVoirJustificatif()" 
+                    class="btn-secondary-tailwind w-full px-4 py-2 rounded-md">
+                    Fermer
+                </button>
+            </div>
+        </div>
+        
+        <!-- Modal Validation (Admin) -->
+        <div id="modalValidation" class="modal-overlay">
+            <div class="modal-content">
+                <h3 class="text-xl font-bold mb-4 text-gray-800">
+                    <i class="fas fa-user-check mr-2 text-green-600"></i>
+                    Valider ou rejeter le justificatif
+                </h3>
+                <form id="formValidation" method="POST">
+                    @csrf
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Décision <span class="text-red-500">*</span>
+                        </label>
+                        <select name="action" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-red">
+                            <option value="">Choisir...</option>
+                            <option value="valider">✅ Valider le justificatif</option>
+                            <option value="rejeter">❌ Rejeter le justificatif</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Commentaire (optionnel)</label>
+                        <textarea name="commentaire_admin" rows="3"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-red"
+                            placeholder="Commentaire administratif..."></textarea>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button type="submit" class="btn-primary-red flex-1 px-4 py-2 rounded-md">
+                            <i class="fas fa-check mr-2"></i> Confirmer
+                        </button>
+                        <button type="button" onclick="fermerModalValidation()" 
+                            class="btn-secondary-tailwind flex-1 px-4 py-2 rounded-md">
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         @push('scripts')
             <script>
-                // Toggle date inputs based on period selection
+                // Toggle date inputs
                 function toggleDateInputs() {
                     const periode = document.getElementById('periode').value;
                     const dateDebutContainer = document.getElementById('date_debut_container');
@@ -533,7 +814,6 @@
                     }
                 }
 
-                // Initialize on load
                 document.addEventListener('DOMContentLoaded', () => {
                     toggleDateInputs();
                 });
@@ -551,6 +831,195 @@
                     window.location.href = "{{ route('pointages.export.pdf') }}" + (params ? '?' + params : '');
                 }
 
+                // Voir Historique Détaillé
+                function voirHistorique(pointageId) {
+    fetch(`/suivre-pointages/${pointageId}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Erreur réseau');
+        return response.json();
+    })
+    .then(data => {
+        let html = '<div class="space-y-4">';
+        
+        // Informations générales
+        html += '<div class="bg-gray-50 p-4 rounded-lg">';
+        html += '<h4 class="font-semibold text-gray-800 mb-3 flex items-center">';
+        html += '<i class="fas fa-info-circle mr-2 text-blue-600"></i> Informations Générales';
+        html += '</h4>';
+        html += '<div class="grid grid-cols-2 gap-3 text-sm">';
+        html += `<div><span class="text-gray-600">Utilisateur:</span> <span class="font-medium">${data.user}</span></div>`;
+        html += `<div><span class="text-gray-600">Date:</span> <span class="font-medium">${data.date}</span></div>`;
+        html += `<div><span class="text-gray-600">Type:</span> `;
+        
+        if (data.type === 'absence') {
+            html += '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">';
+            html += '<i class="fas fa-user-times mr-1"></i> Absence</span>';
+        } else {
+            html += '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">';
+            html += '<i class="fas fa-user-check mr-1"></i> Présence</span>';
+        }
+        html += '</div>';
+        html += `<div><span class="text-gray-600">Créé le:</span> <span class="font-medium">${data.created_at}</span></div>`;
+        html += '</div></div>';
+
+        // Si c'est une présence
+        if (data.type === 'presence') {
+            // Heures
+            html += '<div class="bg-blue-50 p-4 rounded-lg">';
+            html += '<h4 class="font-semibold text-gray-800 mb-3 flex items-center">';
+            html += '<i class="fas fa-clock mr-2 text-blue-600"></i> Horaires';
+            html += '</h4>';
+            html += '<div class="grid grid-cols-2 gap-3 text-sm">';
+            
+            if (data.heure_arrivee) {
+                html += '<div><span class="text-gray-600">Arrivée:</span> ';
+                if (data.is_late) {
+                    html += `<span class="font-bold text-red-600">${data.heure_arrivee}</span>`;
+                    html += ` <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Retard: ${data.retard_minutes} min</span>`;
+                } else {
+                    html += `<span class="font-medium text-green-600">${data.heure_arrivee}</span>`;
+                    html += ' <span class="text-xs text-green-600">✓ À l\'heure</span>';
+                }
+                html += '</div>';
+            }
+            
+            if (data.heure_depart) {
+                html += '<div><span class="text-gray-600">Départ:</span> ';
+                if (data.is_early_departure) {
+                    html += `<span class="font-bold text-orange-600">${data.heure_depart}</span>`;
+                    html += ` <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Anticipé: ${data.depart_minutes} min</span>`;
+                } else {
+                    html += `<span class="font-medium text-blue-600">${data.heure_depart}</span>`;
+                }
+                html += '</div>';
+            } else {
+                html += '<div><span class="text-gray-600">Départ:</span> ';
+                html += '<span class="text-yellow-600 font-medium animate-pulse">En cours...</span></div>';
+            }
+            
+            if (data.duree) {
+                html += `<div class="col-span-2"><span class="text-gray-600">Durée totale:</span> `;
+                html += `<span class="font-bold text-indigo-600 text-lg">${data.duree}</span></div>`;
+            }
+            
+            html += '</div></div>';
+        }
+
+        // Si c'est une absence avec justificatif
+        if (data.type === 'absence' && data.justificatif) {
+            html += '<div class="bg-orange-50 p-4 rounded-lg">';
+            html += '<h4 class="font-semibold text-gray-800 mb-3 flex items-center">';
+            html += '<i class="fas fa-file-alt mr-2 text-orange-600"></i> Justificatif';
+            html += '</h4>';
+            
+            if (data.justificatif_valide) {
+                html += '<div class="mb-2"><span class="justificatif-badge justificatif-valide">';
+                html += '<i class="fas fa-check-circle mr-1"></i> Validé par l\'administration</span></div>';
+            } else {
+                html += '<div class="mb-2"><span class="justificatif-badge justificatif-pending">';
+                html += '<i class="fas fa-clock mr-1"></i> En attente de validation</span></div>';
+            }
+            
+            html += `<div class="bg-white p-3 rounded border border-orange-200 text-sm">${data.justificatif}</div>`;
+            html += '</div>';
+        }
+
+        // Localisation
+        if (data.localisation) {
+            html += '<div class="bg-green-50 p-4 rounded-lg">';
+            html += '<h4 class="font-semibold text-gray-800 mb-2 flex items-center">';
+            html += '<i class="fas fa-map-marker-alt mr-2 text-green-600"></i> Localisation';
+            html += '</h4>';
+            html += `<div class="text-sm text-gray-700">${data.localisation}</div>`;
+            html += '</div>';
+        }
+
+        // Description
+        if (data.description) {
+            html += '<div class="bg-purple-50 p-4 rounded-lg">';
+            html += '<h4 class="font-semibold text-gray-800 mb-2 flex items-center">';
+            html += '<i class="fas fa-comment-alt mr-2 text-purple-600"></i> Description';
+            html += '</h4>';
+            html += `<div class="text-sm text-gray-700 whitespace-pre-wrap">${data.description}</div>`;
+            html += '</div>';
+        }
+
+        html += '</div>';
+        
+        document.getElementById('historiqueContent').innerHTML = html;
+        document.getElementById('modalHistorique').classList.add('show');
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur lors du chargement des détails. Veuillez réessayer.');
+    });
+}
+
+                function fermerModalHistorique() {
+                    document.getElementById('modalHistorique').classList.remove('show');
+                }
+
+                // Justificatif functions
+                function ouvrirModalJustificatif(pointageId) {
+                    const modal = document.getElementById('modalJustificatif');
+                    const form = document.getElementById('formJustificatif');
+                    form.action = `/pointage/${pointageId}/justificatif/soumettre`;
+                    modal.classList.add('show');
+                }
+                
+                function fermerModalJustificatif() {
+                    document.getElementById('modalJustificatif').classList.remove('show');
+                }
+                
+                function voirJustificatif(pointageId, raison, fichier, valide) {
+                    const modal = document.getElementById('modalVoirJustificatif');
+                    
+                    const statutHtml = valide 
+                        ? '<span class="justificatif-badge justificatif-valide"><i class="fas fa-check-circle mr-1"></i> Validé</span>'
+                        : '<span class="justificatif-badge justificatif-pending"><i class="fas fa-clock mr-1"></i> En attente de validation</span>';
+                    document.getElementById('justifStatut').innerHTML = statutHtml;
+                    
+                    document.getElementById('justifRaison').textContent = raison;
+                    
+                    if (fichier) {
+                        document.getElementById('justifFichierContainer').style.display = 'block';
+                        document.getElementById('justifFichierLink').href = `/pointage/${pointageId}/justificatif/telecharger`;
+                    } else {
+                        document.getElementById('justifFichierContainer').style.display = 'none';
+                    }
+                    
+                    modal.classList.add('show');
+                }
+                
+                function fermerModalVoirJustificatif() {
+                    document.getElementById('modalVoirJustificatif').classList.remove('show');
+                }
+                
+                function ouvrirModalValidation(pointageId) {
+                    const modal = document.getElementById('modalValidation');
+                    const form = document.getElementById('formValidation');
+                    form.action = `/pointage/${pointageId}/justificatif/valider`;
+                    modal.classList.add('show');
+                }
+                
+                function fermerModalValidation() {
+                    document.getElementById('modalValidation').classList.remove('show');
+                }
+                
+                // Close modals on outside click
+                document.querySelectorAll('.modal-overlay').forEach(modal => {
+                    modal.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            this.classList.remove('show');
+                        }
+                    });
+                });
+
                 // Charts initialization
                 @if(auth()->user()->hasRole('Sup_Admin') || auth()->user()->hasRole('Custom_Admin'))
                 document.addEventListener('DOMContentLoaded', async () => {
@@ -558,7 +1027,6 @@
                         const response = await fetch("{{ route('pointages.chart.data') }}");
                         const data = await response.json();
 
-                        // Heures travaillées chart
                         const heuresCtx = document.getElementById('heuresChart');
                         if (heuresCtx) {
                             new Chart(heuresCtx, {
@@ -577,26 +1045,17 @@
                                 options: {
                                     responsive: true,
                                     maintainAspectRatio: false,
-                                    plugins: {
-                                        legend: {
-                                            display: false
-                                        }
-                                    },
+                                    plugins: { legend: { display: false } },
                                     scales: {
                                         y: {
                                             beginAtZero: true,
-                                            ticks: {
-                                                callback: function(value) {
-                                                    return value + 'h';
-                                                }
-                                            }
+                                            ticks: { callback: function(value) { return value + 'h'; } }
                                         }
                                     }
                                 }
                             });
                         }
 
-                        // Retards chart
                         const retardsCtx = document.getElementById('retardsChart');
                         if (retardsCtx) {
                             new Chart(retardsCtx, {
@@ -614,70 +1073,21 @@
                                 options: {
                                     responsive: true,
                                     maintainAspectRatio: false,
-                                    plugins: {
-                                        legend: {
-                                            display: false
-                                        }
-                                    },
+                                    plugins: { legend: { display: false } },
                                     scales: {
                                         y: {
                                             beginAtZero: true,
-                                            ticks: {
-                                                stepSize: 1
-                                            }
+                                            ticks: { stepSize: 1 }
                                         }
                                     }
                                 }
                             });
                         }
                     } catch (error) {
-                        console.error('Erreur lors du chargement des graphiques:', error);
+                        console.error('Erreur graphiques:', error);
                     }
                 });
                 @endif
-
-                // Modal functions
-                function ouvrirModalCorrection(pointageId, heureArrivee, heureDepart, description, localisation, userLatitude, userLongitude) {
-                    document.getElementById('modalCorrection').classList.remove('hidden');
-                    const form = document.getElementById('formCorrection');
-                    form.action = `/pointage/${pointageId}/corriger`;
-                    document.getElementById('modal_heure_arrivee').value = heureArrivee;
-                    document.getElementById('modal_heure_depart').value = heureDepart;
-                    document.getElementById('modal_description').value = description;
-                    document.getElementById('modal_localisation').value = localisation;
-                    document.getElementById('modal_user_latitude').value = userLatitude;
-                    document.getElementById('modal_user_longitude').value = userLongitude;
-                }
-
-                function fermerModalCorrection() {
-                    document.getElementById('modalCorrection').classList.add('hidden');
-                }
-
-                // Custom alert modal
-                const customAlertModal = document.getElementById('custom-alert-modal');
-                function showCustomAlert(message, type = 'alert') {
-                    const alertModalMessage = document.getElementById('alert-modal-message');
-                    const alertModalButtons = document.getElementById('alert-modal-buttons');
-                    const alertModalIcon = document.getElementById('alert-modal-icon');
-                    
-                    alertModalMessage.textContent = message;
-                    alertModalButtons.innerHTML = '';
-                    alertModalIcon.innerHTML = '';
-
-                    if (type === 'alert') {
-                        alertModalIcon.innerHTML = '<i class="fas fa-info-circle text-gray-500"></i>';
-                    } else if (type === 'error') {
-                        alertModalIcon.innerHTML = '<i class="fas fa-times-circle text-red-600"></i>';
-                    }
-
-                    const okBtn = document.createElement('button');
-                    okBtn.textContent = 'OK';
-                    okBtn.className = 'px-6 py-3 rounded-full font-bold text-sm text-white uppercase tracking-wider shadow-lg btn-primary-red';
-                    okBtn.onclick = () => customAlertModal.classList.remove('show');
-                    alertModalButtons.appendChild(okBtn);
-
-                    customAlertModal.classList.add('show');
-                }
             </script>
         @endpush
 </x-app-layout>
