@@ -386,6 +386,7 @@
                                     <option value="">Tous</option>
                                     <option value="presence" {{ request('type_pointage') == 'presence' ? 'selected' : '' }}>Présence</option>
                                     <option value="absence" {{ request('type_pointage') == 'absence' ? 'selected' : '' }}>Absence</option>
+                                    <option value="conge" {{ request('type_pointage') == 'conge' ? 'selected' : '' }}>Congé</option>
                                 </select>
                             </div>
 
@@ -563,16 +564,20 @@
                                                 @endif
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                @if($pointage->type === 'absence')
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                        <i class="fas fa-user-times mr-1"></i> Absence
-                                                    </span>
-                                                @else
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                        <i class="fas fa-user-check mr-1"></i> Présence
-                                                    </span>
-                                                @endif
-                                            </td>
+    @if($pointage->type === 'absence')
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <i class="fas fa-user-times mr-1"></i> Absence
+        </span>
+    @elseif($pointage->type === 'conge')
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <i class="fas fa-umbrella-beach mr-1"></i> En Congé
+        </span>
+    @else
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <i class="fas fa-user-check mr-1"></i> Présence
+        </span>
+    @endif
+</td>
 
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 @if($pointage->type === 'absence')

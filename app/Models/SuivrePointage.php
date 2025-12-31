@@ -20,7 +20,7 @@ class SuivrePointage extends Model
         'user_latitude',
         'user_longitude',
         'date_pointage',
-        'type', // presence ou absence
+        'type', // presence, absence, conge
         'justificatif',
         'justificatif_file',
         'justificatif_valide',
@@ -49,6 +49,22 @@ class SuivrePointage extends Model
     }
     
     /**
+     * Vérifier si c'est un congé
+     */
+    public function isConge()
+    {
+        return $this->type === 'conge';
+    }
+    
+    /**
+     * Vérifier si c'est une présence
+     */
+    public function isPresence()
+    {
+        return $this->type === 'presence';
+    }
+    
+    /**
      * Vérifier si le justificatif est soumis
      */
     public function hasJustificatif()
@@ -65,7 +81,7 @@ class SuivrePointage extends Model
     }
     
     /**
-     * Obtenir le statut du justificatif
+     * Obtenir le statut du justificatif (uniquement pour absences)
      */
     public function getJustificatifStatus()
     {

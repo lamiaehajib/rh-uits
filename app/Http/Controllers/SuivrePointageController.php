@@ -22,19 +22,17 @@ class SuivrePointageController extends Controller
     /**
      * Afficher la liste des pointages avec filtres avancés.
      */
-   public function index(Request $request)
+    public function index(Request $request)
     {
         $utilisateur = auth()->user();
         $isAdmin = $utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin');
 
-        // MODIFICATION : On ne récupère que les pointages des utilisateurs qui ne sont PAS des clients
         $requete = SuivrePointage::with('user')->whereHas('user', function ($query) {
             $query->whereDoesntHave('roles', function ($q) {
                 $q->where('name', 'client');
             });
         });
 
-        // MODIFICATION : Filtrer la liste des users pour le dropdown (exclure clients)
         $users = User::whereDoesntHave('roles', function ($q) {
                 $q->where('name', 'client');
             })
@@ -101,7 +99,7 @@ class SuivrePointageController extends Controller
     }
 
     /**
-     * Obtenir les statistiques.
+     * Obtenir les statistiques (UPDATED avec Congés).
      */
     private function getStatistiques(Request $request, $userId = null)
     {
@@ -135,21 +133,28 @@ class SuivrePointageController extends Controller
         }
 
         $totalPointages = $query->count();
-        $pointagesComplets = $query->clone()->whereNotNull('heure_depart')->count();
-        $pointagesEnCours = $query->clone()->whereNull('heure_depart')->count();
         
-        $retards = $query->clone()
+        // Présences seulement
+        $queryPresence = $query->clone()->where('type', 'presence');
+        $pointagesComplets = $queryPresence->clone()->whereNotNull('heure_depart')->count();
+        $pointagesEnCours = $queryPresence->clone()->whereNull('heure_depart')->count();
+        
+        $retards = $queryPresence->clone()
             ->whereNotNull('heure_arrivee')
             ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00'])
             ->count();
 
-        $departsAnticipes = $query->clone()
+        $departsAnticipes = $queryPresence->clone()
             ->whereNotNull('heure_depart')
             ->whereRaw('TIME(heure_depart) < ?', ['17:30:00'])
             ->count();
 
-        // Temps total travaillé
-        $pointagesTermines = $query->clone()->whereNotNull('heure_depart')->get();
+        // Absences et Congés
+        $absences = $query->clone()->where('type', 'absence')->count();
+        $conges = $query->clone()->where('type', 'conge')->count();
+
+        // Temps total travaillé (présences uniquement)
+        $pointagesTermines = $queryPresence->clone()->whereNotNull('heure_depart')->get();
         $tempsTotal = 0;
         foreach ($pointagesTermines as $pointage) {
             if ($pointage->heure_arrivee && $pointage->heure_depart) {
@@ -168,6 +173,8 @@ class SuivrePointageController extends Controller
             'pointages_en_cours' => $pointagesEnCours,
             'retards' => $retards,
             'departs_anticipes' => $departsAnticipes,
+            'absences' => $absences,
+            'conges' => $conges,
             'temps_total' => sprintf('%d h %02d min', $heures, $minutes),
             'temps_moyen' => $pointagesComplets > 0 ? sprintf('%d h %02d min', floor($tempsTotal / $pointagesComplets / 60), ($tempsTotal / $pointagesComplets) % 60) : '0 h 00 min',
         ];
@@ -199,18 +206,18 @@ class SuivrePointageController extends Controller
 
         $callback = function() use ($pointages) {
             $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
             
             fputcsv($file, [
                 'Utilisateur',
                 'Date',
+                'Type',
                 'Heure Arrivée',
                 'Heure Départ',
                 'Durée (minutes)',
                 'Statut',
                 'Retard',
                 'Départ Anticipé',
-                
                 'Description'
             ], ';');
 
@@ -218,6 +225,12 @@ class SuivrePointageController extends Controller
                 $duree = '';
                 $retard = 'Non';
                 $departAnticipe = 'Non';
+                $typeLabel = match($pointage->type) {
+                    'presence' => 'Présence',
+                    'absence' => 'Absence',
+                    'conge' => 'Congé',
+                    default => $pointage->type
+                };
 
                 if ($pointage->heure_arrivee && $pointage->heure_depart) {
                     $arrivee = Carbon::parse($pointage->heure_arrivee);
@@ -244,13 +257,13 @@ class SuivrePointageController extends Controller
                 fputcsv($file, [
                     $pointage->user->name,
                     $pointage->date_pointage ? $pointage->date_pointage->format('d/m/Y') : '',
+                    $typeLabel,
                     $pointage->heure_arrivee ? Carbon::parse($pointage->heure_arrivee)->format('H:i') : '',
                     $pointage->heure_depart ? Carbon::parse($pointage->heure_depart)->format('H:i') : '',
                     $duree,
-                    $pointage->heure_depart ? 'Terminé' : 'En cours',
+                    $pointage->heure_depart ? 'Terminé' : ($pointage->type === 'presence' ? 'En cours' : '-'),
                     $retard,
                     $departAnticipe,
-                    
                     $pointage->description ?? ''
                 ], ';');
             }
@@ -324,11 +337,11 @@ class SuivrePointageController extends Controller
 
         if ($statut = $request->input('statut')) {
             if ($statut === 'en_cours') {
-                $requete->whereNull('heure_depart');
+                $requete->where('type', 'presence')->whereNull('heure_depart');
             } elseif ($statut === 'termine') {
-                $requete->whereNotNull('heure_depart');
+                $requete->where('type', 'presence')->whereNotNull('heure_depart');
             } elseif ($statut === 'retard') {
-                $requete->whereNotNull('heure_arrivee')
+                $requete->where('type', 'presence')->whereNotNull('heure_arrivee')
                        ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00']);
             }
         }
@@ -354,7 +367,6 @@ class SuivrePointageController extends Controller
             $query->where('iduser', $utilisateur->id);
         }
 
-        // Données pour les 30 derniers jours
         $dateDebut = Carbon::now('Africa/Casablanca')->subDays(30);
         $query->where('date_pointage', '>=', $dateDebut);
 
@@ -377,13 +389,13 @@ class SuivrePointageController extends Controller
             $retardsJour = 0;
 
             foreach ($pointagesJour as $pointage) {
-                if ($pointage->heure_arrivee && $pointage->heure_depart) {
+                if ($pointage->type === 'presence' && $pointage->heure_arrivee && $pointage->heure_depart) {
                     $arrivee = Carbon::parse($pointage->heure_arrivee);
                     $depart = Carbon::parse($pointage->heure_depart);
                     $tempsTotal += $arrivee->diffInMinutes($depart) / 60;
                 }
 
-                if ($pointage->heure_arrivee) {
+                if ($pointage->type === 'presence' && $pointage->heure_arrivee) {
                     $arriveeTime = Carbon::parse($pointage->heure_arrivee);
                     $expectedArrivee = Carbon::parse($arriveeTime->format('Y-m-d') . ' 09:10:00');
                     if ($arriveeTime->greaterThan($expectedArrivee)) {
@@ -402,73 +414,70 @@ class SuivrePointageController extends Controller
     /**
      * Afficher les détails d'un pointage.
      */
-   public function show($id)
-{
-    $pointage = SuivrePointage::with('user')->findOrFail($id);
+    public function show($id)
+    {
+        $pointage = SuivrePointage::with('user')->findOrFail($id);
 
-    $utilisateur = auth()->user();
-    if (!($utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin')) && $pointage->iduser !== $utilisateur->id) {
-        abort(403, 'Accès non autorisé.');
-    }
+        $utilisateur = auth()->user();
+        if (!($utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin')) && $pointage->iduser !== $utilisateur->id) {
+            abort(403, 'Accès non autorisé.');
+        }
 
-    // Si c'est une requête AJAX, retourner seulement les détails
-    if (request()->ajax()) {
-        // Calculer les informations
-        $isLateForArrival = false;
-        $isEarlyDeparture = false;
-        $duree = null;
-        $retardMinutes = 0;
-        $departMinutes = 0;
+        if (request()->ajax()) {
+            $isLateForArrival = false;
+            $isEarlyDeparture = false;
+            $duree = null;
+            $retardMinutes = 0;
+            $departMinutes = 0;
 
-        if ($pointage->heure_arrivee) {
-            $arriveeTime = Carbon::parse($pointage->heure_arrivee);
-            $expectedArrivee = Carbon::parse($arriveeTime->format('Y-m-d') . ' 09:10:00');
-            if ($arriveeTime->greaterThan($expectedArrivee)) {
-                $isLateForArrival = true;
-                $retardMinutes = $arriveeTime->diffInMinutes($expectedArrivee);
+            if ($pointage->heure_arrivee) {
+                $arriveeTime = Carbon::parse($pointage->heure_arrivee);
+                $expectedArrivee = Carbon::parse($arriveeTime->format('Y-m-d') . ' 09:10:00');
+                if ($arriveeTime->greaterThan($expectedArrivee)) {
+                    $isLateForArrival = true;
+                    $retardMinutes = $arriveeTime->diffInMinutes($expectedArrivee);
+                }
             }
-        }
 
-        if ($pointage->heure_depart) {
-            $departTime = Carbon::parse($pointage->heure_depart);
-            $expectedDepart = Carbon::parse($departTime->format('Y-m-d') . ' 17:30:00');
-            if ($departTime->lessThan($expectedDepart)) {
-                $isEarlyDeparture = true;
-                $departMinutes = $expectedDepart->diffInMinutes($departTime);
+            if ($pointage->heure_depart) {
+                $departTime = Carbon::parse($pointage->heure_depart);
+                $expectedDepart = Carbon::parse($departTime->format('Y-m-d') . ' 17:30:00');
+                if ($departTime->lessThan($expectedDepart)) {
+                    $isEarlyDeparture = true;
+                    $departMinutes = $expectedDepart->diffInMinutes($departTime);
+                }
             }
+
+            if ($pointage->heure_arrivee && $pointage->heure_depart) {
+                $arrivee = Carbon::parse($pointage->heure_arrivee);
+                $depart = Carbon::parse($pointage->heure_depart);
+                $minutes = $arrivee->diffInMinutes($depart);
+                $heures = floor($minutes / 60);
+                $mins = $minutes % 60;
+                $duree = sprintf('%d h %02d min', $heures, $mins);
+            }
+
+            return response()->json([
+                'user' => $pointage->user->name,
+                'date' => $pointage->date_pointage ? $pointage->date_pointage->format('d/m/Y') : 'N/A',
+                'type' => $pointage->type,
+                'heure_arrivee' => $pointage->heure_arrivee ? Carbon::parse($pointage->heure_arrivee)->format('H:i') : null,
+                'heure_depart' => $pointage->heure_depart ? Carbon::parse($pointage->heure_depart)->format('H:i') : null,
+                'duree' => $duree,
+                'is_late' => $isLateForArrival,
+                'retard_minutes' => $retardMinutes,
+                'is_early_departure' => $isEarlyDeparture,
+                'depart_minutes' => $departMinutes,
+                'localisation' => $pointage->localisation,
+                'description' => $pointage->description,
+                'justificatif' => $pointage->justificatif,
+                'justificatif_valide' => $pointage->justificatif_valide,
+                'created_at' => $pointage->created_at->format('d/m/Y H:i'),
+            ]);
         }
 
-        if ($pointage->heure_arrivee && $pointage->heure_depart) {
-            $arrivee = Carbon::parse($pointage->heure_arrivee);
-            $depart = Carbon::parse($pointage->heure_depart);
-            $minutes = $arrivee->diffInMinutes($depart);
-            $heures = floor($minutes / 60);
-            $mins = $minutes % 60;
-            $duree = sprintf('%d h %02d min', $heures, $mins);
-        }
-
-        return response()->json([
-            'user' => $pointage->user->name,
-            'date' => $pointage->date_pointage ? $pointage->date_pointage->format('d/m/Y') : 'N/A',
-            'type' => $pointage->type,
-            'heure_arrivee' => $pointage->heure_arrivee ? Carbon::parse($pointage->heure_arrivee)->format('H:i') : null,
-            'heure_depart' => $pointage->heure_depart ? Carbon::parse($pointage->heure_depart)->format('H:i') : null,
-            'duree' => $duree,
-            'is_late' => $isLateForArrival,
-            'retard_minutes' => $retardMinutes,
-            'is_early_departure' => $isEarlyDeparture,
-            'depart_minutes' => $departMinutes,
-            'localisation' => $pointage->localisation,
-            'description' => $pointage->description,
-            'justificatif' => $pointage->justificatif,
-            'justificatif_valide' => $pointage->justificatif_valide,
-            'created_at' => $pointage->created_at->format('d/m/Y H:i'),
-        ]);
+        return view('suivre_pointage.show', compact('pointage'));
     }
-
-    // Sinon retourner la vue normale
-    return view('suivre_pointage.show', compact('pointage'));
-}
 
     /**
      * Corriger un pointage.
