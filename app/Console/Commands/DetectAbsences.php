@@ -25,8 +25,8 @@ class DetectAbsences extends Command
                 $query->whereIn('name', ['client', 'Sup_Admin', 'Custom_Admin']);
             })
             // 💡 الشرط السحري: جلب الموظفين الذين بصموا مرة واحدة على الأقل في حياتهم
-            ->whereHas('pointages', function ($query) {
-                $query->where('type', 'presence');
+->whereHas('suiviPointages', function ($query) {
+                    $query->where('type', 'presence');
             })
             ->get();
 

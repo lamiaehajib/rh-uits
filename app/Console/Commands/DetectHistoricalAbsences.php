@@ -20,8 +20,8 @@ class DetectHistoricalAbsences extends Command
             ->whereDoesntHave('roles', function ($query) {
                 $query->whereIn('name', ['client', 'Sup_Admin', 'Custom_Admin']);
             })
-            ->whereHas('pointages', function ($query) {
-                $query->where('type', 'presence');
+->whereHas('suiviPointages', function ($query) {
+                    $query->where('type', 'presence');
             })
             ->get();
 
