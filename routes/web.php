@@ -214,6 +214,16 @@ Route::get('/pointages/chart-data', [SuivrePointageController::class, 'getChartD
     })->name('admin.absences.daily');
 
 
+
+    // Justificatifs de retard
+Route::post('/pointage/{id}/justificatif-retard/soumettre', [SuivrePointageController::class, 'soumettreJustificatifRetard'])
+    ->name('pointage.justificatif.retard.soumettre');
+Route::post('/pointage/{id}/justificatif-retard/valider', [SuivrePointageController::class, 'validerJustificatifRetard'])
+    ->name('pointage.justificatif.retard.valider');
+Route::get('/pointage/{id}/justificatif-retard/telecharger', [SuivrePointageController::class, 'telechargerJustificatifRetard'])
+    ->name('pointage.justificatif.retard.telecharger');
+
+    
     
  // ✅ routes personnalisées أولاً
 Route::get('/objectifs/corbeille', [ObjectifController::class, 'corbeille'])

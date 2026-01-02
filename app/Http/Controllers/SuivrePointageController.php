@@ -140,9 +140,13 @@ class SuivrePointageController extends Controller
         $pointagesEnCours = $queryPresence->clone()->whereNull('heure_depart')->count();
         
         $retards = $queryPresence->clone()
-            ->whereNotNull('heure_arrivee')
-            ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00'])
-            ->count();
+    ->whereNotNull('heure_arrivee')
+    ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00'])
+    ->where(function($q) {
+        $q->whereNull('justificatif_retard')
+          ->orWhere('retard_justifie', false);
+    })
+    ->count();
 
         $departsAnticipes = $queryPresence->clone()
             ->whereNotNull('heure_depart')
@@ -623,5 +627,101 @@ public function telechargerJustificatif($id)
     }
 
     return response()->download(storage_path('app/public/' . $pointage->justificatif_file));
+}
+
+
+public function soumettreJustificatifRetard(Request $request, $id)
+{
+    $request->validate([
+        'justificatif_retard' => 'required|string|max:1000',
+        'justificatif_retard_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+    ]);
+
+    $pointage = SuivrePointage::findOrFail($id);
+    
+    // Vérifier que c'est bien une présence en retard
+    if ($pointage->type !== 'presence' || !$pointage->isLate()) {
+        return back()->with('error', 'Ce pointage n\'est pas en retard.');
+    }
+
+    // Vérifier les permissions
+    if (!auth()->user()->hasRole(['Sup_Admin', 'Custom_Admin']) && $pointage->iduser !== auth()->id()) {
+        abort(403, 'Accès non autorisé.');
+    }
+
+    $data = [
+        'justificatif_retard' => $request->justificatif_retard,
+        'justificatif_retard_soumis_at' => now(),
+    ];
+
+    // Gérer upload du fichier
+    if ($request->hasFile('justificatif_retard_file')) {
+        $file = $request->file('justificatif_retard_file');
+        $filename = 'justif_retard_' . $pointage->id . '_' . time() . '.' . $file->extension();
+        $path = $file->storeAs('justificatifs_retard', $filename, 'public');
+        $data['justificatif_retard_file'] = $path;
+    }
+
+    $pointage->update($data);
+
+    Log::info('Justificatif de retard soumis', [
+        'pointage_id' => $pointage->id,
+        'user_id' => auth()->id(),
+        'retard_minutes' => $pointage->getRetardMinutes()
+    ]);
+
+    return back()->with('success', 'Justificatif de retard soumis avec succès.');
+}
+
+/**
+ * Valider/Rejeter un justificatif de retard (Admin uniquement)
+ */
+public function validerJustificatifRetard(Request $request, $id)
+{
+    if (!auth()->user()->hasRole(['Sup_Admin', 'Custom_Admin'])) {
+        abort(403, 'Accès non autorisé.');
+    }
+
+    $request->validate([
+        'action' => 'required|in:valider,rejeter',
+        'commentaire_admin' => 'nullable|string|max:500',
+    ]);
+
+    $pointage = SuivrePointage::findOrFail($id);
+    
+    $valide = $request->action === 'valider';
+    
+    $commentaire = "\n[Admin - Retard] " . ($request->commentaire_admin ?? ($valide ? 'Retard justifié' : 'Retard non justifié'));
+    
+    $pointage->update([
+        'retard_justifie' => $valide,
+        'description' => ($pointage->description ?? '') . $commentaire
+    ]);
+
+    Log::info('Justificatif de retard ' . $request->action, [
+        'pointage_id' => $pointage->id,
+        'admin_id' => auth()->id(),
+        'decision' => $valide
+    ]);
+
+    return back()->with('success', 'Justificatif de retard ' . ($valide ? 'validé' : 'rejeté') . ' avec succès.');
+}
+
+/**
+ * Télécharger le fichier justificatif de retard
+ */
+public function telechargerJustificatifRetard($id)
+{
+    $pointage = SuivrePointage::findOrFail($id);
+    
+    if (!auth()->user()->hasRole(['Sup_Admin', 'Custom_Admin']) && $pointage->iduser !== auth()->id()) {
+        abort(403, 'Accès non autorisé.');
+    }
+
+    if (!$pointage->justificatif_retard_file) {
+        abort(404, 'Aucun fichier justificatif trouvé.');
+    }
+
+    return response()->download(storage_path('app/public/' . $pointage->justificatif_retard_file));
 }
 }

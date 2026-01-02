@@ -500,20 +500,28 @@
                                                 <i class="far fa-calendar-alt mr-1 text-gray-500"></i>{{ $pointage->date_pointage ? $pointage->date_pointage->format('d/m/Y') : 'N/A' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                @if($pointage->type === 'absence')
-                                                    <span class="text-gray-400">-</span>
-                                                @elseif($pointage->heure_arrivee)
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $isLateForArrival ? 'bg-primary-red text-white' : 'bg-green-100 text-green-800' }}">
-                                                        <i class="fas fa-play mr-1"></i>
-                                                        {{ \Carbon\Carbon::parse($pointage->heure_arrivee)->format('H:i') }}
-                                                    </span>
-                                                    @if($isLateForArrival)
-                                                        <span class="late-arrival-badge">{{ __('Retard') }}</span>
-                                                    @endif
-                                                @else
-                                                    <span class="text-gray-400">-</span>
-                                                @endif
-                                            </td>
+    @if($pointage->type === 'absence')
+        <span class="text-gray-400">-</span>
+    @elseif($pointage->heure_arrivee)
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ ($isLateForArrival && !$pointage->retard_justifie) ? 'bg-primary-red text-white' : 'bg-green-100 text-green-800' }}">
+            <i class="fas fa-play mr-1"></i>
+            {{ \Carbon\Carbon::parse($pointage->heure_arrivee)->format('H:i') }}
+        </span>
+        @if($isLateForArrival)
+            @if($pointage->retard_justifie)
+                <span class="late-arrival-badge" style="background-color: #10b981; color: white;">
+                    <i class="fas fa-check-circle mr-1"></i>{{ __('Justifié') }}
+                </span>
+            @else
+                <span class="late-arrival-badge">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>{{ __('Retard') }}
+                </span>
+            @endif
+        @endif
+    @else
+        <span class="text-gray-400">-</span>
+    @endif
+</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                 @if($pointage->type === 'absence')
                                                     <span class="text-gray-400">-</span>
@@ -615,6 +623,34 @@
                                                         <i class="fas fa-history text-lg"></i>
                                                     </button>
                                                     
+
+                                                    <!-- Gestion RETARD (si présence en retard) -->
+        @if($pointage->type === 'presence' && $pointage->isLate())
+            @if(!$pointage->hasJustificatifRetard())
+                <!-- Bouton Justifier le retard -->
+                <button onclick="ouvrirModalJustificatifRetard({{ $pointage->id }})"
+                    class="text-yellow-600 hover:text-yellow-800 transition duration-200 transform hover:scale-110" 
+                    title="Justifier le retard">
+                    <i class="fas fa-exclamation-circle text-lg"></i>
+                </button>
+            @else
+                <!-- Bouton Voir justificatif retard -->
+                <button onclick="voirJustificatifRetard({{ $pointage->id }}, '{{ addslashes($pointage->justificatif_retard) }}', '{{ $pointage->justificatif_retard_file }}', {{ $pointage->retard_justifie ? 'true' : 'false' }})"
+                    class="text-indigo-600 hover:text-indigo-800 transition duration-200 transform hover:scale-110" 
+                    title="Voir justificatif retard">
+                    <i class="fas fa-clock text-lg"></i>
+                </button>
+                
+                @if(auth()->user()->hasRole(['Sup_Admin', 'Custom_Admin']) && !$pointage->retard_justifie)
+                    <!-- Bouton Valider retard (Admin) -->
+                    <button onclick="ouvrirModalValidationRetard({{ $pointage->id }})"
+                        class="text-green-600 hover:text-green-800 transition duration-200 transform hover:scale-110" 
+                        title="Valider/Rejeter retard">
+                        <i class="fas fa-user-clock text-lg"></i>
+                    </button>
+                @endif
+            @endif
+        @endif
                                                     @if($pointage->type === 'absence')
                                                         @if(!$pointage->justificatif)
                                                             <!-- Bouton Soumettre Justificatif -->
@@ -643,6 +679,8 @@
                                                     @endif
                                                 </div>
                                             </td>
+
+
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -665,6 +703,137 @@
             </div>
         </div>
 
+
+        
+                                            <!-- Modal Justifier Retard -->
+<div id="modalJustificatifRetard" class="modal-overlay">
+    <div class="modal-content">
+        <h3 class="text-xl font-bold mb-4 text-gray-800">
+            <i class="fas fa-clock mr-2 text-yellow-600"></i>
+            Justifier le retard
+        </h3>
+        <form id="formJustificatifRetard" method="POST" enctype="multipart/form-data">
+            @csrf
+            
+            <div class="mb-4 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                <p class="text-sm text-yellow-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Un justificatif validé par l'administration annulera le retard.
+                </p>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Raison du retard <span class="text-red-500">*</span>
+                </label>
+                <textarea name="justificatif_retard" rows="4" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    placeholder="Ex: Embouteillage, problème de transport, urgence personnelle..."></textarea>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Document justificatif (optionnel)
+                </label>
+                <input type="file" name="justificatif_retard_file" accept=".jpg,.jpeg,.png,.pdf"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                <p class="text-xs text-gray-500 mt-1">Formats acceptés: JPG, PNG, PDF (max 5MB)</p>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button type="submit" class="btn-primary-red flex-1 px-4 py-2 rounded-md">
+                    <i class="fas fa-paper-plane mr-2"></i> Soumettre
+                </button>
+                <button type="button" onclick="fermerModalJustificatifRetard()" 
+                    class="btn-secondary-tailwind flex-1 px-4 py-2 rounded-md">
+                    Annuler
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Voir Justificatif Retard -->
+<div id="modalVoirJustificatifRetard" class="modal-overlay">
+    <div class="modal-content">
+        <h3 class="text-xl font-bold mb-4 text-gray-800">
+            <i class="fas fa-clock mr-2 text-indigo-600"></i>
+            Justificatif de retard
+        </h3>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+            <div id="justifRetardStatut"></div>
+        </div>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Raison</label>
+            <div id="justifRetardRaison" class="bg-gray-50 p-3 rounded-md text-gray-800"></div>
+        </div>
+        
+        <div id="justifRetardFichierContainer" class="mb-4" style="display:none;">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Document</label>
+            <a id="justifRetardFichierLink" href="#" target="_blank" 
+                class="text-blue-600 hover:text-blue-800 inline-flex items-center">
+                <i class="fas fa-download mr-2"></i> Télécharger le document
+            </a>
+        </div>
+        
+        <button type="button" onclick="fermerModalVoirJustificatifRetard()" 
+            class="btn-secondary-tailwind w-full px-4 py-2 rounded-md">
+            Fermer
+        </button>
+    </div>
+</div>
+
+<!-- Modal Validation Retard (Admin) -->
+<div id="modalValidationRetard" class="modal-overlay">
+    <div class="modal-content">
+        <h3 class="text-xl font-bold mb-4 text-gray-800">
+            <i class="fas fa-user-check mr-2 text-green-600"></i>
+            Valider ou rejeter le justificatif de retard
+        </h3>
+        <form id="formValidationRetard" method="POST">
+            @csrf
+            
+            <div class="mb-4 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <p class="text-sm text-blue-800">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Si validé, le retard ne sera plus comptabilisé dans les statistiques.
+                </p>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Décision <span class="text-red-500">*</span>
+                </label>
+                <select name="action" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-red">
+                    <option value="">Choisir...</option>
+                    <option value="valider">✅ Valider le justificatif (annuler le retard)</option>
+                    <option value="rejeter">❌ Rejeter le justificatif (maintenir le retard)</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Commentaire (optionnel)</label>
+                <textarea name="commentaire_admin" rows="3"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-red"
+                    placeholder="Commentaire administratif..."></textarea>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button type="submit" class="btn-primary-red flex-1 px-4 py-2 rounded-md">
+                    <i class="fas fa-check mr-2"></i> Confirmer
+                </button>
+                <button type="button" onclick="fermerModalValidationRetard()" 
+                    class="btn-secondary-tailwind flex-1 px-4 py-2 rounded-md">
+                    Annuler
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
         <!-- Modal Historique Détaillé -->
         <div id="modalHistorique" class="modal-overlay">
             <div class="modal-content" style="max-width: 700px;">
@@ -1093,6 +1262,61 @@
                     }
                 });
                 @endif
+
+                function ouvrirModalJustificatifRetard(pointageId) {
+    const modal = document.getElementById('modalJustificatifRetard');
+    const form = document.getElementById('formJustificatifRetard');
+    form.action = `/pointage/${pointageId}/justificatif-retard/soumettre`;
+    modal.classList.add('show');
+}
+
+function fermerModalJustificatifRetard() {
+    document.getElementById('modalJustificatifRetard').classList.remove('show');
+}
+
+function voirJustificatifRetard(pointageId, raison, fichier, valide) {
+    const modal = document.getElementById('modalVoirJustificatifRetard');
+    
+    const statutHtml = valide 
+        ? '<span class="justificatif-badge justificatif-valide"><i class="fas fa-check-circle mr-1"></i> Validé - Retard annulé</span>'
+        : '<span class="justificatif-badge justificatif-pending"><i class="fas fa-clock mr-1"></i> En attente de validation</span>';
+    document.getElementById('justifRetardStatut').innerHTML = statutHtml;
+    
+    document.getElementById('justifRetardRaison').textContent = raison;
+    
+    if (fichier) {
+        document.getElementById('justifRetardFichierContainer').style.display = 'block';
+        document.getElementById('justifRetardFichierLink').href = `/pointage/${pointageId}/justificatif-retard/telecharger`;
+    } else {
+        document.getElementById('justifRetardFichierContainer').style.display = 'none';
+    }
+    
+    modal.classList.add('show');
+}
+
+function fermerModalVoirJustificatifRetard() {
+    document.getElementById('modalVoirJustificatifRetard').classList.remove('show');
+}
+
+function ouvrirModalValidationRetard(pointageId) {
+    const modal = document.getElementById('modalValidationRetard');
+    const form = document.getElementById('formValidationRetard');
+    form.action = `/pointage/${pointageId}/justificatif-retard/valider`;
+    modal.classList.add('show');
+}
+
+function fermerModalValidationRetard() {
+    document.getElementById('modalValidationRetard').classList.remove('show');
+}
+
+// Fermer les modales en cliquant à l'extérieur
+document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('show');
+        }
+    });
+});
             </script>
         @endpush
 </x-app-layout>
