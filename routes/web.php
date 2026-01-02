@@ -9,6 +9,7 @@ use App\Http\Controllers\DepensesController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjetController;
 use App\Http\Controllers\RendezVousController;
+use App\Http\Controllers\RetardCongeController;
 use App\Http\Controllers\TwoFactorController;
 use App\Models\Avancement;
 use Illuminate\Support\Facades\Route;
@@ -223,7 +224,25 @@ Route::post('/pointage/{id}/justificatif-retard/valider', [SuivrePointageControl
 Route::get('/pointage/{id}/justificatif-retard/telecharger', [SuivrePointageController::class, 'telechargerJustificatifRetard'])
     ->name('pointage.justificatif.retard.telecharger');
 
+
+    Route::get('/mes-retards', [RetardCongeController::class, 'monRapport'])
+        ->name('retards.mon-rapport');
     
+    // API - Vérifier alerte retard
+    Route::get('/api/retards/check-alerte', [RetardCongeController::class, 'checkAlerte'])
+        ->name('retards.check-alerte');
+    
+    // Admin uniquement
+    
+        
+        // Dashboard admin des retards
+        Route::get('/admin/retards/dashboard', [RetardCongeController::class, 'dashboardAdmin'])
+            ->name('retards.dashboard-admin');
+        
+        // Exécuter les déductions manuellement
+        Route::post('/admin/retards/executer-deductions', [RetardCongeController::class, 'executerDeductions'])
+            ->name('retards.executer-deductions');
+  
     
  // ✅ routes personnalisées أولاً
 Route::get('/objectifs/corbeille', [ObjectifController::class, 'corbeille'])

@@ -28,6 +28,11 @@ class Kernel extends ConsoleKernel
              ->everyFiveMinutes()
              ->timezone('Africa/Casablanca')
              ->appendOutputTo(storage_path('logs/absences.log'));
+
+
+              $schedule->command('retards:traiter-deductions')
+             ->monthlyOn(1, '00:00')
+             ->timezone('Africa/Casablanca');
     }
 
     /**

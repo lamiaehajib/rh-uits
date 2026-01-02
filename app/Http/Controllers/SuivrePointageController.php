@@ -17,6 +17,7 @@ class SuivrePointageController extends Controller
     public function __construct()
     {
         $this->middleware('permission:pointage-list', ['only' => ['index', 'show']]);
+         $this->retardService = new \App\Services\RetardCongeService();
     }
 
     /**
@@ -140,13 +141,13 @@ class SuivrePointageController extends Controller
         $pointagesEnCours = $queryPresence->clone()->whereNull('heure_depart')->count();
         
         $retards = $queryPresence->clone()
-    ->whereNotNull('heure_arrivee')
-    ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00'])
-    ->where(function($q) {
-        $q->whereNull('justificatif_retard')
-          ->orWhere('retard_justifie', false);
-    })
-    ->count();
+        ->whereNotNull('heure_arrivee')
+        ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00'])
+        ->where(function($q) {
+            $q->whereNull('justificatif_retard')
+              ->orWhere('retard_justifie', false);
+        })
+        ->count();
 
         $departsAnticipes = $queryPresence->clone()
             ->whereNotNull('heure_depart')
@@ -172,17 +173,27 @@ class SuivrePointageController extends Controller
         $minutes = $tempsTotal % 60;
 
         return [
-            'total_pointages' => $totalPointages,
-            'pointages_complets' => $pointagesComplets,
-            'pointages_en_cours' => $pointagesEnCours,
-            'retards' => $retards,
-            'departs_anticipes' => $departsAnticipes,
-            'absences' => $absences,
-            'conges' => $conges,
-            'temps_total' => sprintf('%d h %02d min', $heures, $minutes),
-            'temps_moyen' => $pointagesComplets > 0 ? sprintf('%d h %02d min', floor($tempsTotal / $pointagesComplets / 60), ($tempsTotal / $pointagesComplets) % 60) : '0 h 00 min',
-        ];
+        'total_pointages' => $totalPointages,
+        'pointages_complets' => $pointagesComplets,
+        'pointages_en_cours' => $pointagesEnCours,
+        'retards' => $retards, // Modifié
+        'departs_anticipes' => $departsAnticipes,
+        'absences' => $absences,
+        'conges' => $conges,
+        'temps_total' => sprintf('%d h %02d min', $heures, $minutes),
+        'temps_moyen' => $pointagesComplets > 0 ? sprintf('%d h %02d min', floor($tempsTotal / $pointagesComplets / 60), ($tempsTotal / $pointagesComplets) % 60) : '0 h 00 min',
+    ];
+
     }
+
+    public function afficherAlerteRetard()
+{
+    $user = auth()->user();
+    $service = new \App\Services\RetardCongeService();
+    $alerte = $service->verifierAlerteRetard($user->id);
+    
+    return view('components.alerte-retard', compact('alerte'));
+}
 
     /**
      * Exporter les pointages en Excel/CSV.

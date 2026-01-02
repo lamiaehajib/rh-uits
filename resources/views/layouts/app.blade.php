@@ -121,7 +121,11 @@
                 @include('layouts.client_header')
             @else
                 @include('layouts.header')
+                
                 @include('layouts.navigation')
+                @include('components.alerte-retard', [
+        'alerte' => app(\App\Services\RetardCongeService::class)->verifierAlerteRetard(auth()->id())
+    ])
             @endif
         @endauth
 
