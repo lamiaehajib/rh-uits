@@ -194,8 +194,7 @@ Route::get('/pointages/chart-data', [SuivrePointageController::class, 'getChartD
         ->name('pointage.justificatif.soumettre');
     
     Route::post('/pointage/{id}/justificatif/valider', [SuivrePointageController::class, 'validerJustificatif'])
-        ->name('pointage.justificatif.valider')
-        ->middleware('permission:pointage-edit');
+        ->name('pointage.justificatif.valider');
     
     Route::get('/pointage/{id}/justificatif/telecharger', [SuivrePointageController::class, 'telechargerJustificatif'])
         ->name('pointage.justificatif.telecharger');
