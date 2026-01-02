@@ -13,19 +13,191 @@ use Illuminate\Support\Facades\Auth;
 
 class ProjetController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        $projets = Projet::with('users')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-        
-        return view('admin.projets.index', compact('projets'));
+  
+    public function index(Request $request)
+{
+    // === 1. FILTRES AVANCÉS ===
+    $query = Projet::with(['users', 'avancements', 'rendezVous']);
+    
+    // Filter b statut
+    if ($request->filled('statut')) {
+        $query->where('statut_projet', $request->statut);
     }
+    
+    // Filter b client
+    if ($request->filled('client_id')) {
+        $query->whereHas('users', function($q) use ($request) {
+            $q->where('users.id', $request->client_id);
+        });
+    }
+    
+    // Filter b date (intervalle)
+    if ($request->filled('date_debut_filter')) {
+        $query->where('date_debut', '>=', $request->date_debut_filter);
+    }
+    if ($request->filled('date_fin_filter')) {
+        $query->where('date_fin', '<=', $request->date_fin_filter);
+    }
+    
+    // Search bar (titre ou description)
+    if ($request->filled('search')) {
+        $query->where(function($q) use ($request) {
+            $q->where('titre', 'like', '%' . $request->search . '%')
+              ->orWhere('description', 'like', '%' . $request->search . '%');
+        });
+    }
+    
+    // Tri (sorting)
+    $sortBy = $request->get('sort_by', 'created_at');
+    $sortOrder = $request->get('sort_order', 'desc');
+    $query->orderBy($sortBy, $sortOrder);
+    
+    $projets = $query->paginate(10)->withQueryString();
+    
+    
+    // === 2. STATISTIQUES GLOBALES ===
+    $stats = [
+        'total_projets' => Projet::count(),
+        'projets_en_cours' => Projet::where('statut_projet', 'en cours')->count(),
+        'projets_termines' => Projet::where('statut_projet', 'terminé')->count(),
+        'projets_en_attente' => Projet::where('statut_projet', 'en attente')->count(),
+        'projets_annules' => Projet::where('statut_projet', 'annulé')->count(),
+    ];
+    
+    
+    // === 3. CHART: DISTRIBUTION DES STATUTS (Pie/Donut Chart) ===
+    $statutsChart = [
+        'labels' => ['En cours', 'Terminé', 'En attente', 'Annulé'],
+        'data' => [
+            $stats['projets_en_cours'],
+            $stats['projets_termines'],
+            $stats['projets_en_attente'],
+            $stats['projets_annules']
+        ],
+        'colors' => ['#3B82F6', '#10B981', '#F59E0B', '#EF4444']
+    ];
+    
+    
+    // === 4. CHART: PROJETS PAR MOIS (Line/Bar Chart - 12 derniers mois) ===
+    $projetsParMois = [];
+    $labels = [];
+    for ($i = 11; $i >= 0; $i--) {
+        $date = now()->subMonths($i);
+        $labels[] = $date->format('M Y');
+        $projetsParMois[] = Projet::whereYear('created_at', $date->year)
+                                   ->whereMonth('created_at', $date->month)
+                                   ->count();
+    }
+    
+    $projetsTimeline = [
+        'labels' => $labels,
+        'data' => $projetsParMois
+    ];
+    
+    
+    // === 5. CHART: AVANCEMENT MOYEN PAR PROJET (Top 10) ===
+    $topProjetsAvancement = Projet::with('avancements')
+        ->get()
+        ->map(function($projet) {
+            $pourcentage = $projet->avancements->sum('pourcentage');
+            if ($pourcentage > 100) $pourcentage = 100;
+            return [
+                'titre' => \Str::limit($projet->titre, 20),
+                'pourcentage' => $pourcentage
+            ];
+        })
+        ->sortByDesc('pourcentage')
+        ->take(10)
+        ->values();
+    
+    $avancementChart = [
+        'labels' => $topProjetsAvancement->pluck('titre')->toArray(),
+        'data' => $topProjetsAvancement->pluck('pourcentage')->toArray()
+    ];
+    
+    
+    // === 6. CHART: RENDEZ-VOUS PAR STATUT ===
+    $rdvStats = [
+        'planifie' => \App\Models\RendezVous::where('statut', 'planifié')->count(),
+        'confirme' => \App\Models\RendezVous::where('statut', 'confirmé')->count(),
+        'termine' => \App\Models\RendezVous::where('statut', 'terminé')->count(),
+        'annule' => \App\Models\RendezVous::where('statut', 'annulé')->count(),
+    ];
+    
+    $rdvChart = [
+        'labels' => ['Planifié', 'Confirmé', 'Terminé', 'Annulé'],
+        'data' => array_values($rdvStats),
+        'colors' => ['#6366F1', '#10B981', '#059669', '#DC2626']
+    ];
+    
+    
+    // === 7. RENDEZ-VOUS À VENIR (Prochains 7 jours) ===
+    $rdvAVenir = \App\Models\RendezVous::with('projet')
+        ->whereBetween('date_heure', [now(), now()->addDays(7)])
+        ->orderBy('date_heure', 'asc')
+        ->take(5)
+        ->get();
+    
+    
+    // === 8. PROJETS CRITIQUES (Date fin proche + statut en cours) ===
+    $projetsCritiques = Projet::where('statut_projet', 'en cours')
+        ->where('date_fin', '<=', now()->addDays(7))
+        ->where('date_fin', '>=', now())
+        ->with('users')
+        ->orderBy('date_fin', 'asc')
+        ->take(5)
+        ->get();
+    
+    
+    // === 9. DONNÉES POUR LES FILTRES (dropdowns) ===
+    $clients = User::role('Client')->get();
+    $statutsDisponibles = ['en cours', 'terminé', 'en attente', 'annulé'];
+    
+    
+    // === 10. ACTIVITÉ RÉCENTE (Timeline) ===
+    $activiteRecente = collect();
+    
+    // Derniers projets créés
+    $derniersProjets = Projet::latest()->take(3)->get()->map(function($p) {
+        return [
+            'type' => 'projet',
+            'action' => 'créé',
+            'titre' => $p->titre,
+            'date' => $p->created_at,
+            'icon' => 'folder-plus'
+        ];
+    });
+    
+    // Derniers avancements
+    $derniersAvancements = Avancement::with('projet')->latest()->take(3)->get()->map(function($a) {
+        return [
+            'type' => 'avancement',
+            'action' => 'ajouté',
+            'titre' => $a->titre . ' (' . $a->projet->titre . ')',
+            'date' => $a->created_at,
+            'icon' => 'trending-up'
+        ];
+    });
+    
+    $activiteRecente = $derniersProjets->concat($derniersAvancements)
+                                       ->sortByDesc('date')
+                                       ->take(6);
+    
+    
+    return view('admin.projets.index', compact(
+        'projets',
+        'stats',
+        'statutsChart',
+        'projetsTimeline',
+        'avancementChart',
+        'rdvChart',
+        'rdvAVenir',
+        'projetsCritiques',
+        'clients',
+        'statutsDisponibles',
+        'activiteRecente'
+    ));
+}
 
     /**
      * Show the form for creating a new resource.
