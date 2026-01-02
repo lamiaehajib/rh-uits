@@ -24,10 +24,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('attendance:sync')->everyFifteenMinutes();
 
 
-       $schedule->command('absences:daily')
-         ->everyFiveMinutes()
-         ->timezone('Africa/Casablanca')
-         ->appendOutputTo(storage_path('logs/absences.log'));
+      $schedule->command('absences:daily')
+             ->everyFiveMinutes()
+             ->timezone('Africa/Casablanca')
+             ->appendOutputTo(storage_path('logs/absences.log'));
     }
 
     /**
