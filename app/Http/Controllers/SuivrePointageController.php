@@ -292,6 +292,9 @@ class SuivrePointageController extends Controller
     /**
      * Exporter les pointages en PDF.
      */
+
+
+    
     public function exporterPdf(Request $request)
     {
         $utilisateur = auth()->user();
@@ -304,7 +307,7 @@ class SuivrePointageController extends Controller
         $requete = SuivrePointage::with('user');
         $this->appliquerFiltres($requete, $request);
 
-        $pointages = $requete->orderBy('date_pointage', 'DESC')->get();
+        $pointages = $requete->orderBy('date_pointage', 'ASC')->get();
         $stats = $this->getStatistiques($request);
 
         $pdf = Pdf::loadView('suivre_pointage.export_pdf', compact('pointages', 'stats'));
