@@ -103,44 +103,88 @@ class SuivrePointageController extends Controller
      * Obtenir les statistiques (UPDATED avec Congés).
      */
     private function getStatistiques(Request $request, $userId = null)
-    {
-        $query = SuivrePointage::query();
-        
-        if ($userId) {
-            $query->where('iduser', $userId);
-        }
+{
+    $query = SuivrePointage::query();
+    
+    if ($userId) {
+        $query->where('iduser', $userId);
+    }
 
-        // Appliquer les mêmes filtres que l'index
-        if ($periode = $request->input('periode')) {
-            switch ($periode) {
-                case 'today':
-                    $query->whereDate('date_pointage', Carbon::today('Africa/Casablanca'));
-                    break;
-                case 'this_week':
-                    $query->whereBetween('date_pointage', [
-                        Carbon::now('Africa/Casablanca')->startOfWeek(),
-                        Carbon::now('Africa/Casablanca')->endOfWeek()
-                    ]);
-                    break;
-                case 'this_month':
-                    $query->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->month)
-                          ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
-                    break;
-            }
-        } else {
-            // Par défaut: ce mois
-            $query->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->month)
-                  ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
+    // Appliquer les filtres de période
+    if ($periode = $request->input('periode')) {
+        switch ($periode) {
+            case 'today':
+                $query->whereDate('date_pointage', Carbon::today('Africa/Casablanca'));
+                break;
+            case 'yesterday':
+                $query->whereDate('date_pointage', Carbon::yesterday('Africa/Casablanca'));
+                break;
+            case 'this_week':
+                $query->whereBetween('date_pointage', [
+                    Carbon::now('Africa/Casablanca')->startOfWeek(),
+                    Carbon::now('Africa/Casablanca')->endOfWeek()
+                ]);
+                break;
+            case 'last_week':
+                $query->whereBetween('date_pointage', [
+                    Carbon::now('Africa/Casablanca')->subWeek()->startOfWeek(),
+                    Carbon::now('Africa/Casablanca')->subWeek()->endOfWeek()
+                ]);
+                break;
+            case 'this_month':
+                $query->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->month)
+                      ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
+                break;
+            case 'last_month':
+                $query->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->subMonth()->month)
+                      ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->subMonth()->year);
+                break;
+            case 'this_year':
+                $query->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
+                break;
         }
+    } elseif ($request->input('date_debut') || $request->input('date_fin')) {
+        // Utiliser les dates personnalisées si spécifiées
+        if ($dateDebut = $request->input('date_debut')) {
+            $query->whereDate('date_pointage', '>=', $dateDebut);
+        }
+        if ($dateFin = $request->input('date_fin')) {
+            $query->whereDate('date_pointage', '<=', $dateFin);
+        }
+    } else {
+        // Par défaut: ce mois (seulement si aucun filtre)
+        $query->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->month)
+              ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
+    }
 
-        $totalPointages = $query->count();
-        
-        // Présences seulement
-        $queryPresence = $query->clone()->where('type', 'presence');
-        $pointagesComplets = $queryPresence->clone()->whereNotNull('heure_depart')->count();
-        $pointagesEnCours = $queryPresence->clone()->whereNull('heure_depart')->count();
-        
-        $retards = $queryPresence->clone()
+    // Appliquer le filtre de type de pointage si spécifié
+    if ($type = $request->input('type_pointage')) {
+        $query->where('type', $type);
+    }
+
+    // Appliquer le filtre de statut si spécifié
+    if ($statut = $request->input('statut')) {
+        if ($statut === 'en_cours') {
+            $query->where('type', 'presence')->whereNull('heure_depart');
+        } elseif ($statut === 'termine') {
+            $query->where('type', 'presence')->whereNotNull('heure_depart');
+        } elseif ($statut === 'retard') {
+            $query->where('type', 'presence')->whereNotNull('heure_arrivee')
+                  ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00']);
+        } elseif ($statut === 'depart_anticipe') {
+            $query->where('type', 'presence')->whereNotNull('heure_depart')
+                  ->whereRaw('TIME(heure_depart) < ?', ['17:30:00']);
+        }
+    }
+
+    $totalPointages = $query->count();
+    
+    // Présences seulement
+    $queryPresence = $query->clone()->where('type', 'presence');
+    $pointagesComplets = $queryPresence->clone()->whereNotNull('heure_depart')->count();
+    $pointagesEnCours = $queryPresence->clone()->whereNull('heure_depart')->count();
+    
+    $retards = $queryPresence->clone()
         ->whereNotNull('heure_arrivee')
         ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00'])
         ->where(function($q) {
@@ -149,42 +193,41 @@ class SuivrePointageController extends Controller
         })
         ->count();
 
-        $departsAnticipes = $queryPresence->clone()
-            ->whereNotNull('heure_depart')
-            ->whereRaw('TIME(heure_depart) < ?', ['17:30:00'])
-            ->count();
+    $departsAnticipes = $queryPresence->clone()
+        ->whereNotNull('heure_depart')
+        ->whereRaw('TIME(heure_depart) < ?', ['17:30:00'])
+        ->count();
 
-        // Absences et Congés
-        $absences = $query->clone()->where('type', 'absence')->count();
-        $conges = $query->clone()->where('type', 'conge')->count();
+    // Absences et Congés
+    $absences = $query->clone()->where('type', 'absence')->count();
+    $conges = $query->clone()->where('type', 'conge')->count();
 
-        // Temps total travaillé (présences uniquement)
-        $pointagesTermines = $queryPresence->clone()->whereNotNull('heure_depart')->get();
-        $tempsTotal = 0;
-        foreach ($pointagesTermines as $pointage) {
-            if ($pointage->heure_arrivee && $pointage->heure_depart) {
-                $arrivee = Carbon::parse($pointage->heure_arrivee);
-                $depart = Carbon::parse($pointage->heure_depart);
-                $tempsTotal += $arrivee->diffInMinutes($depart);
-            }
+    // Temps total travaillé (présences uniquement)
+    $pointagesTermines = $queryPresence->clone()->whereNotNull('heure_depart')->get();
+    $tempsTotal = 0;
+    foreach ($pointagesTermines as $pointage) {
+        if ($pointage->heure_arrivee && $pointage->heure_depart) {
+            $arrivee = Carbon::parse($pointage->heure_arrivee);
+            $depart = Carbon::parse($pointage->heure_depart);
+            $tempsTotal += $arrivee->diffInMinutes($depart);
         }
+    }
 
-        $heures = floor($tempsTotal / 60);
-        $minutes = $tempsTotal % 60;
+    $heures = floor($tempsTotal / 60);
+    $minutes = $tempsTotal % 60;
 
-        return [
+    return [
         'total_pointages' => $totalPointages,
         'pointages_complets' => $pointagesComplets,
         'pointages_en_cours' => $pointagesEnCours,
-        'retards' => $retards, // Modifié
+        'retards' => $retards,
         'departs_anticipes' => $departsAnticipes,
         'absences' => $absences,
         'conges' => $conges,
         'temps_total' => sprintf('%d h %02d min', $heures, $minutes),
         'temps_moyen' => $pointagesComplets > 0 ? sprintf('%d h %02d min', floor($tempsTotal / $pointagesComplets / 60), ($tempsTotal / $pointagesComplets) % 60) : '0 h 00 min',
     ];
-
-    }
+}
 
     public function afficherAlerteRetard()
 {
@@ -296,26 +339,28 @@ class SuivrePointageController extends Controller
 
     
     public function exporterPdf(Request $request)
-    {
-        $utilisateur = auth()->user();
-        $isAdmin = $utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin');
+{
+    $utilisateur = auth()->user();
+    $isAdmin = $utilisateur->hasRole('Sup_Admin') || $utilisateur->hasRole('Custom_Admin');
 
-        if (!$isAdmin) {
-            abort(403, 'Accès non autorisé.');
-        }
-
-        $requete = SuivrePointage::with('user');
-        $this->appliquerFiltres($requete, $request);
-
-        $pointages = $requete->orderBy('date_pointage', 'ASC')->get();
-        $stats = $this->getStatistiques($request);
-
-        $pdf = Pdf::loadView('suivre_pointage.export_pdf', compact('pointages', 'stats'));
-        
-        $filename = 'pointages_' . Carbon::now('Africa/Casablanca')->format('Y-m-d_His') . '.pdf';
-        
-        return $pdf->download($filename);
+    if (!$isAdmin) {
+        abort(403, 'Accès non autorisé.');
     }
+
+    $requete = SuivrePointage::with('user');
+    $this->appliquerFiltres($requete, $request);
+
+    $pointages = $requete->orderBy('date_pointage', 'ASC')->get();
+    
+    // IMPORTANT: Passer la request pour appliquer les mêmes filtres aux stats
+    $stats = $this->getStatistiques($request);
+
+    $pdf = Pdf::loadView('suivre_pointage.export_pdf', compact('pointages', 'stats'));
+    
+    $filename = 'pointages_' . Carbon::now('Africa/Casablanca')->format('Y-m-d_His') . '.pdf';
+    
+    return $pdf->download($filename);
+}
 
     /**
      * Appliquer les filtres à une requête.
