@@ -106,8 +106,14 @@ class SuivrePointageController extends Controller
 {
     $query = SuivrePointage::query();
     
+    // Filtre utilisateur (prioritaire)
     if ($userId) {
         $query->where('iduser', $userId);
+    } elseif ($userIdFromRequest = $request->input('user_id')) {
+        // CORRECTION: Appliquer le filtre user_id de la requête
+        if ($userIdFromRequest !== 'all') {
+            $query->where('iduser', $userIdFromRequest);
+        }
     }
 
     // Appliquer les filtres de période
@@ -144,7 +150,6 @@ class SuivrePointageController extends Controller
                 break;
         }
     } elseif ($request->input('date_debut') || $request->input('date_fin')) {
-        // Utiliser les dates personnalisées si spécifiées
         if ($dateDebut = $request->input('date_debut')) {
             $query->whereDate('date_pointage', '>=', $dateDebut);
         }
@@ -152,17 +157,17 @@ class SuivrePointageController extends Controller
             $query->whereDate('date_pointage', '<=', $dateFin);
         }
     } else {
-        // Par défaut: ce mois (seulement si aucun filtre)
+        // Par défaut: ce mois
         $query->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->month)
               ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
     }
 
-    // Appliquer le filtre de type de pointage si spécifié
+    // Appliquer le filtre de type de pointage
     if ($type = $request->input('type_pointage')) {
         $query->where('type', $type);
     }
 
-    // Appliquer le filtre de statut si spécifié
+    // Appliquer le filtre de statut
     if ($statut = $request->input('statut')) {
         if ($statut === 'en_cours') {
             $query->where('type', 'presence')->whereNull('heure_depart');
@@ -202,7 +207,7 @@ class SuivrePointageController extends Controller
     $absences = $query->clone()->where('type', 'absence')->count();
     $conges = $query->clone()->where('type', 'conge')->count();
 
-    // Temps total travaillé (présences uniquement)
+    // Temps total travaillé
     $pointagesTermines = $queryPresence->clone()->whereNotNull('heure_depart')->get();
     $tempsTotal = 0;
     foreach ($pointagesTermines as $pointage) {
