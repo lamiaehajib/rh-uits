@@ -252,14 +252,7 @@
                     <strong>{{ $stats['retards'] }}</strong>
                     <span>Nombre de retards</span>
                 </div>
-                <div class="retard-info-cell">
-                    <strong>{{ $totalRetardMinutes }} min</strong>
-                    <span>Total en minutes</span>
-                </div>
-                <div class="retard-info-cell">
-                    <strong>{{ $heuresRetard }}h {{ str_pad($minutesRetard, 2, '0', STR_PAD_LEFT) }}min</strong>
-                    <span>Total en heures</span>
-                </div>
+                
                 <div class="retard-info-cell">
                     <strong>{{ $stats['retards'] > 0 ? round($totalRetardMinutes / $stats['retards'], 0) : 0 }} min</strong>
                     <span>Moyenne par retard</span>
