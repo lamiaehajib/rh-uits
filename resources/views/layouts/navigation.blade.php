@@ -404,7 +404,7 @@
             <a href="{{ route('users.index') }}" class="menu-item">
                 <i class='bx bx-group menu-icon'></i>
                 <span class="menu-text">Équipe</span>
-                <span class="menu-badge">9</span>
+               
             </a>
             <div class="menu-divider"></div>
             @endcan
