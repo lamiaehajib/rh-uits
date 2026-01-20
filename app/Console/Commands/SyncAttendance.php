@@ -10,69 +10,69 @@ use Carbon\Carbon;
 
 class SyncAttendance extends Command
 {
-    // هاد السمية هي باش غنعيطو للكوموند في التي رمينال
-    protected $signature = 'attendance:sync';
+    // زدت ليك هنا --date باش تقدر تختار نهار محدد إلا بغيتي
+    protected $signature = 'attendance:sync {--date= : المزامنة لتاريخ محدد YYYY-MM-DD}';
     protected $description = 'جلب البصمات من الماكينة وحفظها في قاعدة البيانات';
 
     public function handle()
     {
-        // 1. نجيبو المعلومات من ملف .env
         $ip = config('services.zkteco.ip', env('ZK_DEVICE_IP'));
         $port = config('services.zkteco.port', env('ZK_DEVICE_PORT'));
+        $targetDate = $this->option('date');
 
         $zk = new ZKTeco($ip, $port);
-
         $this->info("جاري الاتصال بالماكينة...");
 
         if ($zk->connect()) {
-            // 2. نجيبو كاع البصمات اللي في الماكينة
             $attendance = $zk->getAttendance();
+            $count = 0;
 
-         foreach ($attendance as $log) {
-    $user = User::where('code', $log['id'])->first();
+            foreach ($attendance as $log) {
+                $fullTimestamp = Carbon::parse($log['timestamp']);
+                $dateOnly = $fullTimestamp->toDateString();
 
-    if ($user) {
-        $fullTimestamp = \Carbon\Carbon::parse($log['timestamp']);
-        $dateOnly = $fullTimestamp->toDateString();
+                // إلا حددتي تاريخ، كيدوز غير البصمات ديال داك النهار
+                if ($targetDate && $dateOnly !== $targetDate) continue;
 
-        // 1. أول حاجة: واش هاد البصمة ديجا كاين فالداتابيز؟ (باش ما نعاودوش نسجلوها)
-        $alreadyExists = SuivrePointage::where('iduser', $user->id)
-                            ->where(function($query) use ($fullTimestamp) {
-                                $query->where('heure_arrivee', $fullTimestamp)
-                                      ->orWhere('heure_depart', $fullTimestamp);
-                            })->exists();
+                $user = User::where('code', $log['id'])->first();
 
-        if ($alreadyExists) continue; // إلا كانت ديجا كاين، دوز للبصمة الموالية بلا ما تدير والو
+                if ($user) {
+                    $alreadyExists = SuivrePointage::where('iduser', $user->id)
+                                        ->where(function($query) use ($fullTimestamp) {
+                                            $query->where('heure_arrivee', $fullTimestamp)
+                                                  ->orWhere('heure_depart', $fullTimestamp);
+                                        })->exists();
 
-        // 2. إلا ما كانتش، دابا نشوفو واش نفتحو سطر جديد ولا نسدو سطر قديم
-        $lastPointage = SuivrePointage::where('iduser', $user->id)
-                                     ->whereDate('date_pointage', $dateOnly)
-                                     ->whereNull('heure_depart')
-                                     ->first();
+                    if ($alreadyExists) continue;
 
-        if (!$lastPointage) {
-            // فتح سطر جديد (دخول)
-            SuivrePointage::create([
-                'iduser'         => $user->id,
-                'date_pointage'  => $dateOnly,
-                'heure_arrivee'  => $fullTimestamp,
-                'description'    => 'Pointage via Machine F18',
-                'localisation'   => 'Office (Titre Mellil)',
-                'statut'         => 'En cours'
-            ]);
-        } else {
-            // تحديث سطر قديم (خروج) - بشرط يكون الوقت أحدث من الدخول بـ 5 دقايق
-            if ($fullTimestamp->diffInMinutes($lastPointage->heure_arrivee) > 5) {
-                $lastPointage->update([
-                    'heure_depart' => $fullTimestamp,
-                    'statut'       => 'Terminé'
-                ]);
+                    $lastPointage = SuivrePointage::where('iduser', $user->id)
+                                                 ->whereDate('date_pointage', $dateOnly)
+                                                 ->whereNull('heure_depart')
+                                                 ->first();
+
+                    if (!$lastPointage) {
+                        SuivrePointage::create([
+                            'iduser'         => $user->id,
+                            'date_pointage'  => $dateOnly,
+                            'heure_arrivee'  => $fullTimestamp,
+                            'type'           => 'presence', // هادي مهمة باش يطلع حاضر
+                            'description'    => 'Pointage via Machine F18',
+                            'localisation'   => 'Office (Titre Mellil)'
+                        ]);
+                        $count++;
+                    } else {
+                        if ($fullTimestamp->diffInMinutes($lastPointage->heure_arrivee) > 5) {
+                            $lastPointage->update([
+                                'heure_depart' => $fullTimestamp,
+                                'type'         => 'presence'
+                            ]);
+                            $count++;
+                        }
+                    }
+                }
             }
-        }
-    }
-}
             $zk->disconnect();
-            $this->info("✅ تمت العملية بنجاح.");
+            $this->info("✅ تمت العملية بنجاح. تم تسجيل $count بصمة جديدة.");
         } else {
             $this->error("❌ فشل الاتصال! تأكدي من الروتر والـ IP.");
         }
