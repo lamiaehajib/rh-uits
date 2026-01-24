@@ -17,10 +17,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
-});
 
-
-Route::prefix('salaires')->group(function () {
+    Route::prefix('salaires')->group(function () {
     
     // ✅ 1. Total des salaires
     Route::get('/total', function() {
@@ -97,3 +95,7 @@ Route::get('/employees/{id}', function($id) {
         'employee' => $user,
     ]);
 });
+});
+
+
+
