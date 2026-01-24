@@ -20,8 +20,61 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
+Route::prefix('salaires')->group(function () {
+    
+    // ✅ 1. Total des salaires
+    Route::get('/total', function() {
+        $users = User::where('is_active', true)->get(['salaire']);
+        
+        return response()->json([
+            'success' => true,
+            'total' => $users->sum('salaire'),
+            'count' => $users->count(),
+            'moyenne' => $users->avg('salaire'),
+        ]);
+    });
+
+    // ✅ 2. Salaires du mois actuel (détaillés)
+    Route::get('/mois-actuel', function() {
+        $users = User::select('id', 'name', 'poste', 'salaire', 'email')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'mois' => now()->month,
+            'annee' => now()->year,
+            'salaires' => $users->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'nom' => $user->name,
+                    'poste' => $user->poste,
+                    'salaire' => (float) $user->salaire,
+                ];
+            }),
+            'total' => $users->sum('salaire'),
+            'count' => $users->count(),
+        ]);
+    });
+
+    // ✅ 3. Salaires par poste
+    Route::get('/par-poste', function() {
+        $data = User::where('is_active', true)
+            ->groupBy('poste')
+            ->selectRaw('poste, COUNT(*) as nombre, SUM(salaire) as total_salaires, AVG(salaire) as moyenne')
+            ->get();
+        
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
+    });
+});
+
+// ✅ 4. Liste des employés
 Route::get('/employees', function() {
-    $users = User::select('id', 'name', 'poste', 'salaire', 'email')
+    $users = User::select('id', 'name', 'poste', 'salaire', 'email', 'tele')
         ->where('is_active', true)
         ->orderBy('name')
         ->get();
@@ -33,51 +86,14 @@ Route::get('/employees', function() {
     ]);
 });
 
-// ✅ 3. Détails d'un employé spécifique
+// ✅ 5. Détails d'un employé
 Route::get('/employees/{id}', function($id) {
-    $user = User::select('id', 'name', 'poste', 'salaire', 'email', 'tele')
+    $user = User::select('id', 'name', 'poste', 'salaire', 'email', 'tele', 'adresse')
         ->where('is_active', true)
         ->findOrFail($id);
     
     return response()->json([
         'success' => true,
         'employee' => $user,
-    ]);
-});
-
-// ✅ 4. Salaires du mois actuel (détaillés)
-Route::get('/salaires/mois-actuel', function() {
-    $users = User::select('id', 'name', 'poste', 'salaire', 'email')
-        ->where('is_active', true)
-        ->orderBy('name')
-        ->get();
-    
-    return response()->json([
-        'success' => true,
-        'mois' => now()->month,
-        'annee' => now()->year,
-        'salaires' => $users->map(function($user) {
-            return [
-                'id' => $user->id,
-                'nom' => $user->name,
-                'poste' => $user->poste,
-                'salaire' => (float) $user->salaire,
-            ];
-        }),
-        'total' => $users->sum('salaire'),
-        'count' => $users->count(),
-    ]);
-});
-
-// ✅ 5. Salaires par poste
-Route::get('/salaires/par-poste', function() {
-    $salairesParPoste = User::where('is_active', true)
-        ->groupBy('poste')
-        ->selectRaw('poste, COUNT(*) as nombre, SUM(salaire) as total_salaires')
-        ->get();
-    
-    return response()->json([
-        'success' => true,
-        'data' => $salairesParPoste,
     ]);
 });
