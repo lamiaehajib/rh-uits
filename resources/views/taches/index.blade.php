@@ -519,6 +519,7 @@
                                         </th>
                                         <th>{{ __('Durée') }}</th>
                                         <th>{{ __('Date Début') }}</th>
+                                        <th>{{ __('Date de fin') }}</th>
                                         <th>{{ __('Statut') }}</th>
                                         <th>
                                             <a href="{{ route('taches.index', array_merge(request()->query(), ['sort_by' => 'priorite', 'sort_direction' => request('sort_by') == 'priorite' && request('sort_direction') == 'asc' ? 'desc' : 'asc'])) }}" class="flex items-center hover:text-primary-red">
@@ -542,6 +543,13 @@
                                             </td>
                                             <td>{{ $tache->duree }}</td>
                                             <td>{{ \Carbon\Carbon::parse($tache->datedebut)->format('d/m/Y') }}</td>
+                                            <td>
+   @if(in_array($tache->date, ['heure', 'minute']))
+    {{ $tache->date_fin_prevue->format('d/m/Y H:i') }}
+@else
+    {{ $tache->date_fin_prevue->format('d/m/Y') }}
+@endif
+</td>
                                             <td>
                                                 <span class="px-3 py-1 rounded-full text-xs font-semibold
                                                     @if($tache->status == 'nouveau') bg-yellow-100 text-yellow-800

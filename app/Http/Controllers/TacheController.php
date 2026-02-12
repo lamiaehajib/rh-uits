@@ -502,6 +502,8 @@ public function exportOverdueTasks(Request $request)
             Carbon::parse($newTache->datedebut),
             $newTache->duree
         );
+
+        
         $newTache->save();
 
         $newTache->users()->attach($originalTache->users->pluck('id'));
