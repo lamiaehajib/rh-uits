@@ -38,12 +38,13 @@ class TacheController extends Controller
 
         $query = Tache::with('users');
 
-        if (!$this->isAdmin($user)) {
-            $query->whereHas('users', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
-            $query->where('datedebut', '<=', Carbon::now());
-        }
+       if (!$this->isAdmin($user)) {
+    $query->whereHas('users', function ($q) use ($user) {
+        $q->where('user_id', $user->id);
+    });
+    $query->where('datedebut', '<=', Carbon::now());
+    $query->where('status', '!=', 'annulé'); // ✅ AJOUT
+}
 
         if ($search) {
             $query->where(function($q) use ($search) {
@@ -70,10 +71,11 @@ class TacheController extends Controller
                     $query->whereMonth('datedebut', Carbon::now()->month);
                     break;
                 case 'overdue':
-                    $query->where('status', '!=', 'termine')
-                            ->whereNotNull('date_fin_prevue')
-                            ->where('date_fin_prevue', '<', Carbon::now());
-                    break;
+    $query->where('status', '!=', 'termine')
+          ->where('status', '!=', 'annulé')   // ← AJOUT
+          ->whereNotNull('date_fin_prevue')
+          ->where('date_fin_prevue', '<', Carbon::now());
+    break;
                 case 'future':
                     if ($this->isAdmin($user)) {
                         $query->where('datedebut', '>', Carbon::now());
@@ -127,10 +129,11 @@ public function exportOverdueTasks(Request $request)
         return redirect()->back()->with('error', 'Veuillez sélectionner un mois pour exporter les tâches en retard.');
     }
 
-    $query = Tache::with('users')
-        ->where('status', '!=', 'termine')
-        ->whereNotNull('date_fin_prevue')
-        ->where('date_fin_prevue', '<', Carbon::now());
+   $query = Tache::with('users')
+    ->where('status', '!=', 'termine')
+    ->where('status', '!=', 'annulé')   // ← AJOUT
+    ->whereNotNull('date_fin_prevue')
+    ->where('date_fin_prevue', '<', Carbon::now());
 
     // Appliquer le filtre par mois
     $query->whereMonth('datedebut', $month);
@@ -208,7 +211,7 @@ public function exportOverdueTasks(Request $request)
         'datedebut' => 'required|date|after_or_equal:today',
         // ✅ التعديل هنا - nullable إذا لم يكن heure أو minute
         'heuredebut' => 'nullable|required_if:date,heure,minute|date_format:H:i',
-        'status' => 'required|in:nouveau,en cours,termine',
+       'status' => 'required|in:nouveau,en cours,termine,annulé',
         'date' => 'required|in:jour,semaine,mois,heure,minute', 
         'user_ids' => 'required|array',
         'user_ids.*' => 'exists:users,id',
@@ -345,7 +348,7 @@ public function exportOverdueTasks(Request $request)
         'duree' => 'required|string|max:255',
         'datedebut' => 'required|date',
         'heuredebut' => 'nullable|required_if:date,heure,minute|date_format:H:i', // ✅ إضافة
-        'status' => 'required|in:nouveau,en cours,termine',
+        'status' => 'required|in:nouveau,en cours,termine,annulé',
         'date' => 'required|in:jour,semaine,mois,heure,minute', 
         'user_ids' => 'required|array',
         'user_ids.*' => 'exists:users,id',
@@ -410,11 +413,11 @@ public function exportOverdueTasks(Request $request)
 
             $tache->users()->sync($request->input('user_ids'));
 
-        } elseif ($canModifyStatusAndRetour) { // This block handles USER_MULTIMEDIA, USER_TRAINING, Sales_Admin, USER_TECH
-            $request->validate([
-                'status' => 'required|in:nouveau,en cours,termine',
-                'retour' => 'nullable|string|max:5000',
-            ]);
+       } elseif ($canModifyStatusAndRetour) {
+    $request->validate([
+        'status' => 'required|in:nouveau,en cours,termine', // ✅ PAS annulé ici
+        'retour' => 'nullable|string|max:5000',
+    ]);
 
             $tache->update([
                 'status' => $request->status,
@@ -583,49 +586,54 @@ public function exportOverdueTasks(Request $request)
 }
 
     private function getTaskStats($user)
-    {
-        $baseQuery = Tache::query();
+{
+    $baseQuery = Tache::query();
 
-        if (!$this->isAdmin($user)) {
-            $baseQuery->whereHas('users', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
-            $baseQuery->where('datedebut', '<=', Carbon::now());
-        }
-
-        $overdueQuery = (clone $baseQuery)->where('status', '!=', 'termine')
-                                            ->whereNotNull('date_fin_prevue')
-                                            ->where('date_fin_prevue', '<', Carbon::now());
-
-        $newTasks = (clone $baseQuery)->where('status', 'nouveau')->count();
-        $inProgressTasks = (clone $baseQuery)->where('status', 'en cours')->count();
-        $completedTasks = (clone $baseQuery)->where('status', 'termine')->count();
-
-        return [
-            'total' => (clone $baseQuery)->count(),
-            'nouveau' => $newTasks,
-            'en_cours' => $inProgressTasks,
-            'termine' => $completedTasks,
-            'overdue' => $overdueQuery->count(),
-        ];
+    if (!$this->isAdmin($user)) {
+        $baseQuery->whereHas('users', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        });
+        $baseQuery->where('datedebut', '<=', Carbon::now());
     }
+
+    // ✅ Exclure 'annulé' du calcul des retards
+    $overdueQuery = (clone $baseQuery)
+        ->where('status', '!=', 'termine')
+        ->where('status', '!=', 'annulé')   // ← AJOUT
+        ->whereNotNull('date_fin_prevue')
+        ->where('date_fin_prevue', '<', Carbon::now());
+
+    $newTasks       = (clone $baseQuery)->where('status', 'nouveau')->count();
+    $inProgressTasks = (clone $baseQuery)->where('status', 'en cours')->count();
+    $completedTasks  = (clone $baseQuery)->where('status', 'termine')->count();
+    $cancelledTasks  = (clone $baseQuery)->where('status', 'annulé')->count(); // ← AJOUT
+
+    return [
+        'total'    => (clone $baseQuery)->count(),
+        'nouveau'  => $newTasks,
+        'en_cours' => $inProgressTasks,
+        'termine'  => $completedTasks,
+        'annule'   => $cancelledTasks,   // ← AJOUT
+        'overdue'  => $overdueQuery->count(),
+    ];
+}
 
     private function getOverdueTasks($user)
-    {
-        $query = Tache::with('users')
-                        ->where('status', '!=', 'termine')
-                        ->whereNotNull('date_fin_prevue')
-                        ->where('date_fin_prevue', '<', Carbon::now());
+{
+    $query = Tache::with('users')
+        ->where('status', '!=', 'termine')
+        ->where('status', '!=', 'annulé')   // ← AJOUT
+        ->whereNotNull('date_fin_prevue')
+        ->where('date_fin_prevue', '<', Carbon::now());
 
-        if (!$this->isAdmin($user)) {
-            $query->whereHas('users', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
-        }
-
-        return $query->orderBy('date_fin_prevue', 'asc')->limit(5)->get();
+    if (!$this->isAdmin($user)) {
+        $query->whereHas('users', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        });
     }
 
+    return $query->orderBy('date_fin_prevue', 'asc')->limit(5)->get();
+}
     private function getRecentTasks($user)
     {
         $query = Tache::with('users')->orderBy('created_at', 'desc');
