@@ -271,6 +271,27 @@ $canEditRetour = $user->hasAnyRole($canModifyRetourRoles);
                                     @enderror
                                 </div>
 
+
+                                <div id="heuredebutContainer" style="display: none;">
+    <label for="heuredebut" class="block text-sm font-semibold text-gray-700 mb-1">
+        <i class="fas fa-clock mr-2 text-blue-500"></i> {{ __('Heure de Début') }} <span class="text-primary-red text-lg">*</span>
+    </label>
+    <input type="time" name="heuredebut" id="heuredebut"
+        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
+        focus:ring-primary-red focus:border-primary-red
+        @error('heuredebut') border-primary-red ring-red-200 @enderror
+        {{ !$isAdminOrAdmin1 ? 'bg-gray-100 cursor-not-allowed' : '' }}"
+        value="{{ old('heuredebut', $tache->heuredebut) }}"
+        {{ !$isAdminOrAdmin1 ? 'readonly' : '' }}>
+    @error('heuredebut')
+        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
+    @enderror
+    
+    {{-- Si non-admin, envoyer la valeur via hidden input --}}
+    @if (!$isAdminOrAdmin1)
+        <input type="hidden" name="heuredebut" value="{{ old('heuredebut', $tache->heuredebut) }}">
+    @endif
+</div>
                                 <div>
                                     <label for="status" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-info-circle mr-2 text-yellow-500"></i> {{ __('Statut de la Tâche') }} <span class="text-primary-red text-lg">*</span>
@@ -624,6 +645,29 @@ placeholder="{{ __('Ajoutez des notes ou un retour sur la tâche...') }}"
                     toggleAudioControls(); // Ensure correct state for audio buttons
                 }
             });
+
+
+            // ========== Toggle Heure Début Field ==========
+const dateSelect = document.getElementById('date');
+const heuredebutContainer = document.getElementById('heuredebutContainer');
+const heuredebutInput = document.getElementById('heuredebut');
+
+function toggleHeureDebut() {
+    const dateValue = dateSelect.value;
+    if (dateValue === 'heure' || dateValue === 'minute') {
+        heuredebutContainer.style.display = 'block';
+        heuredebutInput.required = true;
+    } else {
+        heuredebutContainer.style.display = 'none';
+        heuredebutInput.required = false;
+        heuredebutInput.value = ''; // مسح القيمة إذا لم يكن مطلوبًا
+    }
+}
+
+dateSelect.addEventListener('change', toggleHeureDebut);
+
+// تهيئة عند تحميل الصفحة
+toggleHeureDebut();
         </script>
     </body>
 </x-app-layout>

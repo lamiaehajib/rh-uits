@@ -21,12 +21,21 @@ class Tache extends Model
         'date',
      
         'datedebut',
+         'heuredebut',
         'date_fin_prevue',
         'created_by',
         'updated_by',
         'titre',
         'priorite',
         'retour',
+    ];
+
+    protected $casts = [
+        'date_fin_prevue' => 'datetime',
+        'datedebut' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     /**

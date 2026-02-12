@@ -201,19 +201,20 @@ public function exportOverdueTasks(Request $request)
     public function store(Request $request)
     {
         $request->validate([
-            'titre' => 'required|string|max:255',
-            'description' => 'nullable|string|max:4000', // Laissez-le nullable juste pour la validation afin qu'il puisse être vide
-            'audio_data' => 'nullable|string', // Doit être une chaîne car c'est une chaîne Base64
-            'duree' => 'required|string|max:255',
-            'datedebut' => 'required|date|after_or_equal:today',
-            'status' => 'required|in:nouveau,en cours,termine',
-              'date' => 'required|in:jour,semaine,mois,heure,minute', 
-            'user_ids' => 'required|array',
-            'user_ids.*' => 'exists:users,id',
-            'priorite' => 'required|in:faible,moyen,élevé',
-            'retour' => 'nullable|string|max:5000',
-        ]);
-
+        'titre' => 'required|string|max:255',
+        'description' => 'nullable|string|max:4000',
+        'audio_data' => 'nullable|string',
+        'duree' => 'required|string|max:255',
+        'datedebut' => 'required|date|after_or_equal:today',
+        // ✅ التعديل هنا - nullable إذا لم يكن heure أو minute
+        'heuredebut' => 'nullable|required_if:date,heure,minute|date_format:H:i',
+        'status' => 'required|in:nouveau,en cours,termine',
+        'date' => 'required|in:jour,semaine,mois,heure,minute', 
+        'user_ids' => 'required|array',
+        'user_ids.*' => 'exists:users,id',
+        'priorite' => 'required|in:faible,moyen,élevé',
+        'retour' => 'nullable|string|max:5000',
+    ]);
         // Si l'administrateur remplit les deux (description textuelle et audio_data)
         if ($request->filled('description') && $request->filled('audio_data')) {
             return redirect()->back()
@@ -253,7 +254,12 @@ public function exportOverdueTasks(Request $request)
                 }
             }
 
-            $startDate = Carbon::parse($request->input('datedebut'));
+                $startDate = Carbon::parse($request->input('datedebut'));
+
+                if (in_array($request->input('date'), ['heure', 'minute']) && $request->filled('heuredebut')) {
+        $startDate = Carbon::parse($request->input('datedebut') . ' ' . $request->input('heuredebut'));
+    }
+    
             $data['date_fin_prevue'] = $this->calculateExpectedEndDate($startDate, $request->input('duree'));
 
             $tache = Tache::create($data);
@@ -330,21 +336,22 @@ public function exportOverdueTasks(Request $request)
         $canModifyStatusAndRetour = !$isAdminForFullEdit && $user->hasAnyRole($canModifyStatusAndRetourOnlyRoles);
 
 
-        if ($isAdminForFullEdit) { // This block handles Sup_Admin and Custom_Admin
-            $request->validate([
-                'titre' => 'required|string|max:255',
-                'description' => 'nullable|string|max:5000',
-                'audio_data' => 'nullable|string',
-                'remove_existing_audio' => 'nullable|boolean',
-                'duree' => 'required|string|max:255',
-                'datedebut' => 'required|date',
-                'status' => 'required|in:nouveau,en cours,termine',
-                'date' => 'required|in:jour,semaine,mois,heure,minute', 
-                'user_ids' => 'required|array',
-                'user_ids.*' => 'exists:users,id',
-                'priorite' => 'required|in:faible,moyen,élevé',
-                'retour' => 'nullable|string|max:5000', // ADDED: Validate 'retour' for admins
-            ]);
+        if ($isAdminForFullEdit) {
+    $request->validate([
+        'titre' => 'required|string|max:255',
+        'description' => 'nullable|string|max:5000',
+        'audio_data' => 'nullable|string',
+        'remove_existing_audio' => 'nullable|boolean',
+        'duree' => 'required|string|max:255',
+        'datedebut' => 'required|date',
+        'heuredebut' => 'nullable|required_if:date,heure,minute|date_format:H:i', // ✅ إضافة
+        'status' => 'required|in:nouveau,en cours,termine',
+        'date' => 'required|in:jour,semaine,mois,heure,minute', 
+        'user_ids' => 'required|array',
+        'user_ids.*' => 'exists:users,id',
+        'priorite' => 'required|in:faible,moyen,élevé',
+        'retour' => 'nullable|string|max:5000',
+    ]);
 
             if ($request->filled('description') && $request->filled('audio_data')) {
                 return redirect()->back()
@@ -392,6 +399,11 @@ public function exportOverdueTasks(Request $request)
             }
 
             $startDate = Carbon::parse($request->input('datedebut'));
+    
+    // ✅ دمج التاريخ والوقت إذا كان النوع heure أو minute
+    if (in_array($request->input('date'), ['heure', 'minute']) && $request->filled('heuredebut')) {
+        $startDate = Carbon::parse($request->input('datedebut') . ' ' . $request->input('heuredebut'));
+    }
             $data['date_fin_prevue'] = $this->calculateExpectedEndDate($startDate, $request->input('duree'));
 
             $tache->update($data); // This will now include 'retour' if it was in $request->all()

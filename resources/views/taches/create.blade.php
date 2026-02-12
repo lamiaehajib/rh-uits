@@ -242,6 +242,21 @@ $canCreateRetour = $user->hasAnyRole(['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales
                                     @enderror
                                 </div>
 
+
+                                <div id="heuredebutContainer" style="display: none;">
+    <label for="heuredebut" class="block text-sm font-semibold text-gray-700 mb-1">
+        <i class="fas fa-clock mr-2 text-blue-500"></i> {{ __('Heure de Début') }} <span class="text-primary-red text-lg">*</span>
+    </label>
+    <input type="time" name="heuredebut" id="heuredebut"
+        class="mt-1 block w-full px-4 py-2 text-gray-800 rounded-lg shadow-sm border-gray-300
+        focus:ring-primary-red focus:border-primary-red
+        @error('heuredebut') border-primary-red ring-red-200 @enderror"
+        value="{{ old('heuredebut') }}">
+    @error('heuredebut')
+        <p class="text-primary-red text-xs mt-1">{{ $message }}</p>
+    @enderror
+</div>
+
                                 <div>
                                     <label for="status" class="block text-sm font-semibold text-gray-700 mb-1">
                                         <i class="fas fa-info-circle mr-2 text-yellow-500"></i> {{ __('Statut Initial') }} <span class="text-primary-red text-lg">*</span>
@@ -531,6 +546,27 @@ $canCreateRetour = $user->hasAnyRole(['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales
                     clearButton.disabled = false;
                     recordButton.disabled = true; // Disable new recording
                 }
+
+                const dateSelect = document.getElementById('date');
+const heuredebutContainer = document.getElementById('heuredebutContainer');
+const heuredebutInput = document.getElementById('heuredebut');
+
+function toggleHeureDebut() {
+    const dateValue = dateSelect.value;
+    if (dateValue === 'heure' || dateValue === 'minute') {
+        heuredebutContainer.style.display = 'block';
+        heuredebutInput.required = true;
+    } else {
+        heuredebutContainer.style.display = 'none';
+        heuredebutInput.required = false;
+        heuredebutInput.value = ''; // Effacer la valeur si non requis
+    }
+}
+
+dateSelect.addEventListener('change', toggleHeureDebut);
+
+// Initialiser au chargement de la page
+toggleHeureDebut();
             });
         </script>
     </body>
