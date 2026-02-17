@@ -202,90 +202,87 @@ public function exportOverdueTasks(Request $request)
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-        'titre' => 'required|string|max:255',
+{
+    // ✅ FIX : Normaliser heuredebut à null si type n'est pas heure/minute
+    if (!in_array($request->input('date'), ['heure', 'minute'])) {
+        $request->merge(['heuredebut' => null]);
+    }
+
+    $request->validate([
+        'titre'       => 'required|string|max:255',
         'description' => 'nullable|string|max:4000',
-        'audio_data' => 'nullable|string',
-        'duree' => 'required|string|max:255',
-        'datedebut' => 'required|date|after_or_equal:today',
-        // ✅ التعديل هنا - nullable إذا لم يكن heure أو minute
-        'heuredebut' => 'nullable|required_if:date,heure,minute|date_format:H:i',
-       'status' => 'required|in:nouveau,en cours,termine,annulé',
-        'date' => 'required|in:jour,semaine,mois,heure,minute', 
-        'user_ids' => 'required|array',
-        'user_ids.*' => 'exists:users,id',
-        'priorite' => 'required|in:faible,moyen,élevé',
-        'retour' => 'nullable|string|max:5000',
+        'audio_data'  => 'nullable|string',
+        'duree'       => 'required|string|max:255',
+        'datedebut'   => 'required|date|after_or_equal:today',
+        'heuredebut'  => 'nullable|required_if:date,heure,minute|date_format:H:i',
+        'status'      => 'required|in:nouveau,en cours,termine,annulé',
+        'date'        => 'required|in:jour,semaine,mois,heure,minute',
+        'user_ids'    => 'required|array',
+        'user_ids.*'  => 'exists:users,id',
+        'priorite'    => 'required|in:faible,moyen,élevé',
+        'retour'      => 'nullable|string|max:5000',
     ]);
-        // Si l'administrateur remplit les deux (description textuelle et audio_data)
-        if ($request->filled('description') && $request->filled('audio_data')) {
-            return redirect()->back()
-                ->with('error', 'Vous ne pouvez pas saisir une description textuelle et un enregistrement audio en même temps. Choisissez-en un seul.')
-                ->withInput();
+
+    if ($request->filled('description') && $request->filled('audio_data')) {
+        return redirect()->back()
+            ->with('error', 'Vous ne pouvez pas saisir une description textuelle et un enregistrement audio en même temps. Choisissez-en un seul.')
+            ->withInput();
+    }
+
+    try {
+        DB::beginTransaction();
+
+        $data = $request->except('user_ids', 'audio_data');
+        $data['created_by'] = auth()->id();
+
+        // ✅ FIX : Si type n'est pas heure/minute, forcer heuredebut à null en DB
+        if (!in_array($request->input('date'), ['heure', 'minute'])) {
+            $data['heuredebut'] = null;
         }
 
-        try {
-            DB::beginTransaction();
-
-            $data = $request->except('user_ids', 'audio_data'); // 'audio_data' sera traitée manuellement
-            $data['created_by'] = auth()->id();
-
-            if ($request->filled('audio_data')) {
-                // S'il y a des données audio (Base64)
-                $data['description'] = '-'; // Le texte de la description sera "-" pour rester NOT NULL
-
-                // Décoder l'audio Base64 et le stocker
-                $base64_audio = $request->input('audio_data');
-                // Extrayez les données Base64 réelles (supprimez "data:audio/webm;base64,")
-                @list($type, $base64_audio) = explode(';', $base64_audio); // Utilisez @ pour supprimer l'avertissement si le format est inattendu
-                @list(, $base64_audio) = explode(',', $base64_audio);
-                $audio_decoded = base64_decode($base64_audio);
-
-                $filename = 'audio_' . uniqid() . '.webm'; // Nom de fichier unique et format webm
-                Storage::disk('public')->put('task_audios/' . $filename, $audio_decoded);
-                $data['audio_description_path'] = 'task_audios/' . $filename;
-            } else {
-                // S'il n'y a pas de données audio
-                $data['audio_description_path'] = null; // Le chemin du fichier audio sera NULL
-                if ($request->filled('description')) {
-                    // Si l'administrateur a rempli la description, laissez-la telle quelle
-                    $data['description'] = $request->description;
-                } else {
-                    // Si l'administrateur a laissé la description vide, remplissez-la avec "-"
-                    $data['description'] = '-';
-                }
-            }
-
-                $startDate = Carbon::parse($request->input('datedebut'));
-
-                if (in_array($request->input('date'), ['heure', 'minute']) && $request->filled('heuredebut')) {
-        $startDate = Carbon::parse($request->input('datedebut') . ' ' . $request->input('heuredebut'));
-    }
-    
-            $data['date_fin_prevue'] = $this->calculateExpectedEndDate($startDate, $request->input('duree'));
-
-            $tache = Tache::create($data);
-
-            $tache->users()->attach($request->input('user_ids'));
-
-            foreach ($request->input('user_ids') as $userId) {
-                $user = User::findOrFail($userId);
-                $user->notify(new TacheCreatedNotification($tache));
-            }
-
-            DB::commit();
-
-            return redirect()->route('taches.index')
-                ->with('success', 'Tâche créée avec succès.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error("Erreur lors de la création de la tâche : " . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Erreur lors de la création de la tâche. Détails : ' . $e->getMessage())
-                ->withInput();
+        if ($request->filled('audio_data')) {
+            $data['description'] = '-';
+            $base64_audio = $request->input('audio_data');
+            @list($type, $base64_audio) = explode(';', $base64_audio);
+            @list(, $base64_audio) = explode(',', $base64_audio);
+            $audio_decoded = base64_decode($base64_audio);
+            $filename = 'audio_' . uniqid() . '.webm';
+            Storage::disk('public')->put('task_audios/' . $filename, $audio_decoded);
+            $data['audio_description_path'] = 'task_audios/' . $filename;
+        } else {
+            $data['audio_description_path'] = null;
+            $data['description'] = $request->filled('description') ? $request->description : '-';
         }
+
+        $startDate = Carbon::parse($request->input('datedebut'));
+
+        if (in_array($request->input('date'), ['heure', 'minute']) && $request->filled('heuredebut')) {
+            $startDate = Carbon::parse($request->input('datedebut') . ' ' . $request->input('heuredebut'));
+        }
+
+        $data['date_fin_prevue'] = $this->calculateExpectedEndDate($startDate, $request->input('duree'));
+
+        $tache = Tache::create($data);
+        $tache->users()->attach($request->input('user_ids'));
+
+        foreach ($request->input('user_ids') as $userId) {
+            $user = User::findOrFail($userId);
+            $user->notify(new TacheCreatedNotification($tache));
+        }
+
+        DB::commit();
+
+        return redirect()->route('taches.index')
+            ->with('success', 'Tâche créée avec succès.');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error("Erreur lors de la création de la tâche : " . $e->getMessage());
+        return redirect()->back()
+            ->with('error', 'Erreur lors de la création de la tâche. Détails : ' . $e->getMessage())
+            ->withInput();
     }
+}
 
     public function show($id, Request $request)
     {
@@ -322,133 +319,135 @@ public function exportOverdueTasks(Request $request)
 
 
     public function update(Request $request, $id)
-    {
-        $user = auth()->user();
-        $tache = Tache::with('users')->findOrFail($id);
-        $oldStatus = $tache->status;
+{
+    $user = auth()->user();
+    $tache = Tache::with('users')->findOrFail($id);
+    $oldStatus = $tache->status;
 
-        // Determine if the current user has "admin" level permissions for full task modification.
-        // This includes 'Sup_Admin' and 'Custom_Admin'.
-        $isAdminForFullEdit = $this->isAdmin($user);
+    $isAdminForFullEdit = $this->isAdmin($user);
+    $canModifyStatusAndRetourOnlyRoles = ['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH'];
+    $canModifyStatusAndRetour = !$isAdminForFullEdit && $user->hasAnyRole($canModifyStatusAndRetourOnlyRoles);
 
-        // Define roles that can modify only status and retour, assuming they are NOT full admins.
-        // The Custom_Admin role is now covered by $isAdminForFullEdit.
-        $canModifyStatusAndRetourOnlyRoles = ['USER_MULTIMEDIA', 'USER_TRAINING', 'Sales_Admin', 'USER_TECH'];
+    if ($isAdminForFullEdit) {
 
-        // Flag to check if the user belongs to the specific roles that can only update status and retour.
-        $canModifyStatusAndRetour = !$isAdminForFullEdit && $user->hasAnyRole($canModifyStatusAndRetourOnlyRoles);
-
-
-        if ($isAdminForFullEdit) {
-    $request->validate([
-        'titre' => 'required|string|max:255',
-        'description' => 'nullable|string|max:5000',
-        'audio_data' => 'nullable|string',
-        'remove_existing_audio' => 'nullable|boolean',
-        'duree' => 'required|string|max:255',
-        'datedebut' => 'required|date',
-        'heuredebut' => 'nullable|required_if:date,heure,minute|date_format:H:i', // ✅ إضافة
-        'status' => 'required|in:nouveau,en cours,termine,annulé',
-        'date' => 'required|in:jour,semaine,mois,heure,minute', 
-        'user_ids' => 'required|array',
-        'user_ids.*' => 'exists:users,id',
-        'priorite' => 'required|in:faible,moyen,élevé',
-        'retour' => 'nullable|string|max:5000',
-    ]);
-
-            if ($request->filled('description') && $request->filled('audio_data')) {
-                return redirect()->back()
-                    ->with('error', 'Vous ne pouvez pas saisir une description textuelle et un enregistrement audio en même temps. Choisissez-en un seul.')
-                    ->withInput();
-            }
-
-            // CHANGED: Do NOT exclude 'retour' from $data here.
-            $data = $request->except('user_ids', 'audio_data', 'remove_existing_audio');
-            $data['updated_by'] = auth()->id();
-
-            if ($request->boolean('remove_existing_audio')) {
-                if ($tache->audio_description_path) {
-                    Storage::disk('public')->delete($tache->audio_description_path);
-                }
-                $data['audio_description_path'] = null;
-                $data['description'] = $request->filled('description') ? $request->description : '-';
-            } elseif ($request->filled('audio_data')) {
-                if ($tache->audio_description_path) {
-                    Storage::disk('public')->delete($tache->audio_description_path);
-                }
-                $data['description'] = '-';
-
-                $base64_audio = $request->input('audio_data');
-                @list($type, $base64_audio) = explode(';', $base64_audio);
-                @list(, $base64_audio) = explode(',', $base64_audio);
-                $audio_decoded = base64_decode($base64_audio);
-
-                $filename = 'audio_' . uniqid() . '.webm';
-                Storage::disk('public')->put('task_audios/' . $filename, $audio_decoded);
-                $data['audio_description_path'] = 'task_audios/' . $filename;
-            } elseif ($request->filled('description')) {
-                if ($tache->audio_description_path) {
-                    Storage::disk('public')->delete($tache->audio_description_path);
-                }
-                $data['audio_description_path'] = null;
-                $data['description'] = $request->description;
-            } else {
-                $data['description'] = $tache->description;
-                $data['audio_description_path'] = $tache->audio_description_path;
-
-                if (empty($data['description']) && empty($data['audio_description_path'])) {
-                    $data['description'] = '-';
-                }
-            }
-
-            $startDate = Carbon::parse($request->input('datedebut'));
-    
-    // ✅ دمج التاريخ والوقت إذا كان النوع heure أو minute
-    if (in_array($request->input('date'), ['heure', 'minute']) && $request->filled('heuredebut')) {
-        $startDate = Carbon::parse($request->input('datedebut') . ' ' . $request->input('heuredebut'));
-    }
-            $data['date_fin_prevue'] = $this->calculateExpectedEndDate($startDate, $request->input('duree'));
-
-            $tache->update($data); // This will now include 'retour' if it was in $request->all()
-
-            $tache->users()->sync($request->input('user_ids'));
-
-       } elseif ($canModifyStatusAndRetour) {
-    $request->validate([
-        'status' => 'required|in:nouveau,en cours,termine', // ✅ PAS annulé ici
-        'retour' => 'nullable|string|max:5000',
-    ]);
-
-            $tache->update([
-                'status' => $request->status,
-                'retour' => $request->retour,
-                'updated_by' => auth()->id(),
-            ]);
-            \Log::info('Retour value after update for specific roles: ' . $tache->retour);
-        } else {
-            return redirect()->route('taches.index')
-                ->with('error', 'Accès refusé pour modifier cette tâche.');
+        // ✅ FIX : Normaliser heuredebut à null si type n'est pas heure/minute
+        if (!in_array($request->input('date'), ['heure', 'minute'])) {
+            $request->merge(['heuredebut' => null]);
         }
 
-        if ($oldStatus !== $tache->status) {
-            foreach ($tache->users as $assignedUser) {
-                $assignedUser->notify(new TacheUpdatedNotification($tache));
-            }
-        }
-
-        $finalRedirectParams = $request->only([
-            'search', 'date_filter', 'user_filter', 'sort_by', 'sort_direction', 'page'
+        $request->validate([
+            'titre'                 => 'required|string|max:255',
+            'description'           => 'nullable|string|max:5000',
+            'audio_data'            => 'nullable|string',
+            'remove_existing_audio' => 'nullable|boolean',
+            'duree'                 => 'required|string|max:255',
+            'datedebut'             => 'required|date',
+            'heuredebut'            => 'nullable|required_if:date,heure,minute|date_format:H:i',
+            'status'                => 'required|in:nouveau,en cours,termine,annulé',
+            'date'                  => 'required|in:jour,semaine,mois,heure,minute',
+            'user_ids'              => 'required|array',
+            'user_ids.*'            => 'exists:users,id',
+            'priorite'              => 'required|in:faible,moyen,élevé',
+            'retour'                => 'nullable|string|max:5000',
         ]);
 
-        if ($request->filled('original_status_filter') && $request->input('original_status_filter') !== 'all') {
-            $finalRedirectParams['status'] = $request->input('original_status_filter');
-        } else {
-            unset($finalRedirectParams['status']);
+        if ($request->filled('description') && $request->filled('audio_data')) {
+            return redirect()->back()
+                ->with('error', 'Vous ne pouvez pas saisir une description textuelle et un enregistrement audio en même temps. Choisissez-en un seul.')
+                ->withInput();
         }
 
-        return redirect()->route('taches.index', $finalRedirectParams)
-            ->with('success', 'Tâche mise à jour avec succès.');
+        $data = $request->except('user_ids', 'audio_data', 'remove_existing_audio');
+        $data['updated_by'] = auth()->id();
+
+        // ✅ FIX : Si type n'est pas heure/minute, forcer heuredebut à null en DB
+        if (!in_array($request->input('date'), ['heure', 'minute'])) {
+            $data['heuredebut'] = null;
+        }
+
+        if ($request->boolean('remove_existing_audio')) {
+            if ($tache->audio_description_path) {
+                Storage::disk('public')->delete($tache->audio_description_path);
+            }
+            $data['audio_description_path'] = null;
+            $data['description'] = $request->filled('description') ? $request->description : '-';
+
+        } elseif ($request->filled('audio_data')) {
+            if ($tache->audio_description_path) {
+                Storage::disk('public')->delete($tache->audio_description_path);
+            }
+            $data['description'] = '-';
+            $base64_audio = $request->input('audio_data');
+            @list($type, $base64_audio) = explode(';', $base64_audio);
+            @list(, $base64_audio) = explode(',', $base64_audio);
+            $audio_decoded = base64_decode($base64_audio);
+            $filename = 'audio_' . uniqid() . '.webm';
+            Storage::disk('public')->put('task_audios/' . $filename, $audio_decoded);
+            $data['audio_description_path'] = 'task_audios/' . $filename;
+
+        } elseif ($request->filled('description')) {
+            if ($tache->audio_description_path) {
+                Storage::disk('public')->delete($tache->audio_description_path);
+            }
+            $data['audio_description_path'] = null;
+            $data['description'] = $request->description;
+
+        } else {
+            $data['description'] = $tache->description;
+            $data['audio_description_path'] = $tache->audio_description_path;
+            if (empty($data['description']) && empty($data['audio_description_path'])) {
+                $data['description'] = '-';
+            }
+        }
+
+        $startDate = Carbon::parse($request->input('datedebut'));
+
+        if (in_array($request->input('date'), ['heure', 'minute']) && $request->filled('heuredebut')) {
+            $startDate = Carbon::parse($request->input('datedebut') . ' ' . $request->input('heuredebut'));
+        }
+
+        $data['date_fin_prevue'] = $this->calculateExpectedEndDate($startDate, $request->input('duree'));
+
+        $tache->update($data);
+        $tache->users()->sync($request->input('user_ids'));
+
+    } elseif ($canModifyStatusAndRetour) {
+        $request->validate([
+            'status' => 'required|in:nouveau,en cours,termine',
+            'retour' => 'nullable|string|max:5000',
+        ]);
+
+        $tache->update([
+            'status'     => $request->status,
+            'retour'     => $request->retour,
+            'updated_by' => auth()->id(),
+        ]);
+        \Log::info('Retour value after update for specific roles: ' . $tache->retour);
+
+    } else {
+        return redirect()->route('taches.index')
+            ->with('error', 'Accès refusé pour modifier cette tâche.');
     }
+
+    if ($oldStatus !== $tache->status) {
+        foreach ($tache->users as $assignedUser) {
+            $assignedUser->notify(new TacheUpdatedNotification($tache));
+        }
+    }
+
+    $finalRedirectParams = $request->only([
+        'search', 'date_filter', 'user_filter', 'sort_by', 'sort_direction', 'page'
+    ]);
+
+    if ($request->filled('original_status_filter') && $request->input('original_status_filter') !== 'all') {
+        $finalRedirectParams['status'] = $request->input('original_status_filter');
+    } else {
+        unset($finalRedirectParams['status']);
+    }
+
+    return redirect()->route('taches.index', $finalRedirectParams)
+        ->with('success', 'Tâche mise à jour avec succès.');
+}
 
     public function destroy($id)
     {
