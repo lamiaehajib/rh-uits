@@ -422,11 +422,19 @@
                 const dateSelect = document.getElementById('date');
                 const heuredebutContainer = document.getElementById('heuredebutContainer');
                 const heuredebutInput = document.getElementById('heuredebut');
-                function toggleHeureDebut() {
-                    const val = dateSelect.value;
-                    if (val === 'heure' || val === 'minute') { heuredebutContainer.style.display = 'block'; heuredebutInput.required = true; }
-                    else { heuredebutContainer.style.display = 'none'; heuredebutInput.required = false; heuredebutInput.value = ''; }
-                }
+               function toggleHeureDebut() {
+    const val = dateSelect.value;
+    if (val === 'heure' || val === 'minute') {
+        heuredebutContainer.style.display = 'block';
+        heuredebutInput.required = true;
+        heuredebutInput.disabled = false; // ✅ activer
+    } else {
+        heuredebutContainer.style.display = 'none';
+        heuredebutInput.required = false;
+        heuredebutInput.value = '';
+        heuredebutInput.disabled = true; // ✅ désactiver = ne sera pas envoyé
+    }
+}
                 dateSelect.addEventListener('change', toggleHeureDebut);
                 toggleHeureDebut();
             });
