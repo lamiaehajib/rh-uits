@@ -135,7 +135,7 @@ public function exportOverdueTasks(Request $request)
     ->whereNotNull('date_fin_prevue')
     ->where('date_fin_prevue', '<', Carbon::now());
 
-    // Appliquer le filtre par mois
+    
     $query->whereMonth('datedebut', $month);
 
     // Appliquer le filtre par année si spécifié

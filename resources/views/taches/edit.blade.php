@@ -427,7 +427,7 @@
     if (val === 'heure' || val === 'minute') {
         heuredebutContainer.style.display = 'block';
         heuredebutInput.required = true;
-        heuredebutInput.disabled = false; // ✅ activer
+        heuredebutInput.disabled = false; 
     } else {
         heuredebutContainer.style.display = 'none';
         heuredebutInput.required = false;
