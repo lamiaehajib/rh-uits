@@ -371,56 +371,96 @@ class SuivrePointageController extends Controller
      * Appliquer les filtres à une requête.
      */
     private function appliquerFiltres($requete, Request $request)
-    {
-        if ($recherche = $request->input('search')) {
-            $requete->whereHas('user', function ($query) use ($recherche) {
-                $query->where('name', 'like', "%{$recherche}%");
-            });
-        }
+{
+    if ($recherche = $request->input('search')) {
+        $requete->whereHas('user', function ($query) use ($recherche) {
+            $query->where('name', 'like', "%{$recherche}%");
+        });
+    }
 
-        if ($periode = $request->input('periode')) {
-            switch ($periode) {
-                case 'today':
-                    $requete->whereDate('date_pointage', Carbon::today('Africa/Casablanca'));
-                    break;
-                case 'this_week':
-                    $requete->whereBetween('date_pointage', [
-                        Carbon::now('Africa/Casablanca')->startOfWeek(),
-                        Carbon::now('Africa/Casablanca')->endOfWeek()
-                    ]);
-                    break;
-                case 'this_month':
-                    $requete->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->month)
-                           ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
-                    break;
-            }
-        }
-
-        if ($dateDebut = $request->input('date_debut')) {
-            $requete->whereDate('date_pointage', '>=', $dateDebut);
-        }
-        if ($dateFin = $request->input('date_fin')) {
-            $requete->whereDate('date_pointage', '<=', $dateFin);
-        }
-
-        if ($statut = $request->input('statut')) {
-            if ($statut === 'en_cours') {
-                $requete->where('type', 'presence')->whereNull('heure_depart');
-            } elseif ($statut === 'termine') {
-                $requete->where('type', 'presence')->whereNotNull('heure_depart');
-            } elseif ($statut === 'retard') {
-                $requete->where('type', 'presence')->whereNotNull('heure_arrivee')
-                       ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00']);
-            }
-        }
-
-        if ($userId = $request->input('user_id')) {
-            if ($userId !== 'all') {
-                $requete->where('iduser', $userId);
-            }
+    if ($periode = $request->input('periode')) {
+        switch ($periode) {
+            case 'today':
+                $requete->whereDate('date_pointage', Carbon::today('Africa/Casablanca'));
+                break;
+            case 'this_week':
+                $requete->whereBetween('date_pointage', [
+                    Carbon::now('Africa/Casablanca')->startOfWeek(),
+                    Carbon::now('Africa/Casablanca')->endOfWeek()
+                ]);
+                break;
+            case 'this_month':
+                $requete->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->month)
+                       ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
+                break;
+            // ➕ AJOUT des périodes manquantes
+            case 'yesterday':
+                $requete->whereDate('date_pointage', Carbon::yesterday('Africa/Casablanca'));
+                break;
+            case 'last_week':
+                $requete->whereBetween('date_pointage', [
+                    Carbon::now('Africa/Casablanca')->subWeek()->startOfWeek(),
+                    Carbon::now('Africa/Casablanca')->subWeek()->endOfWeek()
+                ]);
+                break;
+            case 'last_month':
+                $requete->whereMonth('date_pointage', Carbon::now('Africa/Casablanca')->subMonth()->month)
+                       ->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->subMonth()->year);
+                break;
+            case 'this_year':
+                $requete->whereYear('date_pointage', Carbon::now('Africa/Casablanca')->year);
+                break;
         }
     }
 
+    if ($dateDebut = $request->input('date_debut')) {
+        $requete->whereDate('date_pointage', '>=', $dateDebut);
+    }
+    if ($dateFin = $request->input('date_fin')) {
+        $requete->whereDate('date_pointage', '<=', $dateFin);
+    }
+
+    // ➕ AJOUT: Filtre type_pointage
+    if ($type = $request->input('type_pointage')) {
+        $requete->where('type', $type);
+    }
+
+    if ($statut = $request->input('statut')) {
+        if ($statut === 'en_cours') {
+            $requete->where('type', 'presence')->whereNull('heure_depart');
+        } elseif ($statut === 'termine') {
+            $requete->where('type', 'presence')->whereNotNull('heure_depart');
+        } elseif ($statut === 'retard') {
+            $requete->where('type', 'presence')->whereNotNull('heure_arrivee')
+                   ->whereRaw('TIME(heure_arrivee) > ?', ['09:10:00']);
+        } elseif ($statut === 'depart_anticipe') {
+            $requete->where('type', 'presence')->whereNotNull('heure_depart')
+                   ->whereRaw('TIME(heure_depart) < ?', ['17:30:00']);
+        }
+    }
+
+    // ➕ AJOUT: Filtre justificatif_status (CRUCIAL - c'était manquant!)
+    if ($justifStatus = $request->input('justificatif_status')) {
+        $requete->where('type', 'absence');
+        switch ($justifStatus) {
+            case 'non_soumis':
+                $requete->whereNull('justificatif');
+                break;
+            case 'en_attente':
+                $requete->whereNotNull('justificatif')->where('justificatif_valide', false);
+                break;
+            case 'valide':
+                $requete->where('justificatif_valide', true);
+                break;
+        }
+    }
+
+    if ($userId = $request->input('user_id')) {
+        if ($userId !== 'all') {
+            $requete->where('iduser', $userId);
+        }
+    }
+}
     /**
      * API pour les données de charts.
      */
