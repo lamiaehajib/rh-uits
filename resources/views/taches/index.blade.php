@@ -352,11 +352,15 @@
                                             <td>{{ $tache->duree }}</td>
                                             <td>{{ \Carbon\Carbon::parse($tache->datedebut)->format('d/m/Y') }}</td>
                                             <td>
-                                                @if(in_array($tache->date, ['heure', 'minute']))
-                                                    {{ $tache->date_fin_prevue->format('d/m/Y H:i') }}
-                                                @else
-                                                    {{ $tache->date_fin_prevue->format('d/m/Y') }}
-                                                @endif
+                                               @if($tache->date_fin_prevue)
+    @if(in_array($tache->date, ['heure', 'minute']))
+        {{ \Carbon\Carbon::parse($tache->date_fin_prevue)->format('d/m/Y H:i') }}
+    @else
+        {{ \Carbon\Carbon::parse($tache->date_fin_prevue)->format('d/m/Y') }}
+    @endif
+@else
+    <span class="text-gray-400">—</span>
+@endif
                                             </td>
                                             <td>
                                                 <span class="px-3 py-1 rounded-full text-xs font-semibold
