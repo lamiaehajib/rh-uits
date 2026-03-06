@@ -482,7 +482,7 @@
             </a>
             @endcan
 
-            <div class="menu-divider"></div>
+            {{-- <div class="menu-divider"></div>
 @can("project-list")
             <!-- Dropdown Gestion Dépenses -->
             <div class="dropdown-container">
@@ -512,7 +512,7 @@
                     </a>
                 </div>
             </div>
-@endcan
+@endcan --}}
             <!-- Profile Dropdown -->
             <div class="dropdown-container">
                 <button class="dropdown-btn" onclick="toggleDropdown(this)">
