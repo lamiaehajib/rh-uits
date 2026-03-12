@@ -111,6 +111,20 @@ class PermissionseSeeder extends Seeder
             
             'Dashboard',
  
+
+              // ── Ordre de Mission ─────────────────────────────────────
+            'ordre_mission-list',       // Voir la liste (tous les employés)
+            'ordre_mission-create',     // Créer une demande
+            'ordre_mission-show',       // Voir le détail
+            'ordre_mission-edit',       // Modifier sa propre demande
+            'ordre_mission-delete',     // Annuler/supprimer sa demande
+            'ordre_mission-approuver',  // Admin : approuver
+            'ordre_mission-refuser',    // Admin : refuser
+            'ordre_mission-cloturer',   // Admin : clôturer
+            'ordre_mission-admin',      // Accès vue admin complète
+            // Justificatifs
+            'justificatif-create',      // Uploader un justificatif
+            'justificatif-delete',      // Supprimer un justificatif
          ];
  
        

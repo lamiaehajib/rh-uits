@@ -113,6 +113,7 @@
             }
         }
     </style>
+    @stack('styles') 
 </head>
 <body class="font-sans antialiased">
     <div class="min-h-screen">

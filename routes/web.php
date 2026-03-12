@@ -6,6 +6,8 @@ use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CongeController;
 use App\Http\Controllers\DepensesController;
+use App\Http\Controllers\OrdreMissionController;
+use App\Http\Controllers\OrdreMissionJustificatifController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjetController;
 use App\Http\Controllers\RendezVousController;
@@ -554,6 +556,43 @@ Route::post('/depenses/fixes/generer-salaires', [DepensesController::class, 'gen
     
     // Rapport mensuel
     Route::get('/depenses/rapport', [DepensesController::class, 'rapportMensuel'])->name('depenses.rapport');
+
+
+     // ── Employé ─────────────────────────────────────────────────────
+   Route::prefix('ordre-missions')->name('ordre-missions.')->group(function () {
+
+        // Employé
+        Route::get('/',                         [OrdreMissionController::class, 'index'])   ->name('index');
+        Route::get('/create',                   [OrdreMissionController::class, 'create'])  ->name('create');
+        Route::post('/',                        [OrdreMissionController::class, 'store'])   ->name('store');
+        Route::get('/{ordreMission}',           [OrdreMissionController::class, 'show'])    ->name('show');
+        Route::get('/{ordreMission}/edit',      [OrdreMissionController::class, 'edit'])    ->name('edit');
+        Route::put('/{ordreMission}',           [OrdreMissionController::class, 'update'])  ->name('update');
+        Route::patch('/{ordreMission}/annuler', [OrdreMissionController::class, 'annuler']) ->name('annuler');
+
+        // Admin
+        Route::middleware(['role:Sup_Admin|Custom_Admin'])->group(function () {
+            Route::get('/admin/dashboard',               [OrdreMissionController::class, 'dashboard']) ->name('dashboard');
+            Route::patch('/{ordreMission}/approuver',    [OrdreMissionController::class, 'approuver'])->name('approuver');
+            Route::patch('/{ordreMission}/refuser',      [OrdreMissionController::class, 'refuser'])  ->name('refuser');
+            Route::patch('/{ordreMission}/cloturer',     [OrdreMissionController::class, 'cloturer']) ->name('cloturer');
+        });
+
+    });
+
+    // ── Justificatifs ────────────────────────────────────────────────
+    Route::prefix('ordre-missions/{ordreMission}/justificatifs')
+         ->name('justificatifs.')
+         ->group(function () {
+             Route::post('/',                                   [OrdreMissionJustificatifController::class, 'store'])   ->name('store');
+         });
+
+    Route::prefix('justificatifs')
+         ->name('justificatifs.')
+         ->group(function () {
+             Route::get('/{justificatif}',      [OrdreMissionJustificatifController::class, 'show'])    ->name('show');
+             Route::delete('/{justificatif}',   [OrdreMissionJustificatifController::class, 'destroy']) ->name('destroy');
+         });
 });
 
 // Handle registration

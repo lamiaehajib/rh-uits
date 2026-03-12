@@ -435,6 +435,18 @@
             </a>
             @endcan
 
+            {{-- Ordre de Missions --}}
+<a href="{{ route('ordre-missions.index') }}" class="menu-item">
+    <i class='bx bx-file menu-icon'></i>
+    <span class="menu-text">Ordre de Missions</span>
+</a>
+
+@can("user-list")
+<a href="{{ route('ordre-missions.dashboard') }}" class="menu-item">
+    <i class='bx bx-tachometer menu-icon'></i>
+    <span class="menu-text">Dashboard Missions</span>
+</a>
+@endcan
            
             <a href="{{ route('conges.index') }}" class="menu-item">
                 <i class='bx bx-chalkboard menu-icon'></i>

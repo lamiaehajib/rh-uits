@@ -37,6 +37,18 @@ class User extends Authenticatable
         'two_factor_expires_at',
     ];
 
+
+
+
+    public function ordreMissions()
+{
+    return $this->hasMany(OrdreMission::class);
+}
+
+public function ordreMissionsTraitees()
+{
+    return $this->hasMany(OrdreMission::class, 'traite_par');
+}
     public function projets()
     {
         // This defines the many-to-many relationship with the Projet model.
